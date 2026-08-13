@@ -117,10 +117,8 @@ function homeView() {
         <p class="muted">Saisie, photos, signature et envoi sur place</p>
       </div>
     </header>
-    <section class="pad">
-      <div class="hero">
-        <img src="/hero-dog.jpg" alt="" />
-      </div>
+    <div class="hero-bg"><img src="/hero-dog.jpg" alt="" /></div>
+    <section class="content-sheet">
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
       <h2 class="section-title">Mes rapports</h2>
