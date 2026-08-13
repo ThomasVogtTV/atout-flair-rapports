@@ -150,7 +150,7 @@ function lieuBox(sh, report, t, x, y, w) {
   })
   let cy = y - titleH - 15
   for (const f of t.lieuFields[0]) {
-    sh.field(f.label, formatValue(f, report.lieu[f.key]), x + 6, cy, 48, w - 66)
+    sh.field(f.label, fieldValue(report, f), x + 6, cy, 48, w - 66)
     cy -= 15
   }
   return cy
@@ -161,6 +161,13 @@ function formatValue(field, value) {
   if (field.type === 'date') return frDate(value)
   if (field.type === 'time') return frTime(value)
   return value
+}
+
+// Valeur d'un champ du bloc "Lieu d'intervention" : soit saisie sur le lieu,
+// soit reprise automatiquement d'ailleurs sur le rapport (ex. Regie = nom du mandant).
+function fieldValue(report, field) {
+  if (field.derived === 'mandant.nom') return report.mandant.nom || ''
+  return formatValue(field, report.lieu[field.key])
 }
 
 function badge(sh, label, x, y, w = 132) {
@@ -202,10 +209,10 @@ async function drawDetection(sh, report, logo) {
   y -= 30
   const lh = 22
   t.lieuFields[0].forEach((f, i) => {
-    sh.field(f.label, formatValue(f, report.lieu[f.key]), M, y - i * lh, 108, 175)
+    sh.field(f.label, fieldValue(report, f), M, y - i * lh, 108, 175)
   })
   t.lieuFields[1].forEach((f, i) => {
-    sh.field(f.label, formatValue(f, report.lieu[f.key]), M + 300, y - i * lh, 92, 117)
+    sh.field(f.label, fieldValue(report, f), M + 300, y - i * lh, 92, 117)
   })
   y -= lh * 4
   sh.line(M, y, RIGHT, 2)

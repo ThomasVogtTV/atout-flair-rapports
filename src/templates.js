@@ -14,7 +14,9 @@ export const TYPES = {
     // Bloc "Lieu d'intervention et informations" : deux colonnes de champs
     lieuFields: [
       [
-        { key: 'regie', label: 'Régie' },
+        // Dans les trois rapports de reference, ce champ est toujours identique
+        // au nom du mandant : pas de saisie separee, valeur reprise automatiquement.
+        { key: 'regie', label: 'Régie', derived: 'mandant.nom' },
         { key: 'adresseIntervention', label: 'Adresse intervention' },
         { key: 'locataire', label: 'Locataire' },
         { key: 'dateIntervention', label: 'Date Intervention', type: 'date' },
@@ -55,7 +57,7 @@ export const TYPES = {
     layout: 'lignes',
     lieuFields: [
       [
-        { key: 'gerance', label: 'Gérance' },
+        { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
         { key: 'adresse', label: 'Adresse' },
         { key: 'npaLieu', label: 'NPA/Lieu' },
         { key: 'bon', label: 'Bon' },
@@ -87,7 +89,7 @@ export const TYPES = {
     layout: 'lignes',
     lieuFields: [
       [
-        { key: 'gerance', label: 'Gérance' },
+        { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
         { key: 'adresse', label: 'Adresse' },
         { key: 'npaLieu', label: 'NPA/Lieu' },
         { key: 'bon', label: 'Bon' },

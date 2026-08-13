@@ -201,6 +201,7 @@ function editorView() {
       <h2 class="section-title">Lieu d'intervention</h2>
       <div class="card grid2">
         ${lieuFields
+          .filter((f) => !f.derived)
           .map(
             (f) => `<label class="${f.key === 'adresseIntervention' || f.key === 'adresse' ? 'full' : ''}">
               ${esc(f.label)}${fieldInput(f, r.lieu[f.key])}
@@ -522,8 +523,8 @@ async function createChild(rowId) {
   const row = parent.rows.find((r) => r.id === rowId)
   const child = S.newReport('detection')
   child.parentId = parent.id
+  // mandant copie tel quel : la Regie du sous-rapport en derive automatiquement (voir templates.js)
   child.mandant = { ...parent.mandant }
-  child.lieu.regie = parent.lieu.gerance ?? ''
   child.lieu.adresseIntervention = [parent.lieu.adresse, parent.lieu.npaLieu].filter(Boolean).join(', ')
   child.lieu.etagePorte = [row.etage, row.numero].filter(Boolean).join(' - ')
   child.lieu.locataire = row.resident ?? ''
