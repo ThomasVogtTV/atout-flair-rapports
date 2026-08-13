@@ -18,7 +18,7 @@ const ICONS = {
 }
 
 const root = document.getElementById('app')
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], regies: [] }
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [] }
 let saveTimer = null
 
 const esc = (s) =>
@@ -52,7 +52,6 @@ export async function openReport(id) {
   view.report = report
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
-  view.regies = await S.listRegies()
   view.screen = 'editor'
   render()
 }
@@ -150,9 +149,7 @@ function fieldInput(f, value) {
     </div>`
   }
   const type = f.type === 'date' ? 'date' : f.type === 'time' ? 'time' : 'text'
-  const isRegie = f.key === 'regie' || f.key === 'gerance'
-  const listAttr = isRegie ? ' list="regies-list" autocomplete="off"' : ''
-  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}"${listAttr} />`
+  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}" />`
 }
 
 const MANDANT_TYPES = [
@@ -170,7 +167,6 @@ function editorView() {
   const contactOptions = view.contacts
     .map((c) => `<option value="${esc(c.nom)}"></option>`)
     .join('')
-  const regieOptions = view.regies.map((n) => `<option value="${esc(n)}"></option>`).join('')
 
   return `
     <header class="top editor-top">
@@ -180,7 +176,6 @@ function editorView() {
         <p class="muted">N° ${esc(r.ref)} · ${esc(r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport')}</p>
       </div>
     </header>
-    <datalist id="regies-list">${regieOptions}</datalist>
 
     <section class="pad">
       <h2 class="section-title">Mandant

@@ -118,18 +118,6 @@ export async function rememberContact(mandant) {
 
 export const deleteContact = (id) => db.del('contacts', id)
 
-// Regies/gerances deja saisies dans d'autres rapports : sert de suggestions
-// dans le champ (pas un carnet a part, juste l'historique).
-export async function listRegies() {
-  const reports = await db.all('reports')
-  const names = new Set()
-  for (const r of reports) {
-    const v = (r.lieu?.regie || r.lieu?.gerance || '').trim()
-    if (v) names.add(v)
-  }
-  return [...names].sort((a, b) => a.localeCompare(b))
-}
-
 // --- nom de fichier --------------------------------------------------------
 
 const slug = (s) =>
