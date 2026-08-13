@@ -42,15 +42,25 @@ export function newRow(type) {
   return row
 }
 
+// Reference imprimee sur le rapport (ex. AF-00001). Compteur local a
+// l'appareil : suffisant pour un usage a un seul technicien, et sans
+// dependance a un serveur pour rester utilisable hors ligne.
+function nextRef() {
+  const n = Number(localStorage.getItem('af-ref-seq') ?? '0') + 1
+  localStorage.setItem('af-ref-seq', String(n))
+  return `AF-${String(n).padStart(5, '0')}`
+}
+
 export function newReport(type) {
   const t = TYPES[type]
   const report = {
     id: uid(),
+    ref: nextRef(),
     type,
     status: 'draft',
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    mandant: { nom: '', adresse: '', npaLieu: '', email: '', tel: '' },
+    mandant: { type: '', nom: '', adresse: '', npaLieu: '', email: '', tel: '' },
     lieu: {},
     rows: [],
     remarques: '',
@@ -107,6 +117,18 @@ export async function rememberContact(mandant) {
 }
 
 export const deleteContact = (id) => db.del('contacts', id)
+
+// Regies/gerances deja saisies dans d'autres rapports : sert de suggestions
+// dans le champ (pas un carnet a part, juste l'historique).
+export async function listRegies() {
+  const reports = await db.all('reports')
+  const names = new Set()
+  for (const r of reports) {
+    const v = (r.lieu?.regie || r.lieu?.gerance || '').trim()
+    if (v) names.add(v)
+  }
+  return [...names].sort((a, b) => a.localeCompare(b))
+}
 
 // --- nom de fichier --------------------------------------------------------
 

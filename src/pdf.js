@@ -11,6 +11,11 @@ const CW = PAGE.W - 2 * M         // largeur utile
 const RIGHT = M + CW
 const BLACK = rgb(0, 0, 0)
 const RED = rgb(0.85, 0.1, 0.1)
+const GREY = rgb(0.42, 0.42, 0.42)
+
+// Coordonnees de l'entreprise, imprimees en pied de chaque page de contenu.
+const FOOTER_LINE1 = 'Atout Flair · Oberli Stessy · Froideville 1, 1422 Grandson (VD) · 079 269 94 96 · info@atout-flair.ch'
+const FOOTER_LINE2 = 'Chiens certifiés Bed Bug Foundation'
 
 // Les polices standard sont encodees en WinAnsi : on remplace ce qui n'y passe pas.
 function san(s) {
@@ -163,6 +168,20 @@ function badge(sh, label, x, y, w = 132) {
   sh.text(label, x + w / 2, y + 4.5, { size: 7.5, bold: true, align: 'center', maxW: w - 6 })
 }
 
+// Reference imprimee en vis-a-vis du badge de type de rapport.
+function refNumber(sh, report, y) {
+  if (!report.ref) return
+  sh.text(`N° ${report.ref}`, RIGHT, y + 4.5, { size: 8.5, bold: true, align: 'right' })
+}
+
+// Coordonnees de l'entreprise, en bas de chaque page de contenu (pas les pages photo).
+function footer(sh) {
+  const y = 30
+  sh.line(M, y + 13, RIGHT, 0.5)
+  sh.text(FOOTER_LINE1, PAGE.W / 2, y, { size: 6.3, align: 'center', color: GREY, maxW: CW })
+  sh.text(FOOTER_LINE2, PAGE.W / 2, y - 9, { size: 6.3, align: 'center', color: GREY })
+}
+
 // --- rapport de detection (appartement / maison) ---------------------------
 
 async function drawDetection(sh, report, logo) {
@@ -174,6 +193,7 @@ async function drawDetection(sh, report, logo) {
   sh.page.drawImage(logo, { x: M, y: top - logoH, width: logoH * (logo.width / logo.height), height: logoH })
   mandantBox(sh, report, M + 250, top, CW - 250)
   badge(sh, t.badge, M, top - 128)
+  refNumber(sh, report, top - 128)
   sh.line(M, top - 146, RIGHT, 2)
 
   // Lieu d'intervention : bandeau + deux colonnes
@@ -275,6 +295,7 @@ async function drawDetection(sh, report, logo) {
       height: img.height * scale,
     })
   }
+  footer(sh)
 }
 
 // --- rapports immeuble / hotel ---------------------------------------------
@@ -319,12 +340,15 @@ async function drawLignes(sh, report, logo) {
     mandantBox(sh, report, M + 108, top, 168)
     lieuBox(sh, report, t, M + 288, top, CW - 288)
     badge(sh, t.badge, M, top - 112, 118)
+    refNumber(sh, report, top - 112)
     sh.line(M, top - 128, RIGHT, 2)
+    footer(sh)
     return drawTableHead(top - 150)
   }
 
   const startNextPage = () => {
     sh.newPage()
+    footer(sh)
     return drawTableHead(PAGE.H - 60)
   }
 

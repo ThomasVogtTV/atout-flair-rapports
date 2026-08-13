@@ -18,7 +18,7 @@ const ICONS = {
 }
 
 const root = document.getElementById('app')
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [] }
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], regies: [] }
 let saveTimer = null
 
 const esc = (s) =>
@@ -52,6 +52,7 @@ export async function openReport(id) {
   view.report = report
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
+  view.regies = await S.listRegies()
   view.screen = 'editor'
   render()
 }
@@ -64,9 +65,22 @@ async function createReport(type) {
 
 // --- rendu -----------------------------------------------------------------
 
+// Sert a ne rejouer l'animation d'entree que lors d'une vraie navigation
+// (accueil <-> rapport, ou changement de rapport ouvert), pas a chaque
+// re-rendu local (ajout d'une ligne, d'une photo, etc.).
+let lastViewKey = null
+
 function render() {
+  const key = `${view.screen}:${view.report?.id ?? ''}`
+  const navigated = key !== lastViewKey
+  lastViewKey = key
   root.innerHTML = view.screen === 'home' ? homeView() : editorView()
   root.scrollTop = 0
+  if (navigated) {
+    root.classList.remove('view-enter')
+    void root.offsetWidth // force le reflow pour redemarrer l'animation
+    root.classList.add('view-enter')
+  }
   updatePendingBadge()
 }
 
@@ -136,8 +150,17 @@ function fieldInput(f, value) {
     </div>`
   }
   const type = f.type === 'date' ? 'date' : f.type === 'time' ? 'time' : 'text'
-  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}" />`
+  const isRegie = f.key === 'regie' || f.key === 'gerance'
+  const listAttr = isRegie ? ' list="regies-list" autocomplete="off"' : ''
+  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}"${listAttr} />`
 }
+
+const MANDANT_TYPES = [
+  { key: 'particulier', label: 'Particulier' },
+  { key: 'locataire', label: 'Locataire' },
+  { key: 'proprietaire', label: 'Propriétaire' },
+  { key: 'gerance', label: 'Gérance' },
+]
 
 function editorView() {
   const r = view.report
@@ -147,21 +170,29 @@ function editorView() {
   const contactOptions = view.contacts
     .map((c) => `<option value="${esc(c.nom)}"></option>`)
     .join('')
+  const regieOptions = view.regies.map((n) => `<option value="${esc(n)}"></option>`).join('')
 
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
       <div class="top-title">
         <h1>${esc(t.label)}</h1>
-        <p class="muted">${esc(r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport')}</p>
+        <p class="muted">N° ${esc(r.ref)} · ${esc(r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport')}</p>
       </div>
     </header>
+    <datalist id="regies-list">${regieOptions}</datalist>
 
     <section class="pad">
       <h2 class="section-title">Mandant
         <button class="link" data-act="save-contact">Ajouter au carnet</button>
       </h2>
       <div class="card grid2">
+        <div class="full chip-group" data-mandant-type>
+          ${MANDANT_TYPES.map(
+            (mt) =>
+              `<button type="button" class="chip${r.mandant.type === mt.key ? ' on' : ''}" data-val="${mt.key}">${mt.label}</button>`
+          ).join('')}
+        </div>
         <label class="full">Nom
           <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
           <datalist id="contacts">${contactOptions}</datalist>
@@ -362,6 +393,17 @@ root.addEventListener('click', async (ev) => {
   const openId = el.closest('[data-open]')?.dataset.open
   if (openId) return openReport(openId)
 
+  // --- type de mandant (choix unique)
+  const chip = el.closest('.chip')
+  if (chip && chip.closest('[data-mandant-type]')) {
+    const group = chip.closest('[data-mandant-type]')
+    const value = chip.dataset.val
+    view.report.mandant.type = view.report.mandant.type === value ? '' : value
+    group.querySelectorAll('.chip').forEach((b) => b.classList.toggle('on', b.dataset.val === view.report.mandant.type))
+    scheduleSave()
+    return
+  }
+
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')
   if (segBtn) {
@@ -526,14 +568,14 @@ async function currentPdf() {
   let blob = await buildWith(view.report)
   for (const step of SHRINK_STEPS) {
     if (blob.size <= PDF_MAX) break
-    toast('Rapport volumineux : optimisation des photos…')
+    showLoading('Rapport volumineux : optimisation des photos…')
     blob = await buildWith(await shrunkReport(view.report, step))
   }
   return { blob, oversized: blob.size > PDF_MAX }
 }
 
 async function preview() {
-  toast('Génération du PDF…')
+  showLoading('Génération du PDF…')
   const { blob } = await currentPdf()
   const url = URL.createObjectURL(blob)
   // En app installée (iOS notamment) l'ouverture d'onglet est parfois bloquée :
@@ -546,6 +588,7 @@ async function preview() {
     a.click()
   }
   setTimeout(() => URL.revokeObjectURL(url), 60000)
+  hideLoading()
 }
 
 /**
@@ -601,8 +644,9 @@ Atout Flair</textarea></label>
     if (ev.target.hasAttribute?.('data-close') || ev.target === overlay) return overlay.remove()
 
     if (ev.target.hasAttribute?.('data-share')) {
-      toast('Génération du PDF…')
+      showLoading('Génération du PDF…')
       const { blob } = await currentPdf()
+      hideLoading()
       await shareOrDownload(blob, filename)
       return
     }
@@ -620,17 +664,20 @@ Atout Flair</textarea></label>
       filename,
     }
     overlay.remove()
-    toast('Génération du PDF…')
+    showLoading('Génération du PDF…')
     const { blob, oversized } = await currentPdf()
     if (oversized) {
       // Au-dela de la limite du serveur, l'envoi automatique echouerait sans
       // qu'on puisse rien y faire : on passe la main a l'application mail.
+      hideLoading()
       toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
       await shareOrDownload(blob, filename)
       return
     }
 
+    showLoading('Envoi en cours…')
     const { queued, badCode, notConfigured } = await sendReport(view.report, payload, blob)
+    hideLoading()
     if (notConfigured) {
       // Phase d'essai : la boite mail n'est pas encore branchee. Mettre le
       // rapport en attente donnerait l'illusion d'un envoi a venir.
@@ -667,6 +714,22 @@ export function toast(message) {
   el.classList.add('show')
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200)
+}
+
+function showLoading(message) {
+  let el = document.querySelector('.loading-overlay')
+  if (!el) {
+    el = document.createElement('div')
+    el.className = 'loading-overlay'
+    el.innerHTML = `<div class="loading-card"><span class="spinner"></span><span class="loading-text"></span></div>`
+    document.body.appendChild(el)
+  }
+  el.querySelector('.loading-text').textContent = message
+  requestAnimationFrame(() => el.classList.add('show'))
+}
+
+function hideLoading() {
+  document.querySelector('.loading-overlay')?.classList.remove('show')
 }
 
 async function updatePendingBadge() {
