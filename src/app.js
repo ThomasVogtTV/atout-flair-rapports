@@ -118,6 +118,9 @@ function homeView() {
       </div>
     </header>
     <section class="pad">
+      <div class="hero">
+        <img src="/hero-dog.jpg" alt="" />
+      </div>
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
       <h2 class="section-title">Mes rapports</h2>
