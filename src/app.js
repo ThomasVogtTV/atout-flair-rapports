@@ -18,7 +18,7 @@ const ICONS = {
 }
 
 const root = document.getElementById('app')
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [] }
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null }
 let saveTimer = null
 
 const esc = (s) =>
@@ -96,31 +96,61 @@ function homeView() {
     </button>`
   ).join('')
 
-  const list = view.reports.length
-    ? view.reports
-        .map((r) => {
-          const t = TYPES[r.type]
-          const who = r.lieu?.locataire || r.mandant?.nom || 'Sans nom'
-          const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
-          const state =
-            r.status === 'sent'
-              ? `<span class="pill sent">Envoyé</span>`
-              : r.status === 'queued'
-                ? `<span class="pill queued">En attente de réseau</span>`
-                : `<span class="pill draft">Brouillon</span>`
-          return `
-            <li class="report-row" data-open="${r.id}">
-              <div class="report-main">
-                <strong>${esc(who)}</strong>
-                <span class="muted">${esc(t.label)}${where ? ` · ${esc(where)}` : ''}</span>
-              </div>
-              <div class="report-side">${state}
-                <button class="icon-btn" data-del="${r.id}" title="Supprimer">✕</button>
-              </div>
-            </li>`
-        })
-        .join('')
-    : `<li class="empty">Aucun rapport pour l'instant.</li>`
+  const folders = TYPE_LIST.map((t) => {
+    const reports = view.reports.filter((r) => r.type === t.id)
+    const open = view.openFolder === t.id
+    const draft = reports.filter((r) => r.status === 'draft').length
+    const queued = reports.filter((r) => r.status === 'queued').length
+    const sent = reports.filter((r) => r.status === 'sent').length
+    const summary = reports.length
+      ? [
+          draft && `${draft} brouillon${draft > 1 ? 's' : ''}`,
+          queued && `${queued} en attente`,
+          sent && `${sent} envoyé${sent > 1 ? 's' : ''}`,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : 'Vide'
+
+    const items = reports.length
+      ? reports
+          .map((r) => {
+            const who = r.lieu?.locataire || r.mandant?.nom || 'Sans nom'
+            const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+            const state =
+              r.status === 'sent'
+                ? `<span class="pill sent">Envoyé</span>`
+                : r.status === 'queued'
+                  ? `<span class="pill queued">En attente de réseau</span>`
+                  : `<span class="pill draft">Brouillon</span>`
+            return `
+              <li class="report-row" data-open="${r.id}">
+                <div class="report-main">
+                  <strong>${esc(who)}</strong>
+                  <span class="muted">${esc(r.ref ?? '')}${where ? ` · ${esc(where)}` : ''}</span>
+                </div>
+                <div class="report-side">${state}
+                  <button class="icon-btn" data-del="${r.id}" title="Supprimer">✕</button>
+                </div>
+              </li>`
+          })
+          .join('')
+      : `<li class="empty">Aucun rapport de ce type pour l'instant.</li>`
+
+    return `
+      <div class="folder${open ? ' open' : ''}">
+        <button class="folder-head" data-toggle-folder="${t.id}">
+          <span class="type-icon muted">${ICONS[t.id] ?? ''}</span>
+          <span class="folder-body">
+            <span class="folder-name">${esc(t.label)}</span>
+            <span class="folder-summary">${esc(summary)}</span>
+          </span>
+          <span class="folder-count">${reports.length}</span>
+          <span class="folder-chevron">${ICONS.chevron}</span>
+        </button>
+        ${open ? `<ul class="report-list folder-list">${items}</ul>` : ''}
+      </div>`
+  }).join('')
 
   return `
     <header class="top">
@@ -135,7 +165,7 @@ function homeView() {
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
       <h2 class="section-title">Mes rapports</h2>
-      <ul class="report-list">${list}</ul>
+      <div class="folders">${folders}</div>
     </section>`
 }
 
@@ -375,6 +405,12 @@ root.addEventListener('click', async (ev) => {
 
   const newType = el.closest('[data-new]')?.dataset.new
   if (newType) return createReport(newType)
+
+  const folderType = el.closest('[data-toggle-folder]')?.dataset.toggleFolder
+  if (folderType) {
+    view.openFolder = view.openFolder === folderType ? null : folderType
+    return render()
+  }
 
   const delId = el.closest('[data-del]')?.dataset.del
   if (delId) {
