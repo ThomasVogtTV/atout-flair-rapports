@@ -7,19 +7,24 @@ import { uid } from './state.js'
 const ENDPOINT = '/api/send'
 const CODE_KEY = 'af-code'
 
-// Code d'acces partage : demande une seule fois par appareil, puis conserve.
-// Il empeche que l'adresse du site suffise a envoyer des mails depuis la boite
-// de l'entreprise. Il n'est pas dans le code source de l'app, seulement ici.
-function accessCode() {
-  let code = localStorage.getItem(CODE_KEY)
-  if (!code) {
-    code = window.prompt("Code d'accès de l'application (une seule fois sur cet appareil)")?.trim()
-    if (code) localStorage.setItem(CODE_KEY, code)
-  }
+// Code d'acces partage, conserve par appareil. Il empeche que l'adresse du site
+// suffise a envoyer des mails depuis la boite de l'entreprise, et n'apparait pas
+// dans le code envoye au navigateur.
+// Il n'est demande que si le serveur le refuse : tant qu'aucune boite mail n'est
+// branchee, personne ne voit passer cette question.
+function storedCode() {
+  return localStorage.getItem(CODE_KEY) ?? ''
+}
+
+function askCode() {
+  const code = window.prompt("Code d'accès de l'application (une seule fois sur cet appareil)")?.trim()
+  if (code) localStorage.setItem(CODE_KEY, code)
   return code ?? ''
 }
 
 export class BadCodeError extends Error {}
+/** La boite mail n'est pas encore configuree cote serveur : inutile de reessayer. */
+export class NotConfiguredError extends Error {}
 
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -30,15 +35,20 @@ function blobToBase64(blob) {
   })
 }
 
-async function post(job) {
+async function post(job, { code = storedCode(), retried = false } = {}) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-app-code': accessCode() },
+    headers: { 'Content-Type': 'application/json', 'x-app-code': code },
     body: JSON.stringify(job.payload),
   })
+  if (res.status === 503) throw new NotConfiguredError('Envoi automatique pas encore activé')
   if (res.status === 401) {
-    // Code faux ou perimé : on l'oublie pour que le prochain envoi le redemande.
     localStorage.removeItem(CODE_KEY)
+    // Premier refus : on demande le code, puis on retente une seule fois.
+    if (!retried) {
+      const asked = askCode()
+      if (asked) return post(job, { code: asked, retried: true })
+    }
     throw new BadCodeError("Code d'accès refusé")
   }
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
@@ -46,8 +56,10 @@ async function post(job) {
 }
 
 /**
- * Le rapport n'est jamais perdu : tout echec le met en file d'attente.
- * @returns {Promise<{queued: boolean, badCode: boolean}>}
+ * Le rapport n'est jamais perdu : un echec reseau le met en file d'attente.
+ * Seule exception, la boite mail pas encore configuree : la mettre en file
+ * ferait attendre un envoi qui ne partira jamais, on le dit franchement.
+ * @returns {Promise<{queued: boolean, badCode: boolean, notConfigured: boolean}>}
  */
 export async function sendReport(report, payload, blob) {
   const job = {
@@ -58,15 +70,18 @@ export async function sendReport(report, payload, blob) {
   }
   if (!navigator.onLine) {
     await db.put('queue', job)
-    return { queued: true, badCode: false }
+    return { queued: true, badCode: false, notConfigured: false }
   }
   try {
     await post(job)
-    return { queued: false, badCode: false }
+    return { queued: false, badCode: false, notConfigured: false }
   } catch (err) {
+    if (err instanceof NotConfiguredError) {
+      return { queued: false, badCode: false, notConfigured: true }
+    }
     console.warn('Envoi impossible, mise en file', err)
     await db.put('queue', job)
-    return { queued: true, badCode: err instanceof BadCodeError }
+    return { queued: true, badCode: err instanceof BadCodeError, notConfigured: false }
   }
 }
 
@@ -81,7 +96,7 @@ export async function flushQueue() {
   let sent = 0
   for (const job of jobs) {
     try {
-      await post(job)
+      await post(job) // NotConfiguredError / BadCodeError : on sort de la boucle plus bas
       await db.del('queue', job.id)
       const report = await db.get('reports', job.reportId)
       if (report) {

@@ -534,6 +534,29 @@ async function preview() {
   setTimeout(() => URL.revokeObjectURL(url), 60000)
 }
 
+/**
+ * Passe le PDF a l'application mail du telephone (feuille de partage), ou a
+ * defaut le telecharge. Sert de sortie de secours a chaque fois que l'envoi
+ * automatique ne peut pas aboutir.
+ */
+async function shareOrDownload(blob, filename) {
+  const file = new File([blob], filename, { type: 'application/pdf' })
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename })
+      return
+    } catch (err) {
+      if (err?.name === 'AbortError') return // partage annule par l'utilisateur
+    }
+  }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 30000)
+}
+
 function openSendDialog() {
   const r = view.report
   const filename = S.reportFilename(r)
@@ -566,17 +589,7 @@ Atout Flair</textarea></label>
     if (ev.target.hasAttribute?.('data-share')) {
       toast('Génération du PDF…')
       const { blob } = await currentPdf()
-      const file = new File([blob], filename, { type: 'application/pdf' })
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: filename })
-      } else {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        a.click()
-        setTimeout(() => URL.revokeObjectURL(url), 30000)
-      }
+      await shareOrDownload(blob, filename)
       return
     }
 
@@ -598,20 +611,20 @@ Atout Flair</textarea></label>
     if (oversized) {
       // Au-dela de la limite du serveur, l'envoi automatique echouerait sans
       // qu'on puisse rien y faire : on passe la main a l'application mail.
-      const file = new File([blob], filename, { type: 'application/pdf' })
-      toast('Rapport trop lourd pour l’envoi automatique : passez par Partager.')
-      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: filename })
-      else {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        a.click()
-        setTimeout(() => URL.revokeObjectURL(url), 30000)
-      }
+      toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
+      await shareOrDownload(blob, filename)
       return
     }
-    const { queued, badCode } = await sendReport(view.report, payload, blob)
+
+    const { queued, badCode, notConfigured } = await sendReport(view.report, payload, blob)
+    if (notConfigured) {
+      // Phase d'essai : la boite mail n'est pas encore branchee. Mettre le
+      // rapport en attente donnerait l'illusion d'un envoi a venir.
+      toast("Envoi automatique pas encore activé : je passe le PDF à votre messagerie.")
+      await shareOrDownload(blob, filename)
+      return
+    }
+
     view.report.status = queued ? 'queued' : 'sent'
     view.report.sentAt = queued ? null : Date.now()
     await S.saveReport(view.report)
