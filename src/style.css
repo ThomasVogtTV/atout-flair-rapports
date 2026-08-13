@@ -312,6 +312,7 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   box-shadow: var(--shadow-sm);
 }
 .btn.ghost { border-color: var(--line); font-weight: 550; background: #fff; }
+.btn.ghost.danger { color: var(--red); border-color: rgba(192, 42, 42, 0.28); }
 .btn.wide { width: 100%; margin-top: 12px; }
 .icon-btn {
   border: none;

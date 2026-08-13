@@ -496,7 +496,16 @@ root.addEventListener('click', async (ev) => {
 
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
-  if (act === 'home') return view.report?.parentId ? openReport(view.report.parentId) : goHome()
+  if (act === 'home') {
+    // Un rapport deja envoye/en file n'a plus rien a "annuler" : on ne
+    // demande que pour un brouillon, qu'il vienne d'etre cree ou repris.
+    if (view.report.status === 'draft') {
+      const choice = await confirmLeave()
+      if (choice === 'cancel') return
+      if (choice === 'delete') await S.deleteReport(view.report.id)
+    }
+    return view.report?.parentId ? openReport(view.report.parentId) : goHome()
+  }
   if (act === 'add-row') {
     view.report.rows.push(S.newRow(view.report.type))
     await S.saveReport(view.report)
@@ -644,6 +653,34 @@ async function shareOrDownload(blob, filename) {
   a.download = filename
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 30000)
+}
+
+/**
+ * Demande quoi faire d'un brouillon quand on quitte via le bouton retour.
+ * @returns {Promise<'cancel'|'keep'|'delete'>}
+ */
+function confirmLeave() {
+  const overlay = document.createElement('div')
+  overlay.className = 'overlay dialog'
+  overlay.innerHTML = `
+    <div class="dialog-box">
+      <h2>Quitter ce rapport ?</h2>
+      <p class="muted small">Vous pouvez le garder en brouillon pour le reprendre plus tard, ou le supprimer s'il ne doit pas être conservé.</p>
+      <div class="dialog-actions">
+        <button class="btn ghost" data-leave="cancel">Reprendre</button>
+        <button class="btn ghost danger" data-leave="delete">Supprimer</button>
+        <button class="btn primary" data-leave="keep">Garder en brouillon</button>
+      </div>
+    </div>`
+  document.body.appendChild(overlay)
+  return new Promise((resolve) => {
+    overlay.addEventListener('click', (ev) => {
+      const choice = ev.target === overlay ? 'cancel' : ev.target.closest('[data-leave]')?.dataset.leave
+      if (!choice) return
+      overlay.remove()
+      resolve(choice)
+    })
+  })
 }
 
 function openSendDialog() {
