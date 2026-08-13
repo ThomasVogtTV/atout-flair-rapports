@@ -28,10 +28,9 @@ export const TYPES = {
     ],
     rowLabel: 'pièce',
     rowLabelPlural: 'pièces',
-    defaultRows: [
-      'Salon', 'Cuisine', 'Salle de bain', 'Chambre N°1',
-      'Chambre N°2', 'Chambre N°3', 'Bureau', 'Buanderie',
-    ],
+    // Une seule piece au demarrage : le technicien ajoute les suivantes au
+    // fur et a mesure via "+ Ajouter une piece" (suggestions ci-dessous).
+    defaultRows: ['Salon'],
     suggestions: [
       'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'WC', 'Couloir', 'Hall',
       'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
