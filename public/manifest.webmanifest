@@ -1,0 +1,17 @@
+{
+  "name": "Atout Flair — Rapports de détection",
+  "short_name": "Atout Flair",
+  "description": "Rapports de détection canine de punaises de lit : saisie, photos annotées, signature et envoi du PDF sur place.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f4f5",
+  "theme_color": "#111111",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,131 @@
+// Definition des trois types de rapport.
+// Chaque type decrit son en-tete, les champs du bloc "Lieu d'intervention"
+// et les colonnes de sa grille. Le reste de l'app (UI + PDF) se base la-dessus,
+// donc ajouter un 4e type revient a ajouter une entree ici.
+
+export const TYPES = {
+  detection: {
+    id: 'detection',
+    label: 'Rapport de détection',
+    hint: 'Appartement / maison',
+    badge: 'Rapport de détection',
+    sectionTitle: 'Détection Canine - Rapport',
+    layout: 'pieces',
+    // Bloc "Lieu d'intervention et informations" : deux colonnes de champs
+    lieuFields: [
+      [
+        { key: 'regie', label: 'Régie' },
+        { key: 'adresseIntervention', label: 'Adresse intervention' },
+        { key: 'locataire', label: 'Locataire' },
+        { key: 'dateIntervention', label: 'Date Intervention', type: 'date' },
+      ],
+      [
+        { key: 'bon', label: 'Bon de Commande' },
+        { key: 'etagePorte', label: 'Etage/N° porte' },
+        { key: 'presenceLocataire', label: 'Présence locataire', type: 'ouinon' },
+        { key: 'heureIntervention', label: 'Heure Intervention', type: 'time' },
+      ],
+    ],
+    rowLabel: 'pièce',
+    rowLabelPlural: 'pièces',
+    defaultRows: [
+      'Salon', 'Cuisine', 'Salle de bain', 'Chambre N°1',
+      'Chambre N°2', 'Chambre N°3', 'Bureau', 'Buanderie',
+    ],
+    suggestions: [
+      'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'WC', 'Couloir', 'Hall',
+      'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
+      'Bureau', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
+    ],
+    columns: [
+      { key: 'nom', label: 'Pièces', width: 0.26, align: 'center' },
+      { key: 'contamine', label: 'Contaminée', width: 0.24, type: 'contamine' },
+      { key: 'info', label: 'Informations', width: 0.5, align: 'left' },
+    ],
+    hasCounters: true,
+    hasSignature: true,
+    hasRemarques: true,
+    minRows: 8,
+  },
+
+  immeuble: {
+    id: 'immeuble',
+    label: "Rapport d'immeuble",
+    hint: 'Plusieurs appartements',
+    badge: "Rapport d'immeuble",
+    layout: 'lignes',
+    lieuFields: [
+      [
+        { key: 'gerance', label: 'Gérance' },
+        { key: 'adresse', label: 'Adresse' },
+        { key: 'npaLieu', label: 'NPA/Lieu' },
+        { key: 'bon', label: 'Bon' },
+      ],
+    ],
+    rowLabel: 'appartement',
+    rowLabelPlural: 'appartements',
+    defaultRows: [],
+    columns: [
+      { key: 'date', label: 'Date', width: 0.11, type: 'date', align: 'center' },
+      { key: 'etage', label: 'Etage', width: 0.08, align: 'center', suggestions: ['Rez inf', 'Rez sup', 'Rez', '1er', '2ème', '3ème', '4ème', '5ème', 'Comble'] },
+      { key: 'numero', label: 'N° appart.', width: 0.08, align: 'center' },
+      { key: 'resident', label: 'Résident', width: 0.24, align: 'center' },
+      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine', ouiNon: true },
+      { key: 'infos', label: 'Infos', width: 0.28, align: 'center' },
+      { key: 'sousRapport', label: 'Rapport de détection', width: 0.1, type: 'sousRapport' },
+    ],
+    hasCounters: false,
+    hasSignature: false,
+    hasRemarques: true,
+    minRows: 12,
+  },
+
+  hotel: {
+    id: 'hotel',
+    label: "Rapport d'hôtel",
+    hint: 'Chambres, photos uniquement',
+    badge: "Rapport d'hotel",
+    layout: 'lignes',
+    lieuFields: [
+      [
+        { key: 'gerance', label: 'Gérance' },
+        { key: 'adresse', label: 'Adresse' },
+        { key: 'npaLieu', label: 'NPA/Lieu' },
+        { key: 'bon', label: 'Bon' },
+      ],
+    ],
+    rowLabel: 'chambre',
+    rowLabelPlural: 'chambres',
+    defaultRows: [],
+    columns: [
+      { key: 'date', label: 'Date', width: 0.11, type: 'date', align: 'center' },
+      { key: 'etage', label: 'Etage', width: 0.08, align: 'center', suggestions: ['Rez', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'] },
+      { key: 'numero', label: 'N° chambre', width: 0.09, align: 'center' },
+      { key: 'resident', label: 'Informations', width: 0.24, align: 'center' },
+      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine', ouiNon: true },
+      { key: 'infos', label: 'Comp. Informations', width: 0.27, align: 'center' },
+      { key: 'photo', label: 'Photo', width: 0.1, type: 'photoFlag' },
+    ],
+    hasCounters: false,
+    hasSignature: false,
+    hasRemarques: true,
+    minRows: 12,
+  },
+}
+
+export const TYPE_LIST = [TYPES.detection, TYPES.immeuble, TYPES.hotel]
+
+export function typeOf(report) {
+  return TYPES[report.type] ?? TYPES.detection
+}
+
+// Libelle utilise pour nommer une photo quand elle est prise depuis une ligne.
+export function rowLabelFor(report, row) {
+  const t = typeOf(report)
+  if (t.layout === 'pieces') return row.nom || ''
+  const parts = []
+  if (row.numero) parts.push(`N° ${row.numero}`)
+  else if (row.resident) parts.push(row.resident)
+  if (row.etage) parts.push(row.etage)
+  return parts.join(' - ')
+}
