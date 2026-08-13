@@ -74,8 +74,8 @@ function render() {
   const navigated = key !== lastViewKey
   lastViewKey = key
   root.innerHTML = view.screen === 'home' ? homeView() : editorView()
-  root.scrollTop = 0
   if (navigated) {
+    document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
     void root.offsetWidth // force le reflow pour redemarrer l'animation
     root.classList.add('view-enter')
@@ -263,75 +263,113 @@ function editorView() {
     </div>`
 }
 
+// Carte d'une piece : badge numerote colore par statut, labels persistants,
+// puces de noms courants tant que le champ est vide (le champ texte reste
+// disponible pour les cas hors-liste).
+function pieceCardHTML(r, t, row, index) {
+  const photos = r.photos.filter((p) => p.rowId === row.id)
+  const status = row.contamine || ''
+  return `
+  <div class="row-card" data-row="${row.id}" data-status="${status}">
+    <div class="row-head">
+      <span class="piece-badge">${index + 1}</span>
+      <label class="piece-name-wrap">
+        <span class="field-label">Nom de la pièce</span>
+        <input class="row-name piece-name" data-row-field="nom" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
+      </label>
+      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+    </div>
+    ${
+      row.nom
+        ? ''
+        : `<div class="quick-rooms">${t.suggestions
+            .map((s) => `<button type="button" class="chip chip-sm" data-quick-room="${esc(s)}">${esc(s)}</button>`)
+            .join('')}</div>`
+    }
+    <div class="seg tri" data-seg-row="${row.id}">
+      <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminée</button>
+      <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Non</button>
+      <button type="button" class="seg-btn inconnu${status === 'inconnu' ? ' on' : ''}" data-val="inconnu">?</button>
+    </div>
+    <label class="field-info"><span class="field-label">Informations</span>
+      <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
+    </label>
+    ${photoStrip(photos)}
+    <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
+  </div>`
+}
+
 function piecesSection(r, t) {
-  const rows = r.rows
-    .map((row, i) => {
-      const photos = r.photos.filter((p) => p.rowId === row.id)
-      return `
-      <div class="row-card" data-row="${row.id}">
-        <div class="row-head">
-          <input class="row-name" data-row-field="nom" list="pieces-list" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
-          <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
-        </div>
-        <div class="seg tri" data-seg-row="${row.id}">
-          <button type="button" class="seg-btn oui${row.contamine === 'oui' ? ' on' : ''}" data-val="oui">Contaminée</button>
-          <button type="button" class="seg-btn non${row.contamine === 'non' ? ' on' : ''}" data-val="non">Non</button>
-          <button type="button" class="seg-btn inconnu${row.contamine === 'inconnu' ? ' on' : ''}" data-val="inconnu">?</button>
-        </div>
-        <input class="row-info" data-row-field="info" value="${esc(row.info)}" placeholder="Informations (marquage, punaises visibles…)" />
-        ${photoStrip(photos)}
-        <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
-      </div>`
-    })
-    .join('')
+  const rows = r.rows.map((row, i) => pieceCardHTML(r, t, row, i)).join('')
+  const total = S.filledRows(r).length
+  const cont = S.contaminatedCount(r)
 
   return `
     <h2 class="section-title">Pièces
-      <span class="counter"><b id="cnt-total">${S.filledRows(r).length}</b> pièces · <b id="cnt-cont">${S.contaminatedCount(r)}</b> contaminée(s)</span>
+      <span class="section-title-trailer">
+        <span class="counter-pills">
+          <span class="count-pill"><b id="cnt-total">${total}</b> pièce${total > 1 ? 's' : ''}</span>
+          <span class="count-pill${cont ? ' cont' : ''}"><b id="cnt-cont">${cont}</b> contaminée${cont > 1 ? 's' : ''}</span>
+        </span>
+        <button class="link" data-act="add-row">+ Ajouter</button>
+      </span>
     </h2>
-    <datalist id="pieces-list">${t.suggestions.map((s) => `<option value="${esc(s)}"></option>`).join('')}</datalist>
     <div class="rows">${rows}</div>
     <button class="btn ghost wide" data-act="add-row">+ Ajouter une pièce</button>`
 }
 
-function lignesSection(r, t) {
+function lineCardHTML(r, t, row, index) {
   const isHotel = t.id === 'hotel'
-  const rows = r.rows
-    .map((row) => {
-      const photos = r.photos.filter((p) => p.rowId === row.id)
-      const child = view.children.find((c) => c.id === row.sousRapportId)
-      return `
-      <div class="row-card" data-row="${row.id}">
-        <div class="row-head">
-          <input class="row-name small-input" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'N° chambre' : 'N° appart.'}" />
-          <input class="row-name small-input" data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="Étage" />
-          <input type="date" class="small-input" data-row-field="date" value="${esc(row.date)}" />
-          <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
-        </div>
-        <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'Informations (ex. appartement, occupé…)' : 'Résident'}" />
-        <div class="seg" data-seg-row="${row.id}">
-          <button type="button" class="seg-btn oui${row.contamine === 'oui' ? ' on' : ''}" data-val="oui">Contaminé</button>
-          <button type="button" class="seg-btn non${row.contamine === 'non' ? ' on' : ''}" data-val="non">Non</button>
-        </div>
-        <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Infos (téléphone, chien sur place, conseil…)" />
-        ${photoStrip(photos)}
-        <div class="row-actions">
-          <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
-          ${
-            isHotel
-              ? ''
-              : child
-                ? `<button class="btn ghost" data-open-child="${child.id}">Rapport de détection ✓</button>`
-                : `<button class="btn ghost" data-add-child="${row.id}">+ Rapport de détection</button>`
-          }
-        </div>
-      </div>`
-    })
-    .join('')
+  const photos = r.photos.filter((p) => p.rowId === row.id)
+  const child = view.children.find((c) => c.id === row.sousRapportId)
+  const status = row.contamine || ''
+  return `
+  <div class="row-card" data-row="${row.id}" data-status="${status}">
+    <div class="row-head">
+      <span class="piece-badge">${index + 1}</span>
+      <input class="row-name small-input" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'N° chambre' : 'N° appart.'}" />
+      <input class="row-name small-input" data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="Étage" />
+      <input type="date" class="small-input" data-row-field="date" value="${esc(row.date)}" />
+      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+    </div>
+    <label class="field-info"><span class="field-label">${isHotel ? 'Informations' : 'Résident'}</span>
+      <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'ex. appartement, occupé…' : 'Nom du résident'}" />
+    </label>
+    <div class="seg" data-seg-row="${row.id}">
+      <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminé</button>
+      <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Non</button>
+    </div>
+    <label class="field-info"><span class="field-label">Infos</span>
+      <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Téléphone, chien sur place, conseil…" />
+    </label>
+    ${photoStrip(photos)}
+    <div class="row-actions">
+      <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
+      ${
+        isHotel
+          ? ''
+          : child
+            ? `<button class="btn ghost" data-open-child="${child.id}">Rapport de détection ✓</button>`
+            : `<button class="btn ghost" data-add-child="${row.id}">+ Rapport de détection</button>`
+      }
+    </div>
+  </div>`
+}
+
+function lignesSection(r, t) {
+  const rows = r.rows.map((row, i) => lineCardHTML(r, t, row, i)).join('')
+  const total = S.filledRows(r).length
+  const cont = S.contaminatedCount(r)
 
   return `
     <h2 class="section-title">${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}
-      <span class="counter"><b>${S.filledRows(r).length}</b> ligne(s) · <b>${S.contaminatedCount(r)}</b> contaminée(s)</span>
+      <span class="section-title-trailer">
+        <span class="counter-pills">
+          <span class="count-pill"><b id="cnt-total">${total}</b> ligne${total > 1 ? 's' : ''}</span>
+          <span class="count-pill${cont ? ' cont' : ''}"><b id="cnt-cont">${cont}</b> contaminée${cont > 1 ? 's' : ''}</span>
+        </span>
+        <button class="link" data-act="add-row">+ Ajouter</button>
+      </span>
     </h2>
     <datalist id="etages-list">${(t.columns.find((c) => c.key === 'etage')?.suggestions ?? [])
       .map((s) => `<option value="${esc(s)}"></option>`)
@@ -377,7 +415,10 @@ root.addEventListener('input', (ev) => {
     const row = rowOf(el)
     if (!row) return
     row[el.dataset.rowField] = el.value
-    if (el.dataset.rowField === 'nom') refreshCounters()
+    if (el.dataset.rowField === 'nom') {
+      refreshCounters()
+      if (el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
+    }
     scheduleSave()
   }
 })
@@ -393,11 +434,74 @@ root.addEventListener('change', async (ev) => {
   render()
 })
 
+function pulse(el) {
+  el.classList.remove('pulse')
+  void el.offsetWidth // force le reflow pour rejouer l'animation
+  el.classList.add('pulse')
+}
+
 function refreshCounters() {
-  const total = document.getElementById('cnt-total')
-  const cont = document.getElementById('cnt-cont')
-  if (total) total.textContent = S.filledRows(view.report).length
-  if (cont) cont.textContent = S.contaminatedCount(view.report)
+  const totalEl = document.getElementById('cnt-total')
+  const contEl = document.getElementById('cnt-cont')
+  const total = S.filledRows(view.report).length
+  const contVal = S.contaminatedCount(view.report)
+  if (totalEl) {
+    totalEl.textContent = total
+    pulse(totalEl)
+  }
+  if (contEl) {
+    contEl.textContent = contVal
+    contEl.closest('.count-pill')?.classList.toggle('cont', contVal > 0)
+    pulse(contEl)
+  }
+}
+
+// Ajoute une ligne directement dans le DOM (pas de render() complet) pour
+// pouvoir l'amener a l'ecran et y placer le focus dans le meme geste que le
+// tap sur "+ Ajouter" — indispensable pour que le clavier s'ouvre tout seul
+// sur iOS, qui exige que .focus() soit appele sans await intercale.
+function insertNewRow() {
+  const t = typeOf(view.report)
+  const row = S.newRow(view.report.type)
+  view.report.rows.push(row)
+  const index = view.report.rows.length - 1
+  const html = t.layout === 'pieces' ? pieceCardHTML(view.report, t, row, index) : lineCardHTML(view.report, t, row, index)
+  const list = root.querySelector('.rows')
+  list.insertAdjacentHTML('beforeend', html)
+  const card = list.lastElementChild
+  card.classList.add('row-enter')
+  card.addEventListener('animationend', () => card.classList.remove('row-enter'), { once: true })
+  card.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  card.querySelector('.row-name')?.focus({ preventScroll: true })
+  refreshCounters()
+  S.saveReport(view.report)
+}
+
+// Supprime une ligne avec une petite animation de sortie, et demande
+// confirmation si elle contient deja quelque chose (nom, info, photos) pour
+// eviter une perte de donnees accidentelle sur un tap trop rapide.
+async function removeRowAnimated(rowId) {
+  const row = view.report.rows.find((r) => r.id === rowId)
+  const hasContent =
+    row && (row.nom || row.info || row.numero || row.resident || row.infos || view.report.photos.some((p) => p.rowId === rowId))
+  if (hasContent && !confirm('Supprimer cette pièce et ses photos ?')) return
+
+  const card = root.querySelector(`[data-row="${rowId}"]`)
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+  let done = false
+  const commit = async () => {
+    if (done) return
+    done = true
+    view.report.rows = view.report.rows.filter((r) => r.id !== rowId)
+    view.report.photos = view.report.photos.filter((p) => p.rowId !== rowId)
+    await S.saveReport(view.report)
+    render()
+  }
+  if (!card || reduced) return commit()
+  card.style.maxHeight = `${card.scrollHeight}px`
+  requestAnimationFrame(() => card.classList.add('row-exit'))
+  card.addEventListener('transitionend', commit, { once: true })
+  setTimeout(commit, 320) // filet de securite si transitionend ne part pas
 }
 
 root.addEventListener('click', async (ev) => {
@@ -436,6 +540,19 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
+  // --- puce de nom de piece rapide (remplit sans ouvrir le clavier)
+  const quickRoom = el.closest('[data-quick-room]')?.dataset.quickRoom
+  if (quickRoom) {
+    const card = el.closest('.row-card')
+    const row = rowOf(el)
+    row.nom = quickRoom
+    card.querySelector('.row-name').value = quickRoom
+    card.querySelector('.quick-rooms')?.remove()
+    refreshCounters()
+    scheduleSave()
+    return
+  }
+
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')
   if (segBtn) {
@@ -446,6 +563,7 @@ root.addEventListener('click', async (ev) => {
       const row = view.report.rows.find((r) => r.id === segRow.dataset.segRow)
       row.contamine = row.contamine === value ? '' : value
       segRow.querySelectorAll('.seg-btn').forEach((b) => b.classList.toggle('on', b.dataset.val === row.contamine))
+      segRow.closest('.row-card').dataset.status = row.contamine || ''
       refreshCounters()
     } else if (segPath) {
       const current = get(segPath.dataset.seg)
@@ -458,12 +576,7 @@ root.addEventListener('click', async (ev) => {
   }
 
   const delRow = el.closest('[data-del-row]')?.dataset.delRow
-  if (delRow) {
-    view.report.rows = view.report.rows.filter((r) => r.id !== delRow)
-    view.report.photos = view.report.photos.filter((p) => p.rowId !== delRow)
-    await S.saveReport(view.report)
-    return render()
-  }
+  if (delRow) return removeRowAnimated(delRow)
 
   const delPhoto = el.closest('[data-del-photo]')?.dataset.delPhoto
   if (delPhoto) {
@@ -506,11 +619,7 @@ root.addEventListener('click', async (ev) => {
     }
     return view.report?.parentId ? openReport(view.report.parentId) : goHome()
   }
-  if (act === 'add-row') {
-    view.report.rows.push(S.newRow(view.report.type))
-    await S.saveReport(view.report)
-    return render()
-  }
+  if (act === 'add-row') return insertNewRow()
   if (act === 'save-contact') {
     await S.rememberContact(view.report.mandant)
     view.contacts = await S.listContacts()

@@ -233,6 +233,31 @@ html, body {
 }
 .counter { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; color: var(--muted-soft); }
 .counter b { color: var(--ink-soft); font-weight: 650; }
+.section-title-trailer { display: flex; align-items: center; gap: 10px; }
+
+.counter-pills { display: inline-flex; gap: 6px; }
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.count-pill b { color: var(--ink-soft); font-weight: 700; }
+.count-pill.cont { background: var(--red-soft); border-color: transparent; color: var(--red); }
+.count-pill.cont b { color: var(--red); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes count-pulse { 30% { transform: scale(1.22); } }
+  .pulse { display: inline-block; animation: count-pulse 0.25s ease; }
+}
 
 /* --- cartes / formulaires --- */
 .card {
@@ -481,19 +506,71 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .row-card {
   background: var(--card);
   border: 1px solid var(--line);
+  border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: 12px;
   display: grid;
   gap: 9px;
+  transition: border-color 0.15s;
 }
-.row-head { display: flex; gap: 7px; align-items: center; }
+/* Le statut Contaminee/Non/? remonte au niveau de la carte entiere (liseret
+   + badge numerote) au lieu de rester enfoui dans un bouton parmi d'autres :
+   la donnee la plus importante d'un rapport doit se scanner sans lire un mot. */
+.row-card[data-status="oui"] { border-left-color: var(--red); }
+.row-card[data-status="oui"] .piece-badge { background: var(--red-soft); color: var(--red); border-color: transparent; }
+.row-card[data-status="non"] { border-left-color: var(--green); }
+.row-card[data-status="non"] .piece-badge { background: var(--green-soft); color: var(--green); border-color: transparent; }
+.row-card[data-status="inconnu"] { border-left-color: var(--amber); }
+.row-card[data-status="inconnu"] .piece-badge { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+
+.row-head { display: flex; gap: 9px; align-items: center; }
+.piece-badge {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--muted-soft);
+  border: 1px solid var(--line);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
+.piece-name { font-weight: 700; font-size: 16px; padding: 6px 4px; }
+.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }
+.field-info { gap: 4px; }
+
+.quick-rooms { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
+.chip-sm { flex: 0 0 auto; min-height: 34px; padding: 0 13px; font-size: 12.5px; white-space: nowrap; }
+
 .row-name { font-weight: 650; }
 .row-head input { flex: 1 1 0; min-width: 0; }
 .row-head input[type="date"] { flex: 1.5 1 0; }
 .small-input { padding: 9px 8px; font-size: 13.5px; }
 .row-actions { display: flex; gap: 8px; }
 .row-actions .btn { flex: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  .row-card.row-enter { animation: row-in 0.28s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  .row-card.row-exit {
+    transition: max-height 0.22s ease, opacity 0.18s ease, transform 0.22s ease, margin 0.22s ease, padding 0.22s ease;
+    opacity: 0;
+    transform: scale(0.95);
+    max-height: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+}
 
 .seg { display: flex; gap: 7px; }
 .seg-btn {
