@@ -64,7 +64,9 @@ export function newReport(type) {
     report.lieu.presenceLocataire = 'Oui'
     report.rows = t.defaultRows.map((nom) => ({ ...newRow(type), nom }))
   } else {
-    report.rows = Array.from({ length: 3 }, () => newRow(type))
+    // Immeuble / hotel : une seule ligne au depart, l'utilisateur ajoute
+    // chaque chambre au fur et a mesure via "+ Ajouter une ligne".
+    report.rows = [newRow(type)]
   }
   return report
 }
