@@ -20,7 +20,9 @@
 // manuel si un rapport reste trop lourd (voir PDF_MAX dans src/app.js).
 
 const MAILBOX = 'info@atout-flair.ch'
-const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']
+// APP_CODE est obligatoire : sans lui, l'URL du site suffirait a n'importe qui
+// pour envoyer des mails depuis la boite de l'entreprise.
+const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'APP_CODE']
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -31,6 +33,10 @@ export default async function handler(req, res) {
   const missing = required.filter((k) => !process.env[k])
   if (missing.length) {
     return res.status(503).json({ error: `Boîte mail non configurée (${missing.join(', ')})` })
+  }
+
+  if (req.headers['x-app-code'] !== process.env.APP_CODE) {
+    return res.status(401).json({ error: "Code d'accès invalide" })
   }
 
   const { to, cc, subject, body, filename, pdfBase64 } = req.body ?? {}

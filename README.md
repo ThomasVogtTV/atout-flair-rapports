@@ -43,13 +43,27 @@ Le projet est un site statique + une fonction serveur (`api/send.js`).
    | `SMTP_PORT` | `587` (STARTTLS) ou `465` (SSL) |
    | `SMTP_USER` | `info@atout-flair.ch` |
    | `SMTP_PASS` | mot de passe de la boîte |
+   | `APP_CODE` | code d'accès de votre choix, demandé une fois par appareil |
    | `MAIL_FROM` | `Atout Flair <info@atout-flair.ch>` *(optionnel, valeur par défaut)* |
    | `MAIL_REPLY_TO` | `info@atout-flair.ch` *(optionnel, valeur par défaut)* |
    | `MAIL_BCC` | copie d'archivage *(optionnel)* |
 
-Tant que `SMTP_*` n'est pas renseigné, `/api/send` répond 503 : l'app bascule alors
-toute seule sur la file d'attente, et le bouton « Partager / Enregistrer » reste
+Tant que ces variables ne sont pas renseignées, `/api/send` répond 503 : l'app bascule
+alors toute seule sur la file d'attente, et le bouton « Partager / Enregistrer » reste
 disponible pour envoyer le PDF depuis l'application mail du téléphone.
+
+`APP_CODE` n'est pas un confort mais une nécessité : le site est public, et sans ce code
+l'adresse suffirait à n'importe qui pour envoyer des mails depuis `info@atout-flair.ch`.
+L'app le demande une seule fois par appareil et le conserve ; il n'apparaît nulle part
+dans le code envoyé au navigateur. Pour le changer, modifier la variable dans Vercel :
+les appareils le redemanderont au premier envoi refusé.
+
+### Limite de taille
+
+Une fonction Vercel refuse une requête de plus de 4,5 Mo. L'app vise donc 3 Mo de PDF :
+au-delà, elle ré-encode les photos automatiquement (deux paliers), et si le rapport reste
+trop lourd elle bascule sur « Partager » plutôt que d'échouer. Voir `PDF_MAX` dans
+`src/app.js`.
 
 ## Installer l'app sur le téléphone / la tablette
 

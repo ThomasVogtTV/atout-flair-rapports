@@ -611,11 +611,17 @@ Atout Flair</textarea></label>
       }
       return
     }
-    const queued = await sendReport(view.report, payload, blob)
+    const { queued, badCode } = await sendReport(view.report, payload, blob)
     view.report.status = queued ? 'queued' : 'sent'
     view.report.sentAt = queued ? null : Date.now()
     await S.saveReport(view.report)
-    toast(queued ? 'Pas de réseau : envoi mis en file, il partira automatiquement.' : 'Rapport envoyé.')
+    toast(
+      badCode
+        ? "Code d'accès refusé : le rapport est en attente, il repartira au prochain essai."
+        : queued
+          ? 'Pas de réseau : envoi mis en file, il partira automatiquement.'
+          : 'Rapport envoyé.'
+    )
     goHome()
   })
 }
