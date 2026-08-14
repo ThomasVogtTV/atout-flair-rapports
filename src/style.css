@@ -225,7 +225,7 @@ html, body {
 
 .section-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   font-size: 12px;
@@ -235,6 +235,24 @@ html, body {
   color: var(--muted);
   margin: 28px 4px 10px;
 }
+.section-title-main { display: inline-flex; align-items: center; gap: 8px; }
+
+.section-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--red-soft);
+  color: var(--red);
+}
+.section-icon svg { width: 14px; height: 14px; }
+.section-icon.icon-blue { background: var(--blue-soft); color: var(--blue); }
+.section-icon.icon-plum { background: var(--plum-soft); color: var(--plum); }
+.section-icon.icon-amber { background: var(--amber-soft); color: var(--amber); }
+.section-icon.icon-green { background: var(--green-soft); color: var(--green); }
+.section-icon.icon-neutral { background: var(--line); color: var(--muted); }
 .counter { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; color: var(--muted-soft); }
 .counter b { color: var(--ink-soft); font-weight: 650; }
 .section-title-trailer { display: flex; align-items: center; gap: 10px; }

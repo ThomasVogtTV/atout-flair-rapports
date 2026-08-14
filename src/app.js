@@ -16,6 +16,16 @@ const ICONS = {
   immeuble: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="5" y="3.5" width="14" height="17" rx="1.2"/><rect x="5" y="3.5" width="14" height="17" rx="1.2"/><path d="M8.5 7.5h1M14.5 7.5h1M8.5 11.5h1M14.5 11.5h1M8.5 15.5h1M14.5 15.5h1"/><path d="M10 20.5v-3.2a2 2 0 0 1 4 0v3.2"/></svg>`,
   hotel: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3z"/><path d="M3.5 19v-9"/><path d="M3.5 14.5h17V19"/><path d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3"/><path d="M13.5 11h5a2 2 0 0 1 2 2v1.5"/></svg>`,
   chevron: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="m9 5 7 7-7 7"/></svg>`,
+  person: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="12" cy="8.2" r="3.4"/><circle cx="12" cy="8.2" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>`,
+  pin: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z"/><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.2"/></svg>`,
+  room: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="6" y="3.5" width="12" height="17" rx="1"/><rect x="6" y="3.5" width="12" height="17" rx="1"/><circle cx="14.3" cy="12" r="0.9" fill="currentColor" stroke="none"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="12.6" r="3.3"/></svg>`,
+  note: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M6 3.5h9l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M6 3.5h9l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M8.5 12h7M8.5 15.5h4.5"/></svg>`,
+  pen: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m13 6.5 4 4"/></svg>`,
+}
+
+function sectionIcon(key, tone) {
+  return `<span class="section-icon icon-${tone}">${ICONS[key]}</span>`
 }
 
 const root = document.getElementById('app')
@@ -209,7 +219,7 @@ function editorView() {
     </header>
 
     <section class="pad">
-      <h2 class="section-title">Mandant
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Mandant</span>
         <button class="link" data-act="save-contact">Ajouter au carnet</button>
       </h2>
       <div class="card grid2">
@@ -229,7 +239,7 @@ function editorView() {
         <label class="full">Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
       </div>
 
-      <h2 class="section-title">Lieu d'intervention</h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('pin', 'blue')}Lieu d'intervention</span></h2>
       <div class="card grid2">
         ${lieuFields
           .filter((f) => !f.derived)
@@ -243,14 +253,14 @@ function editorView() {
 
       ${t.layout === 'pieces' ? piecesSection(r, t) : lignesSection(r, t)}
 
-      <h2 class="section-title">Photos libres</h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('camera', 'plum')}Photos libres</span></h2>
       <div class="card">
         <p class="muted small">Photos non rattachées à une ligne (façade, cave, hall…).</p>
         ${photoStrip(r.photos.filter((p) => !p.rowId))}
         <button class="btn ghost wide" data-photo="">+ Ajouter une photo</button>
       </div>
 
-      <h2 class="section-title">Remarques et recommandations</h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'neutral')}Remarques et recommandations</span></h2>
       <div class="card">
         <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
       </div>
@@ -306,7 +316,7 @@ function piecesSection(r, t) {
   const cont = S.contaminatedCount(r)
 
   return `
-    <h2 class="section-title">Pièces
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'red')}Pièces</span>
       <span class="section-title-trailer">
         <span class="counter-pills">
           <span class="count-pill"><b id="cnt-total">${total}</b> pièce${total > 1 ? 's' : ''}</span>
@@ -363,7 +373,7 @@ function lignesSection(r, t) {
   const cont = S.contaminatedCount(r)
 
   return `
-    <h2 class="section-title">${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'red')}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
       <span class="section-title-trailer">
         <span class="counter-pills">
           <span class="count-pill"><b id="cnt-total">${total}</b> ligne${total > 1 ? 's' : ''}</span>
@@ -393,7 +403,7 @@ function photoStrip(photos) {
 
 function signatureSection(r) {
   return `
-    <h2 class="section-title">Signature</h2>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'green')}Signature</span></h2>
     <div class="card sig-card">
       ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
       <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
