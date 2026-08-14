@@ -299,18 +299,6 @@ html, body {
   margin: 28px 4px 10px;
 }
 .section-title-main { display: inline-flex; align-items: center; gap: 8px; }
-.section-title-toggle {
-  width: 100%;
-  border: none;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-transform: inherit;
-  letter-spacing: inherit;
-  padding: 0;
-  cursor: pointer;
-}
-.section-title-toggle:active .section-title-trailer { opacity: 0.7; }
 
 .section-icon {
   flex-shrink: 0;
@@ -667,7 +655,7 @@ input:disabled { opacity: 0.55; }
 }
 .folder-chevron { color: var(--muted-soft); flex-shrink: 0; transition: transform 0.2s ease; }
 .folder-chevron svg { width: 16px; height: 16px; }
-.folder.open .folder-chevron, .folder-chevron.open { transform: rotate(90deg); }
+.folder.open .folder-chevron { transform: rotate(90deg); }
 .folder-list.folder-list { padding: 10px; margin: 0; background: var(--bg); }
 
 /* --- lignes du rapport --- */

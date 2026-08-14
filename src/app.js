@@ -54,7 +54,7 @@ function sectionIcon(key, tone) {
 const TYPE_TONE = { detection: 'red', immeuble: 'blue', hotel: 'plum' }
 
 const root = document.getElementById('app')
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null, myReportsOpen: false }
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null }
 let saveTimer = null
 
 const esc = (s) =>
@@ -194,9 +194,6 @@ function homeView() {
       </div>`
   }).join('')
 
-  const totalReports = view.reports.length
-  const myReportsOpen = !!view.myReportsOpen
-
   return `
     <header class="top">
       <img src="/logo.jpg" alt="Atout Flair" class="logo" />
@@ -212,14 +209,8 @@ function homeView() {
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
 
-      <button class="section-title section-title-toggle" data-toggle-my-reports type="button">
-        <span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span>
-        <span class="section-title-trailer">
-          ${totalReports ? `<span class="count-pill"><b>${totalReports}</b> rapport${totalReports > 1 ? 's' : ''}</span>` : ''}
-          <span class="folder-chevron${myReportsOpen ? ' open' : ''}">${ICONS.chevron}</span>
-        </span>
-      </button>
-      ${myReportsOpen ? `<div class="folders">${folders}</div>` : ''}
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span></h2>
+      <div class="folders">${folders}</div>
     </section>`
 }
 
@@ -646,11 +637,6 @@ root.addEventListener('click', async (ev) => {
   const folderType = el.closest('[data-toggle-folder]')?.dataset.toggleFolder
   if (folderType) {
     view.openFolder = view.openFolder === folderType ? null : folderType
-    return render()
-  }
-
-  if (el.closest('[data-toggle-my-reports]')) {
-    view.myReportsOpen = !view.myReportsOpen
     return render()
   }
 
