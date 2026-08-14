@@ -24,6 +24,7 @@ const ICONS = {
   pen: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m13 6.5 4 4"/></svg>`,
   sun: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.2M12 18.8V21M4.4 12H2.6M21.4 12h-1.8M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M18.2 5.8l-1.3 1.3M7.1 16.9l-1.3 1.3"/></svg>`,
   moon: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`,
+  folder: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/><path d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/></svg>`,
 }
 
 // Theme clair/sombre : localStorage retient un choix explicite ; sans choix,
@@ -198,7 +199,7 @@ function homeView() {
       <div class="type-grid">${cards}</div>
 
       <button class="section-title section-title-toggle" data-toggle-my-reports type="button">
-        Mes rapports
+        <span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span>
         <span class="section-title-trailer">
           ${totalReports ? `<span class="count-pill"><b>${totalReports}</b> rapport${totalReports > 1 ? 's' : ''}</span>` : ''}
           <span class="folder-chevron${myReportsOpen ? ' open' : ''}">${ICONS.chevron}</span>
