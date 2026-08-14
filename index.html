@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="fr">
   <head>
+    <script>
+      // Applique le theme choisi avant le premier rendu, pour eviter un flash
+      // clair/sombre au chargement. Si rien n'est enregistre, le mode systeme
+      // (@media prefers-color-scheme) s'applique tout seul via le CSS.
+      (function () {
+        var t = localStorage.getItem('af-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      })()
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#111111" />

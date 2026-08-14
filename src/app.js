@@ -22,6 +22,23 @@ const ICONS = {
   camera: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="12.6" r="3.3"/></svg>`,
   note: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M6 3.5h9l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M6 3.5h9l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M8.5 12h7M8.5 15.5h4.5"/></svg>`,
   pen: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m14 5.5 4.5 4.5-9 9L5 20l1-4.5z"/><path d="m13 6.5 4 4"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.2M12 18.8V21M4.4 12H2.6M21.4 12h-1.8M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M18.2 5.8l-1.3 1.3M7.1 16.9l-1.3 1.3"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`,
+}
+
+// Theme clair/sombre : localStorage retient un choix explicite ; sans choix,
+// le mode systeme (@media prefers-color-scheme) s'applique via le CSS seul.
+function currentTheme() {
+  return (
+    document.documentElement.dataset.theme ??
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  )
+}
+function toggleTheme() {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark'
+  document.documentElement.dataset.theme = next
+  localStorage.setItem('af-theme', next)
+  render()
 }
 
 function sectionIcon(key, tone) {
@@ -170,6 +187,7 @@ function homeView() {
         <h1>Rapports de détection</h1>
         <p class="muted">Saisie, photos, signature et envoi sur place</p>
       </div>
+      <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
     </header>
     <div class="hero-bg"><img src="/hero-dog.jpg" alt="" /></div>
     <section class="content-sheet">
@@ -623,6 +641,7 @@ root.addEventListener('click', async (ev) => {
 
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
+  if (act === 'toggle-theme') return toggleTheme()
   if (act === 'home') {
     // Un rapport deja envoye/en file n'a plus rien a "annuler" : on ne
     // demande que pour un brouillon, qu'il vienne d'etre cree ou repris.
