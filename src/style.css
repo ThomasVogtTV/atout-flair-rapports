@@ -27,7 +27,7 @@
   --radius-sm: 10px;
   --shadow-sm: 0 1px 2px rgba(28, 28, 30, 0.04), 0 2px 8px rgba(28, 28, 30, 0.03);
   --shadow-md: 0 6px 20px rgba(28, 28, 30, 0.07), 0 1px 3px rgba(28, 28, 30, 0.05);
-  --tap: 46px;
+  --tap: 42px;
 }
 
 /* --- theme sombre : suit le systeme par defaut, ou force par data-theme
@@ -312,7 +312,7 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--muted);
-  margin: 28px 4px 10px;
+  margin: 22px 4px 8px;
 }
 .section-title-main { display: inline-flex; align-items: center; gap: 8px; }
 
@@ -366,17 +366,17 @@ html, body {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 16px;
+  padding: 13px;
 }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .grid2 .full { grid-column: 1 / -1; }
 
-.chip-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chip-group { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .chip {
   font: inherit;
   font-weight: 600;
-  font-size: 13px;
-  min-height: 42px;
+  font-size: 12.5px;
+  min-height: 38px;
   border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink-soft);
@@ -391,8 +391,8 @@ html, body {
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 11.5px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-soft);
@@ -404,7 +404,7 @@ input, textarea, select {
   background: var(--card);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 9px 11px;
   min-height: var(--tap);
   width: 100%;
   box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035);
@@ -687,16 +687,16 @@ input:disabled { opacity: 0.55; }
 .folder-list.folder-list { padding: 10px; margin: 0; background: var(--bg); }
 
 /* --- lignes du rapport --- */
-.rows { display: grid; gap: 10px; }
+.rows { display: grid; gap: 8px; }
 .row-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 12px;
+  padding: 10px;
   display: grid;
-  gap: 9px;
+  gap: 7px;
   transition: border-color 0.15s;
 }
 /* Le statut Contaminee/Non/? remonte au niveau de la carte entiere (liseret
@@ -709,34 +709,34 @@ input:disabled { opacity: 0.55; }
 .row-card[data-status="inconnu"] { border-left-color: var(--amber); }
 .row-card[data-status="inconnu"] .piece-badge { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
 
-.row-head { display: flex; gap: 9px; align-items: center; }
+.row-head { display: flex; gap: 8px; align-items: center; }
 .piece-badge {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   background: var(--bg);
   color: var(--muted-soft);
   border: 1px solid var(--line);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
-.piece-name { font-weight: 700; font-size: 16px; padding: 6px 4px; }
-.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }
-.field-info { gap: 4px; }
+.piece-name { font-weight: 700; font-size: 14.5px; padding: 5px 4px; }
+.field-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }
+.field-info { gap: 3px; }
 
-.quick-rooms { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
-.chip-sm { flex: 0 0 auto; min-height: 34px; padding: 0 13px; font-size: 12.5px; white-space: nowrap; }
+.quick-rooms { display: flex; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
+.chip-sm { flex: 0 0 auto; min-height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; }
 
 .row-name { font-weight: 650; }
 .row-head input { flex: 1 1 0; min-width: 0; }
 .row-head input[type="date"] { flex: 1.5 1 0; }
-.small-input { padding: 9px 8px; font-size: 13.5px; }
-.row-actions { display: flex; gap: 8px; }
+.small-input { padding: 8px 7px; font-size: 13px; }
+.row-actions { display: flex; gap: 7px; }
 .row-actions .btn { flex: 1; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -757,13 +757,13 @@ input:disabled { opacity: 0.55; }
   }
 }
 
-.seg { display: flex; gap: 7px; }
+.seg { display: flex; gap: 6px; }
 .seg-btn {
   flex: 1;
   font: inherit;
   font-weight: 600;
-  font-size: 13.5px;
-  min-height: 42px;
+  font-size: 13px;
+  min-height: 38px;
   border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink-soft);

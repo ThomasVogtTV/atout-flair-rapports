@@ -3,14 +3,16 @@
 // et les colonnes de sa grille. Le reste de l'app (UI + PDF) se base la-dessus,
 // donc ajouter un 4e type revient a ajouter une entree ici.
 
-// Pieces standard d'un appartement/maison : pre-remplies a la creation du
-// rapport pour que le technicien supprime ce qui ne s'applique pas plutot
-// que d'ajouter chaque piece une a une sur le terrain. Chambres en tete
-// (le plus souvent contaminees), puis salon.
-const DETECTION_ROOMS = [
-  'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
-  'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'Couloir', 'Hall',
-  'Bureau', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
+// Pieces pre-remplies a la creation du rapport : uniquement celles qui
+// hebergent de la literie/des assises (chambres, salon) - la ou les
+// punaises de lit se trouvent reellement. Cuisine, salle de bain, cave...
+// ne sont pas concernees et alourdissaient la liste par defaut pour rien ;
+// elles restent disponibles en suggestion si le technicien veut quand meme
+// ajouter une piece hors de cette liste.
+const DETECTION_DEFAULT_ROOMS = ['Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4', 'Salon', 'Séjour']
+const DETECTION_ROOM_SUGGESTIONS = [
+  ...DETECTION_DEFAULT_ROOMS,
+  'Bureau', 'Couloir', 'Hall', 'Cuisine', 'Salle de bain', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
 ]
 
 export const TYPES = {
@@ -40,8 +42,8 @@ export const TYPES = {
     ],
     rowLabel: 'pièce',
     rowLabelPlural: 'pièces',
-    defaultRows: DETECTION_ROOMS,
-    suggestions: DETECTION_ROOMS,
+    defaultRows: DETECTION_DEFAULT_ROOMS,
+    suggestions: DETECTION_ROOM_SUGGESTIONS,
     columns: [
       { key: 'nom', label: 'Pièces', width: 0.26, align: 'center' },
       { key: 'contamine', label: 'Contaminée', width: 0.24, type: 'contamine' },
