@@ -2,8 +2,8 @@
 // L'annotation est stockee en coordonnees image : le rendu final est donc
 // fait en pleine resolution, pas a la taille de l'ecran.
 
-const MAX_DIM = 1600
-const QUALITY = 0.82
+const MAX_DIM = 1280
+const QUALITY = 0.72
 
 export async function fileToPhoto(file) {
   // imageOrientation: 'from-image' applique l'orientation EXIF du telephone.
