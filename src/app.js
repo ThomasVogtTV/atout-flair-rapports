@@ -886,19 +886,25 @@ async function currentPdf() {
 
 async function preview() {
   showLoading('Génération du PDF…')
-  const { blob } = await currentPdf()
-  const url = URL.createObjectURL(blob)
-  // En app installée (iOS notamment) l'ouverture d'onglet est parfois bloquée :
-  // on retombe alors sur un téléchargement, que le téléphone ouvre tout seul.
-  const win = window.open(url, '_blank')
-  if (!win) {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = S.reportFilename(view.report)
-    a.click()
+  try {
+    const { blob } = await currentPdf()
+    const url = URL.createObjectURL(blob)
+    // En app installée (iOS notamment) l'ouverture d'onglet est parfois bloquée :
+    // on retombe alors sur un téléchargement, que le téléphone ouvre tout seul.
+    const win = window.open(url, '_blank')
+    if (!win) {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = S.reportFilename(view.report)
+      a.click()
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    console.error('Génération du PDF impossible', err)
+    toast('Impossible de générer le PDF. Réessayez.')
+  } finally {
+    hideLoading()
   }
-  setTimeout(() => URL.revokeObjectURL(url), 60000)
-  hideLoading()
 }
 
 /**
@@ -981,60 +987,71 @@ Atout Flair</textarea></label>
   overlay.addEventListener('click', async (ev) => {
     if (ev.target.hasAttribute?.('data-close') || ev.target === overlay) return overlay.remove()
 
-    if (ev.target.hasAttribute?.('data-share')) {
+    // Un rapport volumineux (photos, plusieurs sous-rapports) peut faire
+    // echouer la generation du PDF (memoire, canvas...) sur un telephone
+    // moins puissant : sans ce filet, l'ecran de chargement restait bloque
+    // indefiniment puisque hideLoading() n'etait jamais atteint.
+    try {
+      if (ev.target.hasAttribute?.('data-share')) {
+        showLoading('Génération du PDF…')
+        const { blob } = await currentPdf()
+        hideLoading()
+        await shareOrDownload(blob, filename)
+        return
+      }
+
+      if (!ev.target.hasAttribute?.('data-send')) return
+      const to = overlay.querySelector('#send-to').value.trim()
+      if (!to) return toast('Indiquez un destinataire')
+      const cc = overlay.querySelector('#send-cc').value.trim()
+      localStorage.setItem('af-copy', cc)
+      const payload = {
+        to,
+        cc,
+        subject: overlay.querySelector('#send-subject').value,
+        body: overlay.querySelector('#send-body').value,
+        filename,
+      }
+      overlay.remove()
       showLoading('Génération du PDF…')
-      const { blob } = await currentPdf()
+      const { blob, oversized } = await currentPdf()
+      if (oversized) {
+        // Au-dela de la limite du serveur, l'envoi automatique echouerait sans
+        // qu'on puisse rien y faire : on passe la main a l'application mail.
+        hideLoading()
+        toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
+        await shareOrDownload(blob, filename)
+        return
+      }
+
+      showLoading('Envoi en cours…')
+      const { queued, badCode, notConfigured } = await sendReport(view.report, payload, blob)
       hideLoading()
-      await shareOrDownload(blob, filename)
-      return
-    }
+      if (notConfigured) {
+        // Phase d'essai : la boite mail n'est pas encore branchee. Mettre le
+        // rapport en attente donnerait l'illusion d'un envoi a venir.
+        toast("Envoi automatique pas encore activé : je passe le PDF à votre messagerie.")
+        await shareOrDownload(blob, filename)
+        return
+      }
 
-    if (!ev.target.hasAttribute?.('data-send')) return
-    const to = overlay.querySelector('#send-to').value.trim()
-    if (!to) return toast('Indiquez un destinataire')
-    const cc = overlay.querySelector('#send-cc').value.trim()
-    localStorage.setItem('af-copy', cc)
-    const payload = {
-      to,
-      cc,
-      subject: overlay.querySelector('#send-subject').value,
-      body: overlay.querySelector('#send-body').value,
-      filename,
-    }
-    overlay.remove()
-    showLoading('Génération du PDF…')
-    const { blob, oversized } = await currentPdf()
-    if (oversized) {
-      // Au-dela de la limite du serveur, l'envoi automatique echouerait sans
-      // qu'on puisse rien y faire : on passe la main a l'application mail.
+      view.report.status = queued ? 'queued' : 'sent'
+      view.report.sentAt = queued ? null : Date.now()
+      await S.saveReport(view.report)
+      toast(
+        badCode
+          ? "Code d'accès refusé : le rapport est en attente, il repartira au prochain essai."
+          : queued
+            ? 'Pas de réseau : envoi mis en file, il partira automatiquement.'
+            : 'Rapport envoyé.'
+      )
+      goHome()
+    } catch (err) {
+      console.error('Génération/envoi du rapport impossible', err)
+      toast('Une erreur est survenue. Réessayez.')
+    } finally {
       hideLoading()
-      toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
-      await shareOrDownload(blob, filename)
-      return
     }
-
-    showLoading('Envoi en cours…')
-    const { queued, badCode, notConfigured } = await sendReport(view.report, payload, blob)
-    hideLoading()
-    if (notConfigured) {
-      // Phase d'essai : la boite mail n'est pas encore branchee. Mettre le
-      // rapport en attente donnerait l'illusion d'un envoi a venir.
-      toast("Envoi automatique pas encore activé : je passe le PDF à votre messagerie.")
-      await shareOrDownload(blob, filename)
-      return
-    }
-
-    view.report.status = queued ? 'queued' : 'sent'
-    view.report.sentAt = queued ? null : Date.now()
-    await S.saveReport(view.report)
-    toast(
-      badCode
-        ? "Code d'accès refusé : le rapport est en attente, il repartira au prochain essai."
-        : queued
-          ? 'Pas de réseau : envoi mis en file, il partira automatiquement.'
-          : 'Rapport envoyé.'
-    )
-    goHome()
   })
 }
 
