@@ -46,6 +46,12 @@ function sectionIcon(key, tone) {
   return `<span class="section-icon icon-${tone}">${ICONS[key]}</span>`
 }
 
+// Meme code couleur que les cartes/dossiers de l'accueil (rouge/bleu/violet
+// selon le type), pour que l'icone "Pieces/Appartements/Chambres" du
+// rapport ouvert reprenne la teinte de son type plutot que d'etre toujours
+// rouge.
+const TYPE_TONE = { detection: 'red', immeuble: 'blue', hotel: 'plum' }
+
 const root = document.getElementById('app')
 let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null, myReportsOpen: false }
 let saveTimer = null
@@ -368,7 +374,7 @@ function piecesSection(r, t) {
   const cont = S.contaminatedCount(r)
 
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'red')}Pièces</span>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', TYPE_TONE[t.id])}Pièces</span>
       <span class="section-title-trailer">
         <span class="counter-pills">
           <span class="count-pill"><b id="cnt-total">${total}</b> pièce${total > 1 ? 's' : ''}</span>
@@ -425,7 +431,7 @@ function lignesSection(r, t) {
   const cont = S.contaminatedCount(r)
 
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'red')}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', TYPE_TONE[t.id])}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
       <span class="section-title-trailer">
         <span class="counter-pills">
           <span class="count-pill"><b id="cnt-total">${total}</b> ligne${total > 1 ? 's' : ''}</span>
