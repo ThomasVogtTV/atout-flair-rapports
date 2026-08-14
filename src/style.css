@@ -475,9 +475,30 @@ input:disabled { opacity: 0.55; }
   transition: background 0.15s;
 }
 .icon-btn:active { background: var(--bg); }
-.theme-toggle, .contacts-toggle { flex-shrink: 0; display: grid; place-items: center; color: var(--ink-soft); }
-.theme-toggle svg, .contacts-toggle svg { width: 20px; height: 20px; }
-.contacts-toggle { margin-left: auto; }
+.theme-toggle { flex-shrink: 0; display: grid; place-items: center; color: var(--ink-soft); }
+.theme-toggle svg { width: 20px; height: 20px; }
+
+/* badge glossy degrade, meme traitement que les icones des cartes/sections
+   (voir .type-icon) - repere fort en tete d'accueil plutot qu'un simple
+   glyphe transparent. Teinte ambre, cohérente avec l'icone Mandant. */
+.contacts-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--amber);
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--amber) 70%, white), var(--amber) 85%);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--amber) 65%, transparent);
+  transition: transform 0.1s ease;
+}
+.contacts-toggle svg { width: 19px; height: 19px; }
+.contacts-toggle:active { transform: scale(0.92); }
 .link {
   border: none;
   background: none;
