@@ -8,6 +8,14 @@ import { sendReport, pendingCount, flushQueue } from './mailer.js'
 // Boite mail de l'entreprise : expediteur cote serveur, copie par defaut cote app.
 const COPY_DEFAULT = 'info@atout-flair.ch'
 
+// Code d'acces a l'app (pas l'APP_CODE serveur, qui protege uniquement l'envoi
+// de mail) : verifie uniquement cote client, l'app devant demarrer hors
+// ligne. Barrage simple contre un lien transfere par erreur, pas une
+// securite forte. Pour le changer : modifier cette ligne puis publier -
+// les appareils deja verifies restent connectes, seuls les nouveaux
+// (ou apres un "effacer les donnees du site") redemanderont le code.
+const ACCESS_CODE = 'stessy'
+
 // Icones de l'accueil (traits fins, 1.6px, coherentes avec le style epure).
 const ICON_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"'
 const ICON_FILL = 'fill="currentColor" fill-opacity="0.16" stroke="none"'
@@ -1155,7 +1163,41 @@ window.addEventListener('online', async () => {
   }
 })
 
+function hasAccess() {
+  return localStorage.getItem('af-access') === '1'
+}
+
+function renderLockScreen() {
+  root.innerHTML = `
+    <div class="lock-screen">
+      <div class="lock-card">
+        <img src="/logo.jpg" alt="Atout Flair" class="lock-logo" />
+        <h1>Atout Flair</h1>
+        <p class="muted small">Entrez le code d'accès pour continuer.</p>
+        <form id="lock-form">
+          <input id="lock-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code d'accès" />
+          <p class="lock-error" id="lock-error"></p>
+          <button type="submit" class="btn primary wide">Continuer</button>
+        </form>
+      </div>
+    </div>`
+  const input = document.getElementById('lock-input')
+  input.focus()
+  document.getElementById('lock-form').addEventListener('submit', (ev) => {
+    ev.preventDefault()
+    if (input.value.trim().toLowerCase() === ACCESS_CODE.toLowerCase()) {
+      localStorage.setItem('af-access', '1')
+      boot()
+      return
+    }
+    document.getElementById('lock-error').textContent = 'Code incorrect.'
+    input.value = ''
+    input.focus()
+  })
+}
+
 export async function boot() {
+  if (!hasAccess()) return renderLockScreen()
   await goHome()
   if (navigator.onLine) flushQueue().then((n) => n && updatePendingBadge())
 }
