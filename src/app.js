@@ -114,7 +114,7 @@ function render() {
 function homeView() {
   const cards = TYPE_LIST.map(
     (t) => `
-    <button class="type-card" data-new="${t.id}">
+    <button class="type-card card-${t.id}" data-new="${t.id}">
       <span class="type-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="type-body">
         <span class="type-name">${esc(t.label)}</span>

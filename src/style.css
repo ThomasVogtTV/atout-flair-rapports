@@ -484,45 +484,63 @@ input:disabled { opacity: 0.55; }
   align-items: center;
   gap: 13px;
   background: var(--card);
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--red-soft) 60%, var(--card)));
   border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--red) 20%, var(--line-strong));
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--red) 50%, transparent), var(--shadow-sm);
   padding: 14px 15px;
   text-align: left;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.15s;
 }
-.type-card:active { transform: scale(0.985); box-shadow: none; }
+.type-card:active { transform: scale(0.985); box-shadow: var(--shadow-sm); }
+
+/* variantes de couleur par type de rapport : chaque carte reprend la
+   teinte de son icone (fond degrade, liseret, ombre) plutot que trois
+   blocs neutres identiques - lecture plus rapide, rendu plus "premium"
+   que des pastilles plates. */
+.type-card.card-immeuble {
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--blue-soft) 60%, var(--card)));
+  border-color: color-mix(in srgb, var(--blue) 20%, var(--line-strong));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--blue) 50%, transparent), var(--shadow-sm);
+}
+.type-card.card-hotel {
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--plum-soft) 60%, var(--card)));
+  border-color: color-mix(in srgb, var(--plum) 20%, var(--line-strong));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--plum) 50%, transparent), var(--shadow-sm);
+}
+
 .type-icon {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
   border-radius: 15px;
+  background: var(--red);
   background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
-    var(--red-soft);
-  color: var(--red);
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--red) 70%, white), var(--red) 85%);
+  color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(192, 42, 42, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--red) 65%, transparent);
 }
 .type-icon svg { width: 23px; height: 23px; }
 
-/* variantes de couleur par type de rapport : distinguer les 3 cartes d'un
-   coup d'oeil plutot que trois pastilles identiques. */
 .type-icon.icon-immeuble {
+  background: var(--blue);
   background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
-    var(--blue-soft);
-  color: var(--blue);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(58, 105, 151, 0.16);
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--blue) 70%, white), var(--blue) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--blue) 65%, transparent);
 }
 .type-icon.icon-hotel {
+  background: var(--plum);
   background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
-    var(--plum-soft);
-  color: var(--plum);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(106, 90, 168, 0.16);
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--plum) 70%, white), var(--plum) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum) 65%, transparent);
 }
 .type-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .type-name { font-weight: 700; font-size: 15.5px; letter-spacing: -0.15px; }
