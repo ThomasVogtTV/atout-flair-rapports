@@ -552,6 +552,11 @@ input:disabled { opacity: 0.55; }
   border-color: color-mix(in srgb, var(--plum) 20%, var(--line-strong));
   box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--plum) 50%, transparent), var(--shadow-sm);
 }
+.folder.card-sent {
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--green-soft) 60%, var(--card)));
+  border-color: color-mix(in srgb, var(--green) 20%, var(--line-strong));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--green) 50%, transparent), var(--shadow-sm);
+}
 
 .type-icon {
   flex-shrink: 0;
@@ -582,6 +587,13 @@ input:disabled { opacity: 0.55; }
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, color-mix(in srgb, var(--plum) 70%, white), var(--plum) 85%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum) 65%, transparent);
+}
+.type-icon.icon-sent {
+  background: var(--green);
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--green) 70%, white), var(--green) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--green) 65%, transparent);
 }
 .type-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .type-name { font-weight: 700; font-size: 15.5px; letter-spacing: -0.15px; }

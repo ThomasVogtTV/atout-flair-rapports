@@ -34,6 +34,7 @@ const ICONS = {
   moon: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/><path d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
+  sent: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"/><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"/><path d="m8.3 12.2 2.4 2.4 5-5.2"/></svg>`,
 }
 
 // Theme clair/sombre : localStorage retient un choix explicite ; sans choix,
@@ -146,6 +147,28 @@ function homeView() {
     </button>`
   ).join('')
 
+  const reportRowHTML = (r, { showType = false } = {}) => {
+    const who = r.lieu?.locataire || r.mandant?.nom || 'Sans nom'
+    const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+    const type = showType ? typeOf(r).label : ''
+    const state =
+      r.status === 'sent'
+        ? `<span class="pill sent">Envoyé</span>`
+        : r.status === 'queued'
+          ? `<span class="pill queued">En attente de réseau</span>`
+          : `<span class="pill draft">Brouillon</span>`
+    return `
+      <li class="report-row" data-open="${r.id}">
+        <div class="report-main">
+          <strong>${esc(who)}</strong>
+          <span class="muted">${esc([type, r.ref, where].filter(Boolean).join(' · '))}</span>
+        </div>
+        <div class="report-side">${state}
+          <button class="icon-btn" data-del="${r.id}" title="Supprimer">✕</button>
+        </div>
+      </li>`
+  }
+
   const folders = TYPE_LIST.map((t) => {
     const reports = view.reports.filter((r) => r.type === t.id)
     const open = view.openFolder === t.id
@@ -163,28 +186,7 @@ function homeView() {
       : 'Vide'
 
     const items = reports.length
-      ? reports
-          .map((r) => {
-            const who = r.lieu?.locataire || r.mandant?.nom || 'Sans nom'
-            const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
-            const state =
-              r.status === 'sent'
-                ? `<span class="pill sent">Envoyé</span>`
-                : r.status === 'queued'
-                  ? `<span class="pill queued">En attente de réseau</span>`
-                  : `<span class="pill draft">Brouillon</span>`
-            return `
-              <li class="report-row" data-open="${r.id}">
-                <div class="report-main">
-                  <strong>${esc(who)}</strong>
-                  <span class="muted">${esc(r.ref ?? '')}${where ? ` · ${esc(where)}` : ''}</span>
-                </div>
-                <div class="report-side">${state}
-                  <button class="icon-btn" data-del="${r.id}" title="Supprimer">✕</button>
-                </div>
-              </li>`
-          })
-          .join('')
+      ? reports.map((r) => reportRowHTML(r)).join('')
       : `<li class="empty">Aucun rapport de ce type pour l'instant.</li>`
 
     return `
@@ -201,6 +203,27 @@ function homeView() {
         ${open ? `<ul class="report-list folder-list">${items}</ul>` : ''}
       </div>`
   }).join('')
+
+  // Dossier transversal : tous les rapports envoyes, tous types confondus -
+  // pour les retrouver sans savoir dans quel type ils ont ete crees.
+  const sentReports = view.reports.filter((r) => r.status === 'sent')
+  const sentOpen = view.openFolder === 'sent'
+  const sentItems = sentReports.length
+    ? sentReports.map((r) => reportRowHTML(r, { showType: true })).join('')
+    : `<li class="empty">Aucun rapport envoyé pour l'instant.</li>`
+  const sentFolder = `
+    <div class="folder card-sent${sentOpen ? ' open' : ''}">
+      <button class="folder-head" data-toggle-folder="sent">
+        <span class="type-icon icon-sent">${ICONS.sent}</span>
+        <span class="folder-body">
+          <span class="folder-name">Rapports envoyés</span>
+          <span class="folder-summary">${sentReports.length ? `${sentReports.length} envoyé${sentReports.length > 1 ? 's' : ''}` : 'Vide'}</span>
+        </span>
+        <span class="folder-count">${sentReports.length}</span>
+        <span class="folder-chevron">${ICONS.chevron}</span>
+      </button>
+      ${sentOpen ? `<ul class="report-list folder-list">${sentItems}</ul>` : ''}
+    </div>`
 
   return `
     <header class="top">
@@ -224,7 +247,7 @@ function homeView() {
       <div class="type-grid">${cards}</div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span></h2>
-      <div class="folders">${folders}</div>
+      <div class="folders">${folders}${sentFolder}</div>
     </section>`
 }
 
