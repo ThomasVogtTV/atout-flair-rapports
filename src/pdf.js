@@ -17,7 +17,8 @@ const INK_SOFT = rgb(0.282, 0.282, 0.298)   // = --ink-soft #48484c : labels, bo
 const LINE_HAIR = rgb(0.60, 0.58, 0.55)     // filet fin interne (plus fonce que --line de l'app : doit rester lisible apres scan/photocopie par la regie)
 const FILL_HEAD = rgb(0.930, 0.918, 0.898)  // trame de fond des bandeaux de titre et entetes de tableau
 const FILL_ZEBRA = rgb(0.975, 0.970, 0.960) // trame tres legere, une ligne sur deux (tableaux longs immeuble/hotel)
-const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : accent rare (croix "oui", filet du pied de page)
+const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : accent de marque (croix "oui", liseret des bandeaux, filet d'entete)
+const RED_SOFT = rgb(0.984, 0.918, 0.918)   // = --red-soft #fbeaea : fond teinte du compteur "contaminee"
 const FOOTER_GREY = rgb(0.36, 0.36, 0.38)
 
 // Coordonnees de l'entreprise, imprimees en pied de chaque page de contenu.
@@ -91,11 +92,19 @@ class Sheet {
     this.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness, color })
   }
 
+  // Liseret rouge sur le bord gauche d'un bandeau - meme registre que les
+  // titres de section colores de l'app. Signature commune a tous les
+  // bandeaux du document (rubriques, tableaux, blocs mandant/lieu).
+  stripe(x, y, h) {
+    this.page.drawRectangle({ x, y, width: 3, height: h, color: RED })
+  }
+
   // Bandeau de section pleine largeur, titre aligne a gauche (convention des
   // rapports d'expertise ; un titre centre dans une boite lit comme un bouton).
   heading(label, y, w = CW, h = 18) {
     this.rect(M, y, w, h, 1, { color: INK_SOFT, fill: FILL_HEAD })
-    this.text(san(label).toUpperCase(), M + 8, y + h / 2 - 3, { size: 9, bold: true, maxW: w - 16 })
+    this.stripe(M, y, h)
+    this.text(san(label).toUpperCase(), M + 10, y + h / 2 - 3, { size: 9, bold: true, maxW: w - 18 })
   }
 
   // Champ "LABEL : valeur" avec la valeur soulignee.
@@ -132,7 +141,8 @@ class Sheet {
 function mandantBox(sh, report, x, y, w, title = 'Mandant') {
   const titleH = 20
   sh.rect(x, y - titleH, w, titleH, 1, { color: INK_SOFT, fill: FILL_HEAD })
-  sh.text(san(title).toUpperCase(), x + 8, y - titleH + 6, { size: 9.5, bold: true, maxW: w - 16 })
+  sh.stripe(x, y - titleH, titleH)
+  sh.text(san(title).toUpperCase(), x + 10, y - titleH + 6, { size: 9.5, bold: true, maxW: w - 18 })
 
   const rows = [
     ['Nom', report.mandant.nom],
@@ -152,7 +162,8 @@ function mandantBox(sh, report, x, y, w, title = 'Mandant') {
 function lieuBox(sh, report, t, x, y, w) {
   const titleH = 20
   sh.rect(x, y - titleH, w, titleH, 1, { color: INK_SOFT, fill: FILL_HEAD })
-  sh.text("LIEU D'INTERVENTION ET INFORMATIONS", x + 8, y - titleH + 6, { size: 9, bold: true, maxW: w - 16 })
+  sh.stripe(x, y - titleH, titleH)
+  sh.text("LIEU D'INTERVENTION ET INFORMATIONS", x + 10, y - titleH + 6, { size: 9, bold: true, maxW: w - 18 })
   let cy = y - titleH - 15
   for (const f of t.lieuFields[0]) {
     sh.field(f.label, fieldValue(report, f), x + 6, cy, 48, w - 66)
@@ -180,7 +191,8 @@ function fieldValue(report, field) {
 // les coordonnees Y calculees plus bas dans drawDetection/drawLignes.
 function headerStrip(sh, label, ref, x, y, w = CW, h = 15) {
   sh.rect(x, y, w, h, 1, { color: INK_SOFT, fill: FILL_HEAD })
-  sh.text(san(label).toUpperCase(), x + 8, y + h / 2 - 3, { size: 9, bold: true, maxW: w * 0.6 })
+  sh.stripe(x, y, h)
+  sh.text(san(label).toUpperCase(), x + 10, y + h / 2 - 3, { size: 9, bold: true, maxW: w * 0.6 - 2 })
   if (ref) sh.text(`N° ${ref}`, x + w - 8, y + h / 2 - 3, { size: 8.5, bold: true, align: 'right' })
 }
 
@@ -209,7 +221,7 @@ async function drawDetection(sh, report, logo) {
   sh.page.drawImage(logo, { x: M, y: top - logoH, width: logoH * (logo.width / logo.height), height: logoH })
   mandantBox(sh, report, M + 250, top, CW - 250)
   headerStrip(sh, t.badge, report.ref, M, top - 128)
-  sh.line(M, top - 146, RIGHT, 1.2, INK_SOFT)
+  sh.line(M, top - 146, RIGHT, 1.1, RED)
 
   // Lieu d'intervention : bandeau + deux colonnes
   let y = top - 168
@@ -235,8 +247,8 @@ async function drawDetection(sh, report, logo) {
   sh.rect(M + 108, y - boxH + 2, boxW, boxH, 1)
   sh.text(String(filledRows(report).length), M + 108 + boxW / 2, y - 14, { size: 16, bold: true, align: 'center' })
   sh.text('Nombre de pièce contaminée :', M + 232, y - 10, { size: 9, color: INK_SOFT })
-  sh.rect(RIGHT - boxW, y - boxH + 2, boxW, boxH, 1)
-  sh.text(String(contaminatedCount(report)), RIGHT - boxW / 2, y - 14, { size: 16, bold: true, align: 'center' })
+  sh.rect(RIGHT - boxW, y - boxH + 2, boxW, boxH, 1, { color: RED, fill: RED_SOFT })
+  sh.text(String(contaminatedCount(report)), RIGHT - boxW / 2, y - 14, { size: 16, bold: true, align: 'center', color: RED })
 
   // Tableau des pieces
   y -= 48
@@ -252,6 +264,7 @@ async function drawDetection(sh, report, logo) {
   // (avant : ecrits sous le rectangle d'entete, dans la marge morte).
   const headH = 26
   sh.rect(M, y - headH, CW, headH, 1, { fill: FILL_HEAD })
+  sh.stripe(M, y - headH, headH)
   cols.forEach((c, i) => {
     if (i) sh.vline(xs[i], y - headH, y)
     sh.text(c.label.toUpperCase(), xs[i] + c.w / 2, y - 10, { size: 8.5, bold: true, align: 'center' })
@@ -265,6 +278,12 @@ async function drawDetection(sh, report, logo) {
   const rowH = 23
   const rows = filledRows(report)
   const count = Math.max(t.minRows, rows.length)
+
+  // Zebrage d'abord (une ligne sur deux) : le cadre et les separateurs
+  // colonnes se dessinent par-dessus juste apres, pour rester visibles.
+  for (let i = 1; i < count; i += 2) {
+    if (rows[i]) sh.page.drawRectangle({ x: M, y: ry - (i + 1) * rowH, width: CW, height: rowH, color: FILL_ZEBRA })
+  }
 
   // Cadre du corps du tableau trace une seule fois (au lieu d'un rect par
   // ligne, qui redessinait deux fois chaque frontiere entre lignes voisines).
@@ -336,6 +355,7 @@ async function drawLignes(sh, report, logo) {
 
   const drawTableHead = (y) => {
     sh.rect(M, y - headH, CW, headH, 1, { fill: FILL_HEAD })
+    sh.stripe(M, y - headH, headH)
     cols.forEach((c, i) => {
       if (i) sh.vline(xs[i], y - headH, y)
       if (c.type === 'contamine') {
@@ -370,7 +390,7 @@ async function drawLignes(sh, report, logo) {
     mandantBox(sh, report, M + 108, top, 168)
     lieuBox(sh, report, t, M + 288, top, CW - 288)
     headerStrip(sh, t.badge, report.ref, M, top - 112)
-    sh.line(M, top - 128, RIGHT, 1.2, INK_SOFT)
+    sh.line(M, top - 128, RIGHT, 1.1, RED)
     footer(sh)
     return drawTableHead(top - 150)
   }
