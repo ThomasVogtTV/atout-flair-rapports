@@ -5,10 +5,11 @@
 
 // Pieces standard d'un appartement/maison : pre-remplies a la creation du
 // rapport pour que le technicien supprime ce qui ne s'applique pas plutot
-// que d'ajouter chaque piece une a une sur le terrain.
+// que d'ajouter chaque piece une a une sur le terrain. Chambres en tete
+// (le plus souvent contaminees), puis salon.
 const DETECTION_ROOMS = [
-  'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'WC', 'Couloir', 'Hall',
   'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
+  'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'Couloir', 'Hall',
   'Bureau', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
 ]
 
