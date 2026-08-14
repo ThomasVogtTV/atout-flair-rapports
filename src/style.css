@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --ink: #1c1c1e;
   --ink-soft: #48484c;
   --muted: #86868b;
@@ -33,6 +34,7 @@
    (bouton lune/soleil sur l'accueil, valeur retenue dans localStorage) --- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --ink: #f1efe9;
     --ink-soft: #c8c4bc;
     --muted: #8f8b83;
@@ -58,6 +60,7 @@
   }
 }
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --ink: #f1efe9;
   --ink-soft: #c8c4bc;
   --muted: #8f8b83;
@@ -81,6 +84,9 @@
   --plum: #ab9cdd;
   --plum-soft: #2a2540;
 }
+/* Repasse les controles natifs (date/heure, defilement...) en rendu clair
+   si le systeme est sombre mais que l'utilisateur a choisi le clair. */
+:root[data-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
