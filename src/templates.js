@@ -3,6 +3,15 @@
 // et les colonnes de sa grille. Le reste de l'app (UI + PDF) se base la-dessus,
 // donc ajouter un 4e type revient a ajouter une entree ici.
 
+// Pieces standard d'un appartement/maison : pre-remplies a la creation du
+// rapport pour que le technicien supprime ce qui ne s'applique pas plutot
+// que d'ajouter chaque piece une a une sur le terrain.
+const DETECTION_ROOMS = [
+  'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'WC', 'Couloir', 'Hall',
+  'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
+  'Bureau', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
+]
+
 export const TYPES = {
   detection: {
     id: 'detection',
@@ -30,14 +39,8 @@ export const TYPES = {
     ],
     rowLabel: 'pièce',
     rowLabelPlural: 'pièces',
-    // Une seule piece au demarrage : le technicien ajoute les suivantes au
-    // fur et a mesure via "+ Ajouter une piece" (suggestions ci-dessous).
-    defaultRows: ['Salon'],
-    suggestions: [
-      'Salon', 'Séjour', 'Cuisine', 'Salle de bain', 'WC', 'Couloir', 'Hall',
-      'Chambre N°1', 'Chambre N°2', 'Chambre N°3', 'Chambre N°4',
-      'Bureau', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
-    ],
+    defaultRows: DETECTION_ROOMS,
+    suggestions: DETECTION_ROOMS,
     columns: [
       { key: 'nom', label: 'Pièces', width: 0.26, align: 'center' },
       { key: 'contamine', label: 'Contaminée', width: 0.24, type: 'contamine' },

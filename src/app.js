@@ -489,12 +489,15 @@ function insertNewRow() {
 }
 
 // Supprime une ligne avec une petite animation de sortie, et demande
-// confirmation si elle contient deja quelque chose (nom, info, photos) pour
-// eviter une perte de donnees accidentelle sur un tap trop rapide.
+// confirmation si elle contient deja quelque chose a perdre. Le nom d'une
+// piece ne compte pas : les rapports demarrent avec des pieces standard
+// pre-remplies (Salon, Chambre N°1...) que le technicien supprime sans
+// friction si elles ne s'appliquent pas - seuls infos/statut/photos
+// reellement saisis meritent une confirmation.
 async function removeRowAnimated(rowId) {
   const row = view.report.rows.find((r) => r.id === rowId)
   const hasContent =
-    row && (row.nom || row.info || row.numero || row.resident || row.infos || view.report.photos.some((p) => p.rowId === rowId))
+    row && (row.info || row.contamine || row.numero || row.resident || row.infos || view.report.photos.some((p) => p.rowId === rowId))
   if (hasContent && !confirm('Supprimer cette pièce et ses photos ?')) return
 
   const card = root.querySelector(`[data-row="${rowId}"]`)
