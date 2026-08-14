@@ -13,6 +13,10 @@
   --green-soft: #e7f5ee;
   --amber: #a66a13;
   --amber-soft: #fbf0dd;
+  --blue: #3a6997;
+  --blue-soft: #e9f1f8;
+  --plum: #6a5aa8;
+  --plum-soft: #eeecf8;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -383,16 +387,35 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .type-card:active { transform: scale(0.985); box-shadow: none; }
 .type-icon {
   flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: var(--red-soft);
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
+    var(--red-soft);
   color: var(--red);
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(192, 42, 42, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(192, 42, 42, 0.16);
 }
-.type-icon svg { width: 22px; height: 22px; }
+.type-icon svg { width: 23px; height: 23px; }
+
+/* variantes de couleur par type de rapport : distinguer les 3 cartes d'un
+   coup d'oeil plutot que trois pastilles identiques. */
+.type-icon.icon-immeuble {
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
+    var(--blue-soft);
+  color: var(--blue);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(58, 105, 151, 0.16);
+}
+.type-icon.icon-hotel {
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 60%),
+    var(--plum-soft);
+  color: var(--plum);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(106, 90, 168, 0.16);
+}
 .type-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .type-name { font-weight: 700; font-size: 15.5px; letter-spacing: -0.15px; }
 .type-hint { color: var(--muted); font-size: 12.5px; }

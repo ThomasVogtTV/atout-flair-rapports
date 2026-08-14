@@ -10,10 +10,11 @@ const COPY_DEFAULT = 'info@atout-flair.ch'
 
 // Icones de l'accueil (traits fins, 1.6px, coherentes avec le style epure).
 const ICON_STROKE = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"'
+const ICON_FILL = 'fill="currentColor" fill-opacity="0.16" stroke="none"'
 const ICONS = {
-  detection: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/><path d="M10 20v-5a2 2 0 0 1 4 0v5"/></svg>`,
-  immeuble: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect x="5" y="3.5" width="14" height="17" rx="1.2"/><path d="M8.5 7.5h1M14.5 7.5h1M8.5 11.5h1M14.5 11.5h1M8.5 15.5h1M14.5 15.5h1"/><path d="M10 20.5v-3.2a2 2 0 0 1 4 0v3.2"/></svg>`,
-  hotel: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M3.5 19v-9"/><path d="M3.5 14.5h17V19"/><path d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3"/><path d="M13.5 11h5a2 2 0 0 1 2 2v1.5"/></svg>`,
+  detection: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M10 20v-5a2 2 0 0 1 4 0v5z"/><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/><path d="M10 20v-5a2 2 0 0 1 4 0v5"/></svg>`,
+  immeuble: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="5" y="3.5" width="14" height="17" rx="1.2"/><rect x="5" y="3.5" width="14" height="17" rx="1.2"/><path d="M8.5 7.5h1M14.5 7.5h1M8.5 11.5h1M14.5 11.5h1M8.5 15.5h1M14.5 15.5h1"/><path d="M10 20.5v-3.2a2 2 0 0 1 4 0v3.2"/></svg>`,
+  hotel: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3z"/><path d="M3.5 19v-9"/><path d="M3.5 14.5h17V19"/><path d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3"/><path d="M13.5 11h5a2 2 0 0 1 2 2v1.5"/></svg>`,
   chevron: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="m9 5 7 7-7 7"/></svg>`,
 }
 
@@ -87,7 +88,7 @@ function homeView() {
   const cards = TYPE_LIST.map(
     (t) => `
     <button class="type-card" data-new="${t.id}">
-      <span class="type-icon">${ICONS[t.id] ?? ''}</span>
+      <span class="type-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="type-body">
         <span class="type-name">${esc(t.label)}</span>
         <span class="type-hint">${esc(t.hint)}</span>
