@@ -172,7 +172,45 @@ html, body {
   inset: 0;
   background:
     linear-gradient(185deg, rgba(20, 18, 16, 0) 42%, var(--bg) 96%),
-    linear-gradient(100deg, rgba(20, 18, 16, 0.28) 0%, rgba(20, 18, 16, 0) 52%);
+    linear-gradient(100deg, rgba(20, 18, 16, 0.5) 0%, rgba(20, 18, 16, 0) 58%);
+}
+
+/* Le vrai titre de l'accueil se joue ici, en grand sur la photo, plutot
+   qu'en petit a cote du logo dans la barre fixe. */
+.hero-caption {
+  position: absolute;
+  left: 20px;
+  right: 40%;
+  top: 20px;
+  color: #fff;
+}
+.hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-transform: uppercase;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  opacity: 0.9;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+.hero-kicker::before { content: ''; width: 13px; height: 2px; flex-shrink: 0; background: var(--red); border-radius: 1px; }
+.hero-caption h2 {
+  margin: 9px 0 5px;
+  font-size: clamp(20px, 6.2vw, 25px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.12;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+.hero-caption p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.92;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
 
 .content-sheet {
@@ -240,35 +278,13 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* Ecran d'accueil : reprend la signature du site atoutflair.ch — un court
-   trait rouge devant un intitule en petites capitales, titre en noir tres gras. */
+/* Ecran d'accueil : barre fixe compacte (juste le nom), le vrai titre se
+   joue en grand sur la photo (.hero-caption) plutot que d'etre repete en
+   petit a cote du logo. */
 .top:not(.editor-top) .top-title h1 {
   font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.5px;
-}
-.top:not(.editor-top) .top-title p {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  text-transform: uppercase;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  color: var(--ink-soft);
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-}
-.top:not(.editor-top) .top-title p::before {
-  content: '';
-  width: 13px;
-  height: 2px;
-  flex-shrink: 0;
-  margin-top: 5px;
-  background: var(--red);
-  border-radius: 1px;
+  font-size: 17px;
+  letter-spacing: -0.4px;
 }
 .editor-top .back {
   font-size: 22px;

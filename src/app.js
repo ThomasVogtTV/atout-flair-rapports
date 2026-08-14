@@ -198,13 +198,19 @@ function homeView() {
     <header class="top">
       <img src="/logo.jpg" alt="Atout Flair" class="logo" />
       <div class="top-title">
-        <h1>Rapports de détection</h1>
-        <p class="muted">Saisie, photos, signature et envoi sur place</p>
+        <h1>Atout Flair</h1>
       </div>
       <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
       <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
     </header>
-    <div class="hero-bg"><img src="/hero-dog.jpg" alt="" /></div>
+    <div class="hero-bg">
+      <img src="/hero-dog.jpg" alt="" />
+      <div class="hero-caption">
+        <span class="hero-kicker">Détection canine professionnelle</span>
+        <h2>Rapports de détection</h2>
+        <p>Saisie, photos, signature et envoi sur place</p>
+      </div>
+    </div>
     <section class="content-sheet">
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
