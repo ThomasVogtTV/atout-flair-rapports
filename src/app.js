@@ -46,7 +46,7 @@ function sectionIcon(key, tone) {
 }
 
 const root = document.getElementById('app')
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null }
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null, myReportsOpen: false }
 let saveTimer = null
 
 const esc = (s) =>
@@ -166,9 +166,9 @@ function homeView() {
       : `<li class="empty">Aucun rapport de ce type pour l'instant.</li>`
 
     return `
-      <div class="folder${open ? ' open' : ''}">
+      <div class="folder card-${t.id}${open ? ' open' : ''}">
         <button class="folder-head" data-toggle-folder="${t.id}">
-          <span class="type-icon muted">${ICONS[t.id] ?? ''}</span>
+          <span class="type-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
           <span class="folder-body">
             <span class="folder-name">${esc(t.label)}</span>
             <span class="folder-summary">${esc(summary)}</span>
@@ -179,6 +179,9 @@ function homeView() {
         ${open ? `<ul class="report-list folder-list">${items}</ul>` : ''}
       </div>`
   }).join('')
+
+  const totalReports = view.reports.length
+  const myReportsOpen = !!view.myReportsOpen
 
   return `
     <header class="top">
@@ -193,8 +196,15 @@ function homeView() {
     <section class="content-sheet">
       <h2 class="section-title">Nouveau rapport</h2>
       <div class="type-grid">${cards}</div>
-      <h2 class="section-title">Mes rapports</h2>
-      <div class="folders">${folders}</div>
+
+      <button class="section-title section-title-toggle" data-toggle-my-reports type="button">
+        Mes rapports
+        <span class="section-title-trailer">
+          ${totalReports ? `<span class="count-pill"><b>${totalReports}</b> rapport${totalReports > 1 ? 's' : ''}</span>` : ''}
+          <span class="folder-chevron${myReportsOpen ? ' open' : ''}">${ICONS.chevron}</span>
+        </span>
+      </button>
+      ${myReportsOpen ? `<div class="folders">${folders}</div>` : ''}
     </section>`
 }
 
@@ -588,6 +598,11 @@ root.addEventListener('click', async (ev) => {
   const folderType = el.closest('[data-toggle-folder]')?.dataset.toggleFolder
   if (folderType) {
     view.openFolder = view.openFolder === folderType ? null : folderType
+    return render()
+  }
+
+  if (el.closest('[data-toggle-my-reports]')) {
+    view.myReportsOpen = !view.myReportsOpen
     return render()
   }
 
