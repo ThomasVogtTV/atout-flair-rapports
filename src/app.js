@@ -198,7 +198,7 @@ function homeView() {
     </section>`
 }
 
-function fieldInput(f, value) {
+function fieldInput(f, value, disabled) {
   const id = `lieu.${f.key}`
   if (f.type === 'ouinon') {
     return `<div class="seg" data-seg="${id}">
@@ -208,7 +208,22 @@ function fieldInput(f, value) {
     </div>`
   }
   const type = f.type === 'date' ? 'date' : f.type === 'time' ? 'time' : 'text'
-  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}" />`
+  return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}"${disabled ? ' disabled' : ''} />`
+}
+
+// Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
+// pour le rapport de detection, deux champs separes (comme le mandant)
+// pour immeuble/hotel.
+const LIEU_ADDR_KEYS = ['adresseIntervention', 'adresse', 'npaLieu']
+
+function applySameAddress(report) {
+  const t = typeOf(report)
+  if (t.layout === 'pieces') {
+    report.lieu.adresseIntervention = [report.mandant.adresse, report.mandant.npaLieu].filter(Boolean).join(', ')
+  } else {
+    report.lieu.adresse = report.mandant.adresse
+    report.lieu.npaLieu = report.mandant.npaLieu
+  }
 }
 
 const MANDANT_TYPES = [
@@ -261,11 +276,19 @@ function editorView() {
       <div class="card grid2">
         ${lieuFields
           .filter((f) => !f.derived)
-          .map(
-            (f) => `<label class="${f.key === 'adresseIntervention' || f.key === 'adresse' ? 'full' : ''}">
-              ${esc(f.label)}${fieldInput(f, r.lieu[f.key])}
+          .map((f) => {
+            const isAddrField = f.key === 'adresseIntervention' || f.key === 'adresse'
+            const disabled = LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant
+            const field = `<label class="${isAddrField ? 'full' : ''}">
+              ${esc(f.label)}${fieldInput(f, r.lieu[f.key], disabled)}
             </label>`
-          )
+            if (!isAddrField) return field
+            return `${field}
+              <label class="full same-addr">
+                <input type="checkbox" data-same-addr${r.lieu.sameAsMandant ? ' checked' : ''} />
+                Même adresse que le mandant
+              </label>`
+          })
           .join('')}
       </div>
 
@@ -439,6 +462,16 @@ root.addEventListener('input', (ev) => {
   const el = ev.target
   if (el.dataset.path) {
     set(el.dataset.path, el.value)
+    // Case "meme adresse que le mandant" cochee : les champs adresse du
+    // lieu restent en phase pendant la saisie, sans re-rendu complet pour
+    // ne pas faire perdre le focus/curseur du champ mandant en cours.
+    if (view.report.lieu.sameAsMandant && (el.dataset.path === 'mandant.adresse' || el.dataset.path === 'mandant.npaLieu')) {
+      applySameAddress(view.report)
+      LIEU_ADDR_KEYS.forEach((key) => {
+        const target = root.querySelector(`[data-path="lieu.${key}"]`)
+        if (target) target.value = view.report.lieu[key] ?? ''
+      })
+    }
     scheduleSave()
   } else if (el.dataset.rowField) {
     const row = rowOf(el)
@@ -452,13 +485,23 @@ root.addEventListener('input', (ev) => {
   }
 })
 
-// Le carnet remplit le reste des coordonnees des que le nom correspond.
 root.addEventListener('change', async (ev) => {
   const el = ev.target
+
+  if (el.dataset.sameAddr !== undefined) {
+    view.report.lieu.sameAsMandant = el.checked
+    if (el.checked) applySameAddress(view.report)
+    await S.saveReport(view.report)
+    render()
+    return
+  }
+
+  // Le carnet remplit le reste des coordonnees des que le nom correspond.
   if (el.dataset.path !== 'mandant.nom') return
   const match = view.contacts.find((c) => (c.nom || '').toLowerCase() === el.value.trim().toLowerCase())
   if (!match) return
   view.report.mandant = { nom: match.nom, adresse: match.adresse, npaLieu: match.npaLieu, email: match.email, tel: match.tel }
+  if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
   await S.saveReport(view.report)
   render()
 })
