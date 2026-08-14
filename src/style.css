@@ -475,8 +475,9 @@ input:disabled { opacity: 0.55; }
   transition: background 0.15s;
 }
 .icon-btn:active { background: var(--bg); }
-.theme-toggle { margin-left: auto; flex-shrink: 0; display: grid; place-items: center; color: var(--ink-soft); }
-.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle, .contacts-toggle { flex-shrink: 0; display: grid; place-items: center; color: var(--ink-soft); }
+.theme-toggle svg, .contacts-toggle svg { width: 20px; height: 20px; }
+.contacts-toggle { margin-left: auto; }
 .link {
   border: none;
   background: none;

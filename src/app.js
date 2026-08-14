@@ -25,6 +25,7 @@ const ICONS = {
   sun: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.2M12 18.8V21M4.4 12H2.6M21.4 12h-1.8M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M18.2 5.8l-1.3 1.3M7.1 16.9l-1.3 1.3"/></svg>`,
   moon: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/><path d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/></svg>`,
+  contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
 }
 
 // Theme clair/sombre : localStorage retient un choix explicite ; sans choix,
@@ -81,6 +82,12 @@ export async function goHome() {
   render()
 }
 
+export async function openContacts() {
+  view = { ...view, screen: 'contacts', report: null }
+  view.contacts = await S.listContacts()
+  render()
+}
+
 export async function openReport(id) {
   const report = await S.loadReport(id)
   if (!report) return goHome()
@@ -108,7 +115,7 @@ function render() {
   const key = `${view.screen}:${view.report?.id ?? ''}`
   const navigated = key !== lastViewKey
   lastViewKey = key
-  root.innerHTML = view.screen === 'home' ? homeView() : editorView()
+  root.innerHTML = view.screen === 'home' ? homeView() : view.screen === 'contacts' ? contactsView() : editorView()
   if (navigated) {
     document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
@@ -197,6 +204,7 @@ function homeView() {
         <h1>Rapports de détection</h1>
         <p class="muted">Saisie, photos, signature et envoi sur place</p>
       </div>
+      <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
       <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
     </header>
     <div class="hero-bg"><img src="/hero-dog.jpg" alt="" /></div>
@@ -212,6 +220,39 @@ function homeView() {
         </span>
       </button>
       ${myReportsOpen ? `<div class="folders">${folders}</div>` : ''}
+    </section>`
+}
+
+function contactsView() {
+  const contacts = view.contacts ?? []
+  const rows = contacts.length
+    ? contacts
+        .map(
+          (c) => `
+          <li class="report-row" data-edit-contact="${c.id}">
+            <div class="report-main">
+              <strong>${esc(c.nom || 'Sans nom')}</strong>
+              <span class="muted">${esc([c.adresse, c.npaLieu].filter(Boolean).join(', ')) || 'Adresse non renseignée'}</span>
+            </div>
+            <div class="report-side">
+              <button class="icon-btn" data-del-contact="${c.id}" title="Supprimer">✕</button>
+            </div>
+          </li>`
+        )
+        .join('')
+    : `<li class="empty">Aucun contact enregistré pour l'instant.</li>`
+
+  return `
+    <header class="top editor-top">
+      <button class="icon-btn back" data-act="home">‹</button>
+      <div class="top-title">
+        <h1>Carnet de contacts</h1>
+        <p class="muted">${contacts.length} contact${contacts.length > 1 ? 's' : ''}</p>
+      </div>
+    </header>
+    <section class="pad">
+      <ul class="report-list">${rows}</ul>
+      <button class="btn ghost wide" data-act="add-contact">+ Ajouter un contact</button>
     </section>`
 }
 
@@ -626,6 +667,24 @@ root.addEventListener('click', async (ev) => {
   const openId = el.closest('[data-open]')?.dataset.open
   if (openId) return openReport(openId)
 
+  const delContactId = el.closest('[data-del-contact]')?.dataset.delContact
+  if (delContactId) {
+    ev.stopPropagation()
+    if (confirm('Supprimer ce contact ?')) {
+      await S.deleteContact(delContactId)
+      view.contacts = await S.listContacts()
+      render()
+    }
+    return
+  }
+
+  const editContactId = el.closest('[data-edit-contact]')?.dataset.editContact
+  if (editContactId) {
+    const c = view.contacts.find((x) => x.id === editContactId)
+    if (c) openContactDialog(c)
+    return
+  }
+
   // --- type de mandant (choix unique)
   const chip = el.closest('.chip')
   if (chip && chip.closest('[data-mandant-type]')) {
@@ -707,15 +766,18 @@ root.addEventListener('click', async (ev) => {
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
   if (act === 'toggle-theme') return toggleTheme()
+  if (act === 'open-contacts') return openContacts()
+  if (act === 'add-contact') return openContactDialog()
   if (act === 'home') {
     // Un rapport deja envoye/en file n'a plus rien a "annuler" : on ne
     // demande que pour un brouillon, qu'il vienne d'etre cree ou repris.
-    if (view.report.status === 'draft') {
+    // Le carnet de contacts n'a pas de rapport ouvert, rien a confirmer.
+    if (view.screen === 'editor' && view.report.status === 'draft') {
       const choice = await confirmLeave()
       if (choice === 'cancel') return
       if (choice === 'delete') await S.deleteReport(view.report.id)
     }
-    return view.report?.parentId ? openReport(view.report.parentId) : goHome()
+    return view.screen === 'editor' && view.report?.parentId ? openReport(view.report.parentId) : goHome()
   }
   if (act === 'add-row') return insertNewRow()
   if (act === 'save-contact') {
@@ -973,6 +1035,78 @@ Atout Flair</textarea></label>
           : 'Rapport envoyé.'
     )
     goHome()
+  })
+}
+
+// Formulaire d'ajout/modification d'un contact du carnet. `contact` absent
+// = creation ; fourni = edition (bouton Supprimer visible, mise a jour par
+// id pour pouvoir renommer sans dupliquer l'entree).
+function openContactDialog(contact) {
+  const c = contact ?? { type: '', nom: '', adresse: '', npaLieu: '', tel: '', email: '' }
+  let type = c.type || ''
+
+  const overlay = document.createElement('div')
+  overlay.className = 'overlay dialog'
+  overlay.innerHTML = `
+    <div class="dialog-box">
+      <h2>${contact ? 'Modifier le contact' : 'Nouveau contact'}</h2>
+      <div class="chip-group" data-contact-type>
+        ${MANDANT_TYPES.map(
+          (mt) => `<button type="button" class="chip${type === mt.key ? ' on' : ''}" data-val="${mt.key}">${mt.label}</button>`
+        ).join('')}
+      </div>
+      <label>Nom<input id="ct-nom" value="${esc(c.nom)}" /></label>
+      <label>Adresse<input id="ct-adresse" value="${esc(c.adresse)}" /></label>
+      <label>NPA/Lieu<input id="ct-npa" value="${esc(c.npaLieu)}" /></label>
+      <label>N° tél<input id="ct-tel" value="${esc(c.tel)}" inputmode="tel" /></label>
+      <label>Email<input id="ct-email" value="${esc(c.email)}" inputmode="email" /></label>
+      <div class="dialog-actions">
+        ${contact ? `<button class="btn ghost danger" data-del>Supprimer</button>` : ''}
+        <button class="btn ghost" data-close>Annuler</button>
+        <button class="btn primary" data-save>Enregistrer</button>
+      </div>
+    </div>`
+  document.body.appendChild(overlay)
+  overlay.querySelector('#ct-nom').focus()
+
+  overlay.addEventListener('click', async (ev) => {
+    if (ev.target === overlay || ev.target.hasAttribute?.('data-close')) {
+      overlay.remove()
+      return
+    }
+
+    const chip = ev.target.closest('[data-contact-type] .chip')
+    if (chip) {
+      type = type === chip.dataset.val ? '' : chip.dataset.val
+      overlay.querySelectorAll('[data-contact-type] .chip').forEach((b) => b.classList.toggle('on', b.dataset.val === type))
+      return
+    }
+
+    if (ev.target.hasAttribute?.('data-del')) {
+      if (!confirm('Supprimer ce contact ?')) return
+      await S.deleteContact(c.id)
+      overlay.remove()
+      view.contacts = await S.listContacts()
+      render()
+      return
+    }
+
+    if (ev.target.hasAttribute?.('data-save')) {
+      const nom = overlay.querySelector('#ct-nom').value.trim()
+      if (!nom) return toast('Indiquez un nom')
+      await S.saveContact({
+        id: c.id,
+        type,
+        nom,
+        adresse: overlay.querySelector('#ct-adresse').value,
+        npaLieu: overlay.querySelector('#ct-npa').value,
+        tel: overlay.querySelector('#ct-tel').value,
+        email: overlay.querySelector('#ct-email').value,
+      })
+      overlay.remove()
+      view.contacts = await S.listContacts()
+      render()
+    }
   })
 }
 

@@ -118,6 +118,15 @@ export async function rememberContact(mandant) {
 
 export const deleteContact = (id) => db.del('contacts', id)
 
+// Enregistrement direct (carnet de contacts) : contrairement a
+// rememberContact, met a jour l'id fourni sans re-chercher par nom -
+// necessaire pour pouvoir renommer un contact existant sans en dupliquer un.
+export async function saveContact(contact) {
+  const nom = (contact.nom || '').trim()
+  if (!nom) return
+  await db.put('contacts', { ...contact, id: contact.id ?? uid(), nom })
+}
+
 // --- nom de fichier --------------------------------------------------------
 
 const slug = (s) =>
