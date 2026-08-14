@@ -262,10 +262,10 @@ html, body {
 /* --- cartes / formulaires --- */
 .card {
   background: var(--card);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 14px;
+  padding: 16px;
 }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid2 .full { grid-column: 1 / -1; }
@@ -275,43 +275,45 @@ html, body {
   font: inherit;
   font-weight: 600;
   font-size: 13px;
-  min-height: 40px;
-  border: 1px solid var(--line);
-  background: var(--bg);
+  min-height: 42px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
   color: var(--ink-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s;
+  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.03);
+  transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .chip:active { transform: scale(0.96); }
-.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip.on { background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: var(--shadow-sm); }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
 input, textarea, select {
   font: inherit;
   color: var(--ink);
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: #fff;
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   min-height: var(--tap);
   width: 100%;
-  transition: border-color 0.15s, background 0.15s;
+  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
 input:focus, textarea:focus {
   outline: none;
-  border-color: var(--ink);
-  background: #fff;
+  border-color: var(--red);
+  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035), 0 0 0 3px var(--red-soft);
 }
 input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 
@@ -579,12 +581,13 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   font-weight: 600;
   font-size: 13.5px;
   min-height: 42px;
-  border: 1px solid var(--line);
-  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  background: #fff;
   color: var(--ink-soft);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s;
+  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.03);
+  transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .seg-btn:active { transform: scale(0.96); }
 .seg-btn.on { background: var(--ink); color: #fff; border-color: var(--ink); }
