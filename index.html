@@ -23,10 +23,13 @@
   </head>
   <body>
     <!-- Photo de fond de l'accueil : posee ici plutot que dans l'ecran, pour
-         qu'elle ne soit ni rechargee ni redessinee a chaque rendu. Le voile
-         par-dessus garde le contenu lisible. -->
+         qu'elle ne soit ni rechargee ni redessinee a chaque rendu. Deux fois
+         le meme fichier (une seule requete, un seul decodage) : une copie
+         floutee qui remplit l'ecran, et la photo nette en haut, ou les deux
+         chiens tiennent en entier. Le voile par-dessus garde le texte lisible. -->
     <div class="app-bg" aria-hidden="true">
-      <img src="/hero-dog.webp" alt="" />
+      <img class="app-bg-blur" src="/hero-dog.webp" alt="" />
+      <img class="app-bg-photo" src="/hero-dog.webp" alt="" />
       <span class="app-bg-veil"></span>
     </div>
     <main id="app"></main>

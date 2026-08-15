@@ -177,16 +177,33 @@ html, body {
   transition: opacity 0.35s ease, visibility 0.35s;
 }
 body[data-screen="home"] .app-bg { opacity: 1; visibility: visible; }
-/* Sur un ecran de telephone (haut et etroit), la photo se cadre en largeur :
-   sans l'agrandissement ci-dessous, les tetes des chiens tombent derriere les
-   cartes et il ne reste que des pattes a l'ecran. */
-.app-bg img {
+/* Un ecran de telephone est haut et etroit, la photo est large : la recadrer
+   en plein ecran ne laisse voir qu'une bande verticale, donc un seul chien.
+   D'ou deux couches - la photo nette en pleine largeur en haut, ou les deux
+   chiens tiennent en entier, et la meme photo floutee derriere pour occuper
+   le reste de l'ecran sans laisser de zone morte. */
+.app-bg-blur {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 32%;
+  object-position: 50% 60%;
+  /* L'agrandissement evite que le flou laisse voir les bords de l'image. */
+  transform: scale(1.12);
+  filter: blur(22px) saturate(0.95) brightness(0.9);
+}
+.app-bg-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
   display: block;
-  transform: scale(1.16) translateY(-7%);
+  /* Le bas de la photo nette s'efface dans la couche floutee : pas de bord
+     franc entre les deux. */
+  -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 99%);
+  mask-image: linear-gradient(180deg, #000 58%, transparent 99%);
 }
 /* Voile : la photo reste franche sur toute la moitie haute - c'est elle qu'on
    veut voir - et ne se fond qu'en bas de l'ecran, pour que la page se termine
@@ -200,12 +217,12 @@ body[data-screen="home"] .app-bg { opacity: 1; visibility: visible; }
     linear-gradient(
       180deg,
       transparent 0%,
-      transparent 46%,
-      color-mix(in srgb, var(--bg-solid) 32%, transparent) 68%,
-      color-mix(in srgb, var(--bg-solid) 86%, transparent) 87%,
-      var(--bg-solid) 100%
+      transparent 42%,
+      color-mix(in srgb, var(--bg-solid) 26%, transparent) 70%,
+      color-mix(in srgb, var(--bg-solid) 68%, transparent) 90%,
+      color-mix(in srgb, var(--bg-solid) 92%, transparent) 100%
     ),
-    linear-gradient(100deg, rgba(20, 18, 16, 0.3) 0%, rgba(20, 18, 16, 0) 60%);
+    linear-gradient(100deg, rgba(20, 18, 16, 0.3) 0%, rgba(20, 18, 16, 0) 62%);
 }
 
 /* Le contenu passe au-dessus de la photo. */
