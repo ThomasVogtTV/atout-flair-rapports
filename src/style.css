@@ -552,11 +552,6 @@ input:disabled { opacity: 0.55; }
   border-color: color-mix(in srgb, var(--plum) 20%, var(--line-strong));
   box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--plum) 50%, transparent), var(--shadow-sm);
 }
-.folder.card-sent {
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--green-soft) 60%, var(--card)));
-  border-color: color-mix(in srgb, var(--green) 20%, var(--line-strong));
-  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--green) 50%, transparent), var(--shadow-sm);
-}
 
 .type-icon {
   flex-shrink: 0;
@@ -588,13 +583,6 @@ input:disabled { opacity: 0.55; }
     linear-gradient(135deg, color-mix(in srgb, var(--plum) 70%, white), var(--plum) 85%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum) 65%, transparent);
 }
-.type-icon.icon-sent {
-  background: var(--green);
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--green) 70%, white), var(--green) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--green) 65%, transparent);
-}
 .type-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .type-name { font-weight: 700; font-size: 15.5px; letter-spacing: -0.15px; }
 .type-hint { color: var(--muted); font-size: 12.5px; }
@@ -616,7 +604,7 @@ input:disabled { opacity: 0.55; }
 }
 .report-row:active { transform: scale(0.985); }
 .report-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.report-main strong { font-weight: 650; font-size: 14.5px; }
+.report-main strong { font-weight: 650; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-main .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-side { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .empty {
@@ -645,9 +633,22 @@ input:disabled { opacity: 0.55; }
 .pill.sent { background: var(--green-soft); color: var(--green); }
 .pill.queued { background: var(--amber-soft); color: var(--amber); }
 
-/* --- dossiers "Mes rapports" (un par type) --- */
-.folders { display: grid; gap: 10px; }
+/* --- bloc "Mes rapports" : un seul volet, ouvert d'un clic --- */
+.my-reports { margin-top: 22px; }
 .folder { overflow: hidden; }
+/* Gris graphite plutot qu'une des trois couleurs de type : le bloc les
+   contient toutes, il ne doit en revendiquer aucune. */
+.folder.card-all {
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--line) 45%, var(--card)));
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+.type-icon.icon-all {
+  background:
+    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--muted) 78%, white), var(--muted) 88%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 10px -4px color-mix(in srgb, var(--muted) 65%, transparent);
+}
 .folder-head {
   width: 100%;
   display: flex;
@@ -684,7 +685,24 @@ input:disabled { opacity: 0.55; }
 .folder-chevron { color: var(--muted-soft); flex-shrink: 0; transition: transform 0.2s ease; }
 .folder-chevron svg { width: 16px; height: 16px; }
 .folder.open .folder-chevron { transform: rotate(90deg); }
-.folder-list.folder-list { padding: 10px; margin: 0; background: var(--bg); }
+.folder-panel { padding: 10px; background: var(--bg); display: grid; gap: 9px; }
+/* Sans cela, la barre de filtres et les lignes de rapport imposent leur
+   largeur de contenu au volet et debordent de l'ecran (le bouton de
+   suppression sortait a droite). */
+.folder-panel > *, .report-list > * { min-width: 0; }
+
+/* Filtres de la liste : une seule ligne, qui defile lateralement si les
+   libelles depassent, plutot que de casser la hauteur du volet. */
+.chip-count {
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.chip.on .chip-count { background: color-mix(in srgb, var(--fill-text) 22%, transparent); color: var(--fill-text); }
 
 /* --- lignes du rapport --- */
 .rows { display: grid; gap: 8px; }
@@ -729,7 +747,7 @@ input:disabled { opacity: 0.55; }
 .field-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }
 .field-info { gap: 3px; }
 
-.quick-rooms { display: flex; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
+.quick-rooms, .report-filters { display: flex; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
 .chip-sm { flex: 0 0 auto; min-height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; }
 
 .row-name { font-weight: 650; }

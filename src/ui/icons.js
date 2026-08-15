@@ -18,7 +18,6 @@ export const ICONS = {
   moon: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/><path d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
-  sent: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"/><path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"/><path d="m8.3 12.2 2.4 2.4 5-5.2"/></svg>`,
 }
 
 export function sectionIcon(key, tone) {

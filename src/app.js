@@ -17,7 +17,10 @@ import { editorView, rowCardHTML, applySameAddress, LIEU_ADDR_KEYS } from './vie
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog } from './send.js'
 
-let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], openFolder: null }
+// reportsOpen / filter : etat du bloc "Mes rapports" de l'accueil. Il survit
+// aux allers-retours vers un rapport (goHome recopie la vue), de sorte qu'on
+// retrouve la liste ouverte sur le meme filtre en revenant.
+let view = { screen: 'home', report: null, children: [], reports: [], contacts: [], reportsOpen: false, filter: 'tous' }
 let saveTimer = null
 
 function scheduleSave() {
@@ -215,9 +218,14 @@ root.addEventListener('click', async (ev) => {
   const newType = el.closest('[data-new]')?.dataset.new
   if (newType) return createReport(newType)
 
-  const folderType = el.closest('[data-toggle-folder]')?.dataset.toggleFolder
-  if (folderType) {
-    view.openFolder = view.openFolder === folderType ? null : folderType
+  if (el.closest('[data-toggle-reports]')) {
+    view.reportsOpen = !view.reportsOpen
+    return render()
+  }
+
+  const filter = el.closest('[data-filter]')?.dataset.filter
+  if (filter) {
+    view.filter = filter
     return render()
   }
 
