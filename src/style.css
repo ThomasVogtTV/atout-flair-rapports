@@ -302,31 +302,42 @@ html, body {
 }
 .editor-top .back:active { background: var(--line); transform: scale(0.94); }
 
+/* Intitules de rubrique du formulaire. Le filet qui prolonge le titre
+   jusqu'au bord reprend la signature des rubriques du PDF : l'ecran de
+   saisie et le document imprime annoncent leurs sections de la meme facon. */
 .section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 650;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-  margin: 22px 4px 8px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin: 26px 4px 10px;
 }
-.section-title-main { display: inline-flex; align-items: center; gap: 8px; }
+.section-title-main { display: inline-flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
+.section-title-main::after {
+  content: '';
+  flex: 1;
+  min-width: 12px;
+  height: 1px;
+  background: var(--line-strong);
+}
 
 .section-icon {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
   display: grid;
   place-items: center;
   background: var(--red-soft);
   color: var(--red);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 20%, transparent);
 }
-.section-icon svg { width: 14px; height: 14px; }
+.section-icon svg { width: 15px; height: 15px; }
 .section-icon.icon-blue { background: var(--blue-soft); color: var(--blue); }
 .section-icon.icon-plum { background: var(--plum-soft); color: var(--plum); }
 .section-icon.icon-amber { background: var(--amber-soft); color: var(--amber); }
