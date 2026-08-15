@@ -188,20 +188,24 @@ body[data-screen="home"] .app-bg { opacity: 1; visibility: visible; }
   display: block;
   transform: scale(1.16) translateY(-7%);
 }
-/* Voile : transparent en haut (la photo se voit franchement derriere le
-   titre), de plus en plus dense vers le bas ou se posent les cartes. */
+/* Voile : la photo reste franche sur toute la moitie haute - c'est elle qu'on
+   veut voir - et ne se fond qu'en bas de l'ecran, pour que la page se termine
+   sur la couleur de fond plutot que sur une coupure nette.
+   Le degrade oblique, lui, ne fait que poser le titre blanc sur un fond
+   suffisamment sombre, quel que soit le theme. */
 .app-bg-veil {
   position: absolute;
   inset: 0;
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--bg-solid) 18%, transparent) 0%,
-      color-mix(in srgb, var(--bg-solid) 62%, transparent) 38%,
-      color-mix(in srgb, var(--bg-solid) 88%, transparent) 78%,
+      transparent 0%,
+      transparent 46%,
+      color-mix(in srgb, var(--bg-solid) 32%, transparent) 68%,
+      color-mix(in srgb, var(--bg-solid) 86%, transparent) 87%,
       var(--bg-solid) 100%
     ),
-    linear-gradient(100deg, rgba(20, 18, 16, 0.32) 0%, rgba(20, 18, 16, 0) 62%);
+    linear-gradient(100deg, rgba(20, 18, 16, 0.3) 0%, rgba(20, 18, 16, 0) 60%);
 }
 
 /* Le contenu passe au-dessus de la photo. */
