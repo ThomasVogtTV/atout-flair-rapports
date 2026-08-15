@@ -2,8 +2,8 @@
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
 
-const CACHE = 'atout-flair-v4'
-const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.jpg', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
+const CACHE = 'atout-flair-v6'
+const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))
@@ -18,6 +18,23 @@ async function pruneStaleAssets() {
     const res = await fetch('/index.html', { cache: 'no-store' })
     const html = await res.text()
     const current = new Set(Array.from(html.matchAll(/\/assets\/[\w.-]+/g), (m) => m[0]))
+    // Le moteur PDF est charge a la demande : son nom de fichier n'apparait pas
+    // dans index.html mais dans un import() du script principal, en chemin
+    // relatif. Sans cette passe, il serait efface du cache a chaque activation,
+    // et le PDF deviendrait impossible hors ligne.
+    for (const path of Array.from(current).filter((p) => p.endsWith('.js'))) {
+      try {
+        const js = await (await fetch(path, { cache: 'no-store' })).text()
+        const base = new URL(path, location.origin)
+        for (const m of js.matchAll(/import\(\s*["']([^"']+\.js)["']\s*\)/g)) {
+          current.add(new URL(m[1], base).pathname)
+        }
+      } catch {
+        // Ce script n'a pas pu etre relu : on ne sait pas ce qu'il reference,
+        // donc on ne nettoie rien du tout plutot que de casser le hors ligne.
+        return
+      }
+    }
     const cache = await caches.open(CACHE)
     const reqs = await cache.keys()
     await Promise.all(

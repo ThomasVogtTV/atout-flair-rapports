@@ -54,16 +54,18 @@ disponible pour envoyer le PDF depuis l'application mail du téléphone.
 
 `APP_CODE` n'est pas un confort mais une nécessité : le site est public, et sans ce code
 l'adresse suffirait à n'importe qui pour envoyer des mails depuis `info@atout-flair.ch`.
-L'app le demande une seule fois par appareil et le conserve ; il n'apparaît nulle part
-dans le code envoyé au navigateur. Pour le changer, modifier la variable dans Vercel :
-les appareils le redemanderont au premier envoi refusé.
+Il ne protège que l'envoi, pas l'ouverture de l'app : celle-ci s'ouvre directement sur
+l'accueil, sans rien demander. Le code n'est demandé qu'au premier envoi refusé par le
+serveur, une seule fois par appareil, et il n'apparaît nulle part dans le code envoyé au
+navigateur. Pour le changer, modifier la variable dans Vercel : les appareils le
+redemanderont au premier envoi refusé.
 
 ### Limite de taille
 
 Une fonction Vercel refuse une requête de plus de 4,5 Mo. L'app vise donc 3 Mo de PDF :
 au-delà, elle ré-encode les photos automatiquement (deux paliers), et si le rapport reste
 trop lourd elle bascule sur « Partager » plutôt que d'échouer. Voir `PDF_MAX` dans
-`src/app.js`.
+`src/send.js`.
 
 ## Installer l'app sur le téléphone / la tablette
 
@@ -81,7 +83,11 @@ L'icône se comporte ensuite comme une application : plein écran, démarrage ho
 | `src/templates.js` | Définition des trois types de rapport (colonnes, champs, pièces) |
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi) |
-| `src/app.js` | Écrans et interactions |
+| `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
+| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js` |
+| `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js` |
+| `src/send.js` | Aperçu PDF, dialogue d'envoi, partage vers la messagerie |
+| `src/contact-dialog.js` | Formulaire d'ajout/modification d'un contact |
 | `src/photo.js` | Capture, compression, éditeur d'annotations |
 | `src/signature.js` | Pad de signature |
 | `src/pdf.js` | Génération du PDF (mise en page Atout Flair) |
@@ -91,6 +97,9 @@ L'icône se comporte ensuite comme une application : plein écran, démarrage ho
 
 Ajouter un quatrième type de rapport se fait dans `src/templates.js` : l'interface et le
 PDF s'y adaptent.
+
+Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
+ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
 
 ## À compléter
 
