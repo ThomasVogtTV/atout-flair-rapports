@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { TYPES } from './templates.js'
-import { frDate, frTime, filledRows, contaminatedCount } from './state.js'
+import { frDate, frTime, filledRows, contaminatedCount, fullName } from './state.js'
 
 // Mise en page des rapports Atout Flair (A4 portrait).
 // Les cotes sont en points PDF (1 pt = 1/72 pouce).
@@ -294,7 +294,7 @@ async function signatureBlock(sh, report, y) {
   }
 
   drawCol(M, 'Le technicien', 'Oberli Stessy · Atout Flair')
-  drawCol(M + colW + 16, 'Le locataire / le mandant', report.lieu?.locataire || report.mandant?.nom || '')
+  drawCol(M + colW + 16, 'Le locataire / le mandant', report.lieu?.locataire || fullName(report.mandant) || '')
 
   if (report.signature) {
     const img = await sh.doc.embedPng(dataUrlToBytes(report.signature))
@@ -329,7 +329,7 @@ async function drawDetection(sh, report, logo) {
     sh,
     'Mandant',
     [
-      ['Nom', report.mandant.nom],
+      ['Nom', fullName(report.mandant)],
       ['Adresse', report.mandant.adresse],
       ['NPA / Lieu', report.mandant.npaLieu],
       ['Email', report.mandant.email],
@@ -537,7 +537,7 @@ async function drawLignes(sh, report, logo) {
     sh,
     'Mandant',
     [
-      ['Nom', report.mandant.nom],
+      ['Nom', fullName(report.mandant)],
       ['Adresse', report.mandant.adresse],
       ['NPA / Lieu', report.mandant.npaLieu],
       ['Email', report.mandant.email],

@@ -60,7 +60,7 @@ export function newReport(type) {
     status: 'draft',
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    mandant: { type: '', nom: '', adresse: '', npaLieu: '', email: '', tel: '' },
+    mandant: { type: '', nom: '', prenom: '', adresse: '', npaLieu: '', email: '', tel: '' },
     lieu: {},
     rows: [],
     remarques: '',
@@ -80,6 +80,13 @@ export function newReport(type) {
   }
   return report
 }
+
+/**
+ * Nom affichable d'un mandant ou d'un contact. Le prenom est facultatif : une
+ * gerance n'en a pas, un particulier oui. Ordre administratif (nom d'abord),
+ * celui des rapports et du carnet.
+ */
+export const fullName = (p) => [p?.nom, p?.prenom].filter((s) => (s || '').trim()).join(' ').trim()
 
 export function contaminatedCount(report) {
   return report.rows.filter((r) => r.contamine === 'oui').length
@@ -105,14 +112,15 @@ export const listReports = async () =>
 // --- carnet d'adresses -----------------------------------------------------
 
 export const listContacts = async () =>
-  (await db.all('contacts')).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+  (await db.all('contacts')).sort((a, b) => fullName(a).localeCompare(fullName(b)))
 
 export async function rememberContact(mandant) {
   const nom = (mandant.nom || '').trim()
   if (!nom) return
-  const existing = (await listContacts()).find(
-    (c) => (c.nom || '').toLowerCase() === nom.toLowerCase()
-  )
+  // Comparaison sur nom + prenom : deux personnes du meme nom de famille sont
+  // deux contacts differents, pas une mise a jour de la premiere.
+  const key = fullName(mandant).toLowerCase()
+  const existing = (await listContacts()).find((c) => fullName(c).toLowerCase() === key)
   await db.put('contacts', { id: existing?.id ?? uid(), ...mandant, nom })
 }
 
@@ -139,7 +147,7 @@ const slug = (s) =>
 
 export function reportFilename(report) {
   const t = TYPES[report.type]
-  const who = slug(report.lieu.locataire || report.mandant.nom || 'Rapport')
+  const who = slug(report.lieu.locataire || fullName(report.mandant) || 'Rapport')
   const date = frDate(report.lieu.dateIntervention || report.rows[0]?.date || todayISO())
   const adresse = slug(report.lieu.adresseIntervention || report.lieu.adresse || '')
   const parts = [who, `${t.label} du ${date}`]

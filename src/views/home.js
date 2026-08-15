@@ -2,6 +2,7 @@
 // qui s'ouvre d'un clic sur la liste complete, filtrable par type.
 
 import { TYPE_LIST, typeOf } from '../templates.js'
+import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { ICONS } from '../ui/icons.js'
 import { currentTheme } from '../ui/theme.js'
@@ -23,7 +24,7 @@ const FILTERS = [
 ]
 
 function reportRowHTML(r, { showType = false } = {}) {
-  const who = r.lieu?.locataire || r.mandant?.nom || 'Sans nom'
+  const who = r.lieu?.locataire || fullName(r.mandant) || 'Sans nom'
   const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
   // Sur la largeur d'un telephone, la deuxieme ligne ne tient qu'un repere en
   // plus de l'adresse : le type quand la liste les melange, le numero quand

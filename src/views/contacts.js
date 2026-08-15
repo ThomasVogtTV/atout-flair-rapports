@@ -1,7 +1,9 @@
 // Ecran "Carnet de contacts" : la liste. L'ajout et la modification passent
 // par le formulaire de `src/contact-dialog.js`.
 
+import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
+import { mandantTypeLabel } from '../ui/chips.js'
 
 export function contactsView(view) {
   const contacts = view.contacts ?? []
@@ -11,8 +13,8 @@ export function contactsView(view) {
           (c) => `
           <li class="report-row" data-edit-contact="${c.id}">
             <div class="report-main">
-              <strong>${esc(c.nom || 'Sans nom')}</strong>
-              <span class="muted">${esc([c.adresse, c.npaLieu].filter(Boolean).join(', ')) || 'Adresse non renseignée'}</span>
+              <strong>${esc(fullName(c) || 'Sans nom')}</strong>
+              <span class="muted">${esc([mandantTypeLabel(c.type), c.adresse, c.npaLieu].filter(Boolean).join(' · ')) || 'Adresse non renseignée'}</span>
             </div>
             <div class="report-side">
               <button class="icon-btn" data-del-contact="${c.id}" title="Supprimer">✕</button>

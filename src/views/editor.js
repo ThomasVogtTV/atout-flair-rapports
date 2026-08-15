@@ -5,7 +5,7 @@ import { typeOf } from '../templates.js'
 import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon, TYPE_TONE } from '../ui/icons.js'
-import { mandantChips } from '../ui/chips.js'
+import { mandantPicker } from '../ui/chips.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
 // pour le rapport de detection, deux champs separes (comme le mandant)
@@ -174,22 +174,26 @@ function signatureSection(r) {
     </div>`
 }
 
-function mandantSection(r, contacts) {
-  const contactOptions = contacts.map((c) => `<option value="${esc(c.nom)}"></option>`).join('')
+// Les champs vont deux par deux : nom/prenom, adresse/NPA, email/telephone.
+// Chaque paire est une seule information du dossier, coupee en deux champs -
+// les separer sur deux lignes allongeait le formulaire sans rien clarifier.
+function mandantSection(view, r, contacts) {
+  const contactOptions = contacts.map((c) => `<option value="${esc(S.fullName(c))}"></option>`).join('')
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Mandant</span>
       <button class="link" data-act="save-contact">Ajouter au carnet</button>
     </h2>
     <div class="card grid2">
-      ${mandantChips(r.mandant.type, { attr: 'data-mandant-type', extraClass: 'full ' })}
-      <label class="full">Nom
+      <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type', open: view.mandantOpen })}</div>
+      <label>Nom
         <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
         <datalist id="contacts">${contactOptions}</datalist>
       </label>
-      <label class="full">Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
+      <label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>
+      <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
       <label>NPA/Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
-      <label>N° tél<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
-      <label class="full">Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
+      <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
+      <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
     </div>`
 }
 
@@ -231,7 +235,7 @@ export function editorView(view) {
     </header>
 
     <section class="pad">
-      ${mandantSection(r, view.contacts)}
+      ${mandantSection(view, r, view.contacts)}
 
       ${lieuSection(r, t)}
 

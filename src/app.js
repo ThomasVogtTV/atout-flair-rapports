@@ -29,6 +29,7 @@ let view = {
   newOpen: true,
   reportsOpen: false,
   filter: 'tous',
+  mandantOpen: false,
 }
 let saveTimer = null
 
@@ -147,11 +148,23 @@ root.addEventListener('change', async (ev) => {
     return
   }
 
-  // Le carnet remplit le reste des coordonnees des que le nom correspond.
+  // Le carnet remplit le reste des coordonnees des que le nom correspond -
+  // le nom saisi seul, ou le nom complet propose par la liste du carnet.
   if (el.dataset.path !== 'mandant.nom') return
-  const match = view.contacts.find((c) => (c.nom || '').toLowerCase() === el.value.trim().toLowerCase())
+  const typed = el.value.trim().toLowerCase()
+  const match = view.contacts.find(
+    (c) => S.fullName(c).toLowerCase() === typed || (c.nom || '').trim().toLowerCase() === typed
+  )
   if (!match) return
-  view.report.mandant = { nom: match.nom, adresse: match.adresse, npaLieu: match.npaLieu, email: match.email, tel: match.tel }
+  view.report.mandant = {
+    type: match.type ?? '',
+    nom: match.nom,
+    prenom: match.prenom ?? '',
+    adresse: match.adresse,
+    npaLieu: match.npaLieu,
+    email: match.email,
+    tel: match.tel,
+  }
   if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
   await S.saveReport(view.report)
   render()
@@ -273,15 +286,20 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
-  // --- type de mandant (choix unique)
+  // --- type de mandant : bouton qui deplie les quatre choix
+  if (el.closest('[data-picker]')) {
+    view.mandantOpen = !view.mandantOpen
+    return render()
+  }
+
   const chip = el.closest('.chip')
   if (chip && chip.closest('[data-mandant-type]')) {
-    const group = chip.closest('[data-mandant-type]')
     const value = chip.dataset.val
     view.report.mandant.type = view.report.mandant.type === value ? '' : value
-    group.querySelectorAll('.chip').forEach((b) => b.classList.toggle('on', b.dataset.val === view.report.mandant.type))
+    // Un choix referme le selecteur, comme une liste deroulante.
+    view.mandantOpen = false
     scheduleSave()
-    return
+    return render()
   }
 
   // --- puce de nom de piece rapide (remplit sans ouvrir le clavier)
