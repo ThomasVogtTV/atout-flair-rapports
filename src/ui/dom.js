@@ -27,6 +27,13 @@ export function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200)
 }
 
+// L'affichage est repousse d'une frame pour que la transition CSS parte du
+// bon etat. Si le travail se termine avant cette frame - un PDF leger se
+// genere en quelques millisecondes - hideLoading passait avant l'ajout de la
+// classe, et l'ecran de chargement s'affichait ensuite pour ne plus jamais
+// partir. La frame en attente est donc annulee a la fermeture.
+let loadingFrame = null
+
 export function showLoading(message) {
   let el = document.querySelector('.loading-overlay')
   if (!el) {
@@ -36,9 +43,12 @@ export function showLoading(message) {
     document.body.appendChild(el)
   }
   el.querySelector('.loading-text').textContent = message
-  requestAnimationFrame(() => el.classList.add('show'))
+  cancelAnimationFrame(loadingFrame)
+  loadingFrame = requestAnimationFrame(() => el.classList.add('show'))
 }
 
 export function hideLoading() {
+  cancelAnimationFrame(loadingFrame)
+  loadingFrame = null
   document.querySelector('.loading-overlay')?.classList.remove('show')
 }
