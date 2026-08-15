@@ -515,14 +515,11 @@ input:disabled { opacity: 0.55; }
   padding: 4px 0;
 }
 
-/* --- accueil --- */
-.type-grid { display: grid; gap: 10px; }
+/* --- accueil : les deux volets (creation / rangement) --- */
 
-/* Traitement couleur partage par les cartes "Nouveau rapport" et les
-   dossiers "Mes rapports" : meme degrade/liseret/ombre teintes selon le
-   type, pour que les deux sections lisent comme un seul systeme plutot
-   que creation (vive) / rangement (neutre) separement. */
-.type-card, .folder {
+/* Degrade/liseret/ombre teintes en rouge par defaut, la couleur de la
+   maison ; les variantes ci-dessous les reteintent par type. */
+.folder {
   background: var(--card);
   background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--red-soft) 60%, var(--card)));
   border: 1px solid var(--line);
@@ -531,33 +528,11 @@ input:disabled { opacity: 0.55; }
   box-shadow: var(--shadow-sm);
   box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--red) 50%, transparent), var(--shadow-sm);
 }
-.type-card {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 14px 15px;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.15s;
-}
-.type-card:active { transform: scale(0.985); box-shadow: var(--shadow-sm); }
 
-.type-card.card-immeuble, .folder.card-immeuble {
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--blue-soft) 60%, var(--card)));
-  border-color: color-mix(in srgb, var(--blue) 20%, var(--line-strong));
-  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--blue) 50%, transparent), var(--shadow-sm);
-}
-.type-card.card-hotel, .folder.card-hotel {
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--plum-soft) 60%, var(--card)));
-  border-color: color-mix(in srgb, var(--plum) 20%, var(--line-strong));
-  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--plum) 50%, transparent), var(--shadow-sm);
-}
-
-.type-icon {
+/* Pastille d'icone : meme peinture pour la grande (en-tete d'un volet) et la
+   petite (choix d'un type), seules les dimensions changent. */
+.type-icon, .type-chip-icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 15px;
   background: var(--red);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
@@ -567,27 +542,50 @@ input:disabled { opacity: 0.55; }
   place-items: center;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--red) 65%, transparent);
 }
+.type-icon { width: 48px; height: 48px; border-radius: 15px; }
 .type-icon svg { width: 23px; height: 23px; }
+.type-chip-icon { width: 34px; height: 34px; border-radius: 11px; }
+.type-chip-icon svg { width: 19px; height: 19px; }
 
-.type-icon.icon-immeuble {
+.type-icon.icon-immeuble, .type-chip-icon.icon-immeuble {
   background: var(--blue);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, color-mix(in srgb, var(--blue) 70%, white), var(--blue) 85%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--blue) 65%, transparent);
 }
-.type-icon.icon-hotel {
+.type-icon.icon-hotel, .type-chip-icon.icon-hotel {
   background: var(--plum);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, color-mix(in srgb, var(--plum) 70%, white), var(--plum) 85%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum) 65%, transparent);
 }
-.type-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.type-name { font-weight: 700; font-size: 15.5px; letter-spacing: -0.15px; }
-.type-hint { color: var(--muted); font-size: 12.5px; }
-.type-chevron { color: var(--muted-soft); flex-shrink: 0; }
-.type-chevron svg { width: 17px; height: 17px; }
+
+/* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
+   entiere cliquable : la cible reste large malgre la taille reduite. */
+.type-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.type-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 6px 10px;
+  min-height: var(--tap);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--red) 22%, var(--line-strong));
+  border-radius: var(--radius-md);
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.type-chip.card-immeuble { border-color: color-mix(in srgb, var(--blue) 22%, var(--line-strong)); }
+.type-chip.card-hotel { border-color: color-mix(in srgb, var(--plum) 22%, var(--line-strong)); }
+.type-chip:active { transform: scale(0.96); }
+.type-chip-name { font-weight: 700; font-size: 13px; letter-spacing: -0.1px; }
+.type-chip-hint { font-size: 10.5px; line-height: 1.25; color: var(--muted); }
 
 .report-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .report-row {

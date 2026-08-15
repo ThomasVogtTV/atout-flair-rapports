@@ -8,6 +8,7 @@ export const ICONS = {
   immeuble: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="5" y="3.5" width="14" height="17" rx="1.2"/><rect x="5" y="3.5" width="14" height="17" rx="1.2"/><path d="M8.5 7.5h1M14.5 7.5h1M8.5 11.5h1M14.5 11.5h1M8.5 15.5h1M14.5 15.5h1"/><path d="M10 20.5v-3.2a2 2 0 0 1 4 0v3.2"/></svg>`,
   hotel: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3z"/><path d="M3.5 19v-9"/><path d="M3.5 14.5h17V19"/><path d="M3.5 14.5v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3"/><path d="M13.5 11h5a2 2 0 0 1 2 2v1.5"/></svg>`,
   chevron: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="m9 5 7 7-7 7"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="8.5"/><path d="M12 8.2v7.6M8.2 12h7.6"/></svg>`,
   person: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="12" cy="8.2" r="3.4"/><circle cx="12" cy="8.2" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z"/><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.2"/></svg>`,
   room: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="6" y="3" width="12" height="18" rx="1"/><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12.3" r="0.9" fill="currentColor" stroke="none"/><path d="M4.3 21h15.4"/></svg>`,

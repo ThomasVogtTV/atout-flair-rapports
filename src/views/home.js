@@ -110,19 +110,35 @@ function myReportsHTML(view) {
     </div>`
 }
 
-export function homeView(view) {
-  const cards = TYPE_LIST.map(
+// Bloc "Nouveau rapport" : meme volet repliable que "Mes rapports", avec les
+// trois types cote a cote. Ouvert par defaut - creer un rapport est le geste
+// le plus frequent de l'app, il ne doit pas couter un clic de plus.
+function newReportHTML(view) {
+  const open = view.newOpen
+  const choices = TYPE_LIST.map(
     (t) => `
-    <button class="type-card card-${t.id}" data-new="${t.id}">
-      <span class="type-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
-      <span class="type-body">
-        <span class="type-name">${esc(t.label)}</span>
-        <span class="type-hint">${esc(t.hint)}</span>
-      </span>
-      <span class="type-chevron">${ICONS.chevron}</span>
+    <button type="button" class="type-chip card-${t.id}" data-new="${t.id}">
+      <span class="type-chip-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
+      <span class="type-chip-name">${esc(shortLabel(t))}</span>
+      <span class="type-chip-hint">${esc(t.hint)}</span>
     </button>`
   ).join('')
 
+  return `
+    <div class="folder card-new${open ? ' open' : ''}">
+      <button class="folder-head" data-toggle-new>
+        <span class="type-icon icon-new">${ICONS.plus}</span>
+        <span class="folder-body">
+          <span class="folder-name">Nouveau rapport</span>
+          <span class="folder-summary">Détection, immeuble ou hôtel</span>
+        </span>
+        <span class="folder-chevron">${ICONS.chevron}</span>
+      </button>
+      ${open ? `<div class="folder-panel"><div class="type-chips">${choices}</div></div>` : ''}
+    </div>`
+}
+
+export function homeView(view) {
   return `
     <header class="top">
       <img src="/logo.jpg" alt="Atout Flair" class="logo" />
@@ -141,9 +157,7 @@ export function homeView(view) {
       </div>
     </div>
     <section class="content-sheet">
-      <h2 class="section-title">Nouveau rapport</h2>
-      <div class="type-grid">${cards}</div>
-
+      ${newReportHTML(view)}
       <div class="my-reports">${myReportsHTML(view)}</div>
     </section>`
 }
