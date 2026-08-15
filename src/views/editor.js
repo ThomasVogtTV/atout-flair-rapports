@@ -179,17 +179,19 @@ function signatureSection(r) {
 // les separer sur deux lignes allongeait le formulaire sans rien clarifier.
 function mandantSection(view, r, contacts) {
   const contactOptions = contacts.map((c) => `<option value="${esc(S.fullName(c))}"></option>`).join('')
+  // Une gerance est une societe : pas de prenom, et le nom prend la ligne.
+  const societe = r.mandant.type === 'gerance'
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Mandant</span>
       <button class="link" data-act="save-contact">Ajouter au carnet</button>
     </h2>
     <div class="card grid2">
       <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type', open: view.mandantOpen })}</div>
-      <label>Nom
+      <label class="${societe ? 'full' : ''}">Nom
         <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
         <datalist id="contacts">${contactOptions}</datalist>
       </label>
-      <label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>
+      ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
       <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
       <label>NPA/Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
       <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>

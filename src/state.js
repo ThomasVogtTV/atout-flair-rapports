@@ -82,11 +82,18 @@ export function newReport(type) {
 }
 
 /**
- * Nom affichable d'un mandant ou d'un contact. Le prenom est facultatif : une
- * gerance n'en a pas, un particulier oui. Ordre administratif (nom d'abord),
- * celui des rapports et du carnet.
+ * Nom affichable d'un mandant ou d'un contact, dans l'ordre administratif
+ * (nom puis prenom), celui des rapports et du carnet.
+ *
+ * Une gerance est une societe : elle n'a pas de prenom. Un prenom saisi puis
+ * bascule en "Gerance" est ignore plutot qu'efface - repasser en particulier
+ * le retrouve, et il ne peut pas ressortir tout seul dans un PDF.
  */
-export const fullName = (p) => [p?.nom, p?.prenom].filter((s) => (s || '').trim()).join(' ').trim()
+export const fullName = (p) => {
+  if (!p) return ''
+  const parts = p.type === 'gerance' ? [p.nom] : [p.nom, p.prenom]
+  return parts.filter((s) => (s || '').trim()).join(' ').trim()
+}
 
 export function contaminatedCount(report) {
   return report.rows.filter((r) => r.contamine === 'oui').length
