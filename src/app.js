@@ -93,6 +93,9 @@ function render() {
   const key = `${view.screen}:${view.report?.id ?? ''}`
   const navigated = key !== lastViewKey
   lastViewKey = key
+  // La photo de fond n'apparait que sur l'accueil : derriere un formulaire,
+  // elle nuirait a la lecture des champs (voir .app-bg dans style.css).
+  document.body.dataset.screen = view.screen
   root.innerHTML = view.screen === 'home' ? homeView(view) : view.screen === 'contacts' ? contactsView(view) : editorView(view)
   if (navigated) {
     document.scrollingElement.scrollTop = 0

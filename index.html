@@ -22,6 +22,13 @@
     <title>Atout Flair — Rapports de détection</title>
   </head>
   <body>
+    <!-- Photo de fond de l'accueil : posee ici plutot que dans l'ecran, pour
+         qu'elle ne soit ni rechargee ni redessinee a chaque rendu. Le voile
+         par-dessus garde le contenu lisible. -->
+    <div class="app-bg" aria-hidden="true">
+      <img src="/hero-dog.webp" alt="" />
+      <span class="app-bg-veil"></span>
+    </div>
     <main id="app"></main>
     <script type="module" src="/src/main.js"></script>
   </body>

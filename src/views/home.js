@@ -149,13 +149,10 @@ export function homeView(view) {
       <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
       <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
     </header>
-    <div class="hero-bg">
-      <img src="/hero-dog.webp" alt="" />
-      <div class="hero-caption">
-        <span class="hero-kicker">Détection canine professionnelle</span>
-        <h2>Rapports de détection</h2>
-        <p>Saisie, photos, signature et envoi sur place</p>
-      </div>
+    <div class="hero-caption">
+      <span class="hero-kicker">Détection canine professionnelle</span>
+      <h2>Rapports de détection</h2>
+      <p>Saisie, photos, signature et envoi sur place</p>
     </div>
     <section class="content-sheet">
       ${newReportHTML(view)}
