@@ -117,10 +117,12 @@ ville des signatures sont en haut de `src/pdf.js` (`SOCIETE`, `VILLE`, `FOOTER_L
 `DEFAULT_REMARQUES` dans `src/state.js` : il disparaît de lui-même si une pièce est
 déclarée contaminée, pour qu'un rapport ne puisse pas contredire son propre tableau.
 
-Le rouge ne signale qu'une chose, dans l'app comme dans le PDF : la présence de punaises
-de lit. Tout le reste — liserets, filets, pastilles, annotations sur les photos — porte le
-vert de la maison (`--accent` dans `src/style.css`, `ACCENT` dans `src/pdf.js`, `MARK`
-dans `src/photo.js`).
+Trois couleurs, trois sens, dans l'app comme dans le PDF : le **rouge** dit la présence de
+punaises de lit, le **vert** son absence, et le **cyan** n'est que du décor — liserets,
+filets, pastilles, annotations sur les photos. Une couleur qui n'apparaît que là où elle
+compte se voit de loin. Les teintes sont dans `--accent` (`src/style.css`), `ACCENT`
+(`src/pdf.js`) et `MARK` (`src/photo.js`) ; celle du PDF est volontairement assombrie pour
+tenir la photocopie, celle des annotations franche pour ressortir sur une photo.
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.

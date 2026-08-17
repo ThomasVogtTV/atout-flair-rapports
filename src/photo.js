@@ -43,10 +43,11 @@ function loadImage(src) {
   })
 }
 
-// Couleur des annotations : le vert de la maison, franc et sature pour rester
-// visible sur un matelas clair comme sur un sommier sombre. Le rouge est
-// reserve au signalement d'une contamination (voir style.css).
-const MARK = '#14c25a'
+// Couleur des annotations : le cyan de la maison, mais sa version franche et
+// non le cyan assombri du reste. Ce trait doit ressortir sur un matelas clair
+// comme sur un sommier sombre - il est regarde a l'ecran, jamais photocopie.
+// Le rouge, lui, reste reserve au signalement d'une contamination.
+const MARK = '#00a6c8'
 
 function drawShapes(ctx, shapes, imgW) {
   const base = Math.max(3, imgW / 320)

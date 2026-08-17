@@ -17,16 +17,17 @@
   --fill-text: #fff;
   --header-bg: rgba(252, 251, 249, 0.86);
   --bar-bg: rgba(255, 255, 255, 0.9);
-  /* Le rouge ne signale plus qu'une chose dans l'app comme dans le PDF : la
-     presence de punaises de lit (bouton "Contaminee", liseret et badge de la
-     carte, compteur de pieces contaminees, bandeau de verdict). Tout le decor
-     - liserets, filets, pastilles d'icones, mise au point des champs,
-     annotations sur les photos - porte l'accent vert de la maison. Un rouge
-     qui n'apparait que la ou il compte se voit de loin. */
-  --accent: #26985f;
-  --accent-soft: #e8f6ee;
-  --accent-ink: #1b7a49; /* pour du texte/une icone posee sur --accent-soft */
-  --accent-fill: #1b7a49; /* pour une surface pleine qui porte du blanc */
+  /* Trois couleurs, trois sens, dans l'app comme dans le PDF :
+       rouge  -> presence de punaises de lit (bouton "Contaminee", liseret et
+                 badge de la carte, compteur, bandeau de verdict) ;
+       vert   -> rien trouve (bouton "Non", bandeau de verdict d'un rapport sain) ;
+       cyan   -> le decor, et lui seul : liserets, filets, pastilles d'icones,
+                 mise au point des champs, annotations sur les photos.
+     Une couleur qui n'apparait que la ou elle compte se voit de loin. */
+  --accent: #0e7c93;
+  --accent-soft: #e4f2f6;
+  --accent-ink: #0b6477; /* pour du texte/une icone posee sur --accent-soft */
+  --accent-fill: #0c6d82; /* pour une surface pleine qui porte du blanc */
   --red: #c02a2a;
   --red-soft: #fbeaea;
   --green: #1f7a4d;
@@ -64,10 +65,10 @@
     --fill-text: #171513;
     --header-bg: rgba(23, 21, 19, 0.86);
     --bar-bg: rgba(33, 31, 28, 0.9);
-    --accent: #5ec98d;
-    --accent-soft: #16311f;
-    --accent-ink: #5ec98d;
-    --accent-fill: #2b8a58;
+    --accent: #4fc3dd;
+    --accent-soft: #10303a;
+    --accent-ink: #4fc3dd;
+    --accent-fill: #1d7f96;
     --red: #e8615a;
     --red-soft: #3a1f1c;
     --green: #52b485;
@@ -96,10 +97,10 @@
   --fill-text: #171513;
   --header-bg: rgba(23, 21, 19, 0.86);
   --bar-bg: rgba(33, 31, 28, 0.9);
-  --accent: #5ec98d;
-  --accent-soft: #16311f;
-  --accent-ink: #5ec98d;
-  --accent-fill: #2b8a58;
+  --accent: #4fc3dd;
+  --accent-soft: #10303a;
+  --accent-ink: #4fc3dd;
+  --accent-fill: #1d7f96;
   --red: #e8615a;
   --red-soft: #3a1f1c;
   --green: #52b485;

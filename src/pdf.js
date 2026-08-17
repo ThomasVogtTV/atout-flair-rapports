@@ -30,15 +30,16 @@ const LINE_HAIR = rgb(0.72, 0.70, 0.67)     // filet fin (doit rester lisible ap
 const LINE_FRAME = rgb(0.55, 0.54, 0.52)    // cadre des tableaux et blocs
 const FILL_HEAD = rgb(0.945, 0.938, 0.925)  // trame des bandeaux et entetes de tableau
 const FILL_ZEBRA = rgb(0.976, 0.972, 0.964) // trame tres legere, une ligne sur deux
-// Le rouge ne dit qu'une chose dans ce document : la presence de punaises de
-// lit (bandeau de verdict, croix "OUI", nombre de pieces contaminees). Tout ce
-// qui n'est que decor - liserets, filets, numero de rapport, trait du pied de
-// page - porte le vert de la maison : quand du rouge apparait, il compte.
+// Trois couleurs, trois sens : le rouge dit la presence de punaises de lit, le
+// vert son absence, et le cyan n'est que du decor - liserets, filets, numero de
+// rapport, trait du pied de page. Quand du rouge ou du vert apparait, il compte.
 const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : contamination, uniquement
 const RED_SOFT = rgb(0.984, 0.918, 0.918)   // = --red-soft #fbeaea
 const GREEN = rgb(0.122, 0.478, 0.302)      // = --green #1f7a4d : rapport sans contamination
 const GREEN_SOFT = rgb(0.906, 0.961, 0.933) // = --green-soft #e7f5ee
-const ACCENT = rgb(0.149, 0.596, 0.373)     // = --accent #26985f : accent de marque
+// Cyan assombri plutot que franc : un filet de 2 pt en cyan clair devient pale
+// a la photocopie ou en impression economique.
+const ACCENT = rgb(0.055, 0.486, 0.576)     // = --accent #0e7c93 : accent de marque
 
 // Coordonnees de l'entreprise, imprimees en pied de chaque page.
 const SOCIETE = 'Atout-Flair Sàrl'
