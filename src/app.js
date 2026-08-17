@@ -231,21 +231,6 @@ function insertNewRow() {
   S.saveReport(view.report)
 }
 
-// Deplace une ligne d'un cran. Les numeros des cartes etant leur position, la
-// carte entiere est redessinee, puis ramenee sous les yeux : sans cela, la
-// ligne qu'on vient de monter sort du champ de vision au premier appui.
-async function moveRow(rowId, dir) {
-  const rows = view.report.rows
-  const i = rows.findIndex((r) => r.id === rowId)
-  const j = i + dir
-  if (i < 0 || j < 0 || j >= rows.length) return
-  ;[rows[i], rows[j]] = [rows[j], rows[i]]
-  await S.saveReport(view.report)
-  render()
-  const card = root.querySelector(`[data-row="${rowId}"]`)
-  card?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-}
-
 // Fin d'un glissement : la carte a ete deposee a un nouveau rang, le modele
 // suit. Pas de scrollIntoView ici - la carte est deja sous les yeux, c'est le
 // doigt qui l'y a mise.
@@ -391,10 +376,6 @@ root.addEventListener('click', async (ev) => {
     scheduleSave()
     return
   }
-
-  // --- deplacement d'une ligne (monter / descendre)
-  const moveDir = el.closest('[data-move]')?.dataset.move
-  if (moveDir) return moveRow(el.closest('[data-row]')?.dataset.row, moveDir === 'up' ? -1 : 1)
 
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')

@@ -20,8 +20,7 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
   toucher au réglage — le cas du collègue envoyé faire une détection.
 - **Pièces réordonnables au doigt** : on attrape une carte par son badge numéroté et on la
   fait glisser où l'on veut — la liste défile toute seule quand on approche d'un bord, un
-  espace en pointillé montre la place visée. Les flèches ↑ / ↓ restent là pour un décalage
-  d'un cran. L'ordre à l'écran est celui du PDF.
+  espace en pointillé montre la place visée. L'ordre à l'écran est celui du PDF.
 - **Un seul PDF** : rapport + photos annotées + rapports individuels des appartements
   contaminés (immeuble).
 - **Hors ligne** : l'app démarre et fonctionne sans réseau (cave, sous-sol, hôtel sans
@@ -82,6 +81,13 @@ Ouvrir l'adresse du site, puis :
 - **iPhone / iPad (Safari)** : Partager → « Sur l'écran d'accueil ».
 
 L'icône se comporte ensuite comme une application : plein écran, démarrage hors ligne.
+
+Une app installée n'est presque jamais fermée : reprise depuis l'arrière-plan, elle
+continuerait de faire tourner le code du jour où elle a été ouverte. Elle se recharge donc
+d'elle-même dès qu'une nouvelle version prend la main — mais depuis l'accueil seulement,
+jamais au milieu d'un rapport (voir `src/main.js`). Pour forcer la mise à jour tout de
+suite : fermer complètement l'app (la balayer hors des applications récentes) et la
+rouvrir.
 
 ## Structure
 

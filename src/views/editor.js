@@ -54,15 +54,6 @@ function photoStrip(photos) {
     .join('')}</div>`
 }
 
-// Boutons de deplacement d'une ligne. Places dans la rangee d'actions du bas
-// plutot que dans l'en-tete de la carte : la tete est deja pleine (badge, nom,
-// suppression) et une cible de 44px se tape sans viser, gants compris.
-function moveButtonsHTML(index, count) {
-  return `
-    <button class="btn ghost move-btn" data-move="up" title="Monter"${index === 0 ? ' disabled' : ''}>↑</button>
-    <button class="btn ghost move-btn" data-move="down" title="Descendre"${index === count - 1 ? ' disabled' : ''}>↓</button>`
-}
-
 // Carte d'une piece : badge numerote colore par statut, labels persistants,
 // puces de noms courants tant que le champ est vide (le champ texte reste
 // disponible pour les cas hors-liste).
@@ -95,10 +86,7 @@ function pieceCardHTML(r, t, row, index) {
       <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
     </label>
     ${photoStrip(photos)}
-    <div class="row-actions">
-      ${moveButtonsHTML(index, r.rows.length)}
-      <button class="btn ghost" data-photo="${row.id}">+ Photo de cette pièce</button>
-    </div>
+    <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
   </div>`
 }
 
@@ -128,7 +116,6 @@ function lineCardHTML(r, t, row, index, children) {
     </label>
     ${photoStrip(photos)}
     <div class="row-actions">
-      ${moveButtonsHTML(index, r.rows.length)}
       <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
       ${
         isHotel

@@ -843,7 +843,9 @@ input:disabled { opacity: 0.55; }
 .chip.on .chip-count { background: color-mix(in srgb, var(--fill-text) 22%, transparent); color: var(--fill-text); }
 
 /* --- lignes du rapport --- */
-.rows { display: grid; gap: 8px; }
+/* position: relative -> repere de la carte en cours de glissement, qui passe en
+   absolu sans quitter la liste (voir ui/dragsort.js). */
+.rows { display: grid; gap: 8px; position: relative; }
 .row-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -886,11 +888,18 @@ input:disabled { opacity: 0.55; }
    saisit, et touch-action:none rend le glissement au doigt possible (sans
    quoi le navigateur y verrait un defilement de la page). */
 .piece-badge[data-grip] {
+  position: relative;
   display: flex;
   gap: 4px;
-  width: 34px;
+  width: 36px;
   cursor: grab;
+  /* touch-action: none -> le doigt pose ici ne fait pas defiler la page.
+     touch-callout / user-select -> un appui maintenu sur iOS ne declenche pas
+     le menu de selection, qui annulerait le geste en cours. */
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .piece-badge[data-grip]::before {
   content: '';
@@ -900,18 +909,33 @@ input:disabled { opacity: 0.55; }
   background: radial-gradient(circle at 50% 50%, currentColor 40%, transparent 44%) 0 0 / 3px 4.5px repeat-y;
   opacity: 0.45;
 }
+/* Zone de prise elargie, invisible : le badge reste petit a l'oeil mais se
+   attrape au pouce sans viser. */
+.piece-badge[data-grip]::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: -10px;
+  right: -7px;
+}
 .piece-badge[data-grip]:active { cursor: grabbing; }
 
-/* Carte en vol : elle a quitte le flux et suit le doigt (voir ui/dragsort.js). */
+/* Carte en vol : hors du flux, elle suit le doigt sans quitter sa liste
+   (voir ui/dragsort.js). z-index 4 : au-dessus des autres cartes et de la
+   barre du bas, en dessous de l'en-tete colle en haut. */
+/* Pas de pointer-events: none ici : la poignee qu'elle contient est justement
+   l'element qui retient le doigt jusqu'au relachement. */
 .row-card.row-dragging {
-  position: fixed;
-  z-index: 40;
-  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+  left: 0;
   margin: 0;
   transform: scale(1.025);
   box-shadow: 0 20px 36px -16px rgba(20, 18, 16, 0.45), var(--shadow-md);
 }
-body.dragging-rows { user-select: none; -webkit-user-select: none; }
+/* Un second doigt ne vient pas faire defiler la page pendant le glissement. */
+body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action: none; }
 
 /* La place qu'elle prendra si on lache maintenant. */
 .row-placeholder {
@@ -934,17 +958,6 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; }
 .small-input { padding: 8px 7px; font-size: 13px; }
 .row-actions { display: flex; gap: 7px; }
 .row-actions .btn { flex: 1; }
-/* Monter / descendre : largeur fixe, la place restante va aux boutons qui
-   portent du texte. Le bouton inutile (premiere ou derniere ligne) reste en
-   place, en retrait : la rangee ne bouge pas d'une carte a l'autre. */
-.move-btn {
-  flex: 0 0 44px;
-  padding: 0;
-  font-size: 17px;
-  line-height: 1;
-  color: var(--ink-soft);
-}
-.move-btn:disabled { opacity: 0.3; }
 
 .tech-sig { display: grid; gap: 6px; justify-items: center; }
 .tech-sig .btn.wide { margin-top: 4px; }
