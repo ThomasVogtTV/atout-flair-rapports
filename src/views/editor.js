@@ -72,7 +72,7 @@ function pieceCardHTML(r, t, row, index) {
   return `
   <div class="row-card" data-row="${row.id}" data-status="${status}">
     <div class="row-head">
-      <span class="piece-badge">${index + 1}</span>
+      <span class="piece-badge" data-grip title="Glisser pour changer la place">${index + 1}</span>
       <label class="piece-name-wrap">
         <span class="field-label">Nom de la pièce</span>
         <input class="row-name piece-name" data-row-field="nom" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
@@ -110,7 +110,7 @@ function lineCardHTML(r, t, row, index, children) {
   return `
   <div class="row-card" data-row="${row.id}" data-status="${status}">
     <div class="row-head">
-      <span class="piece-badge">${index + 1}</span>
+      <span class="piece-badge" data-grip title="Glisser pour changer la place">${index + 1}</span>
       <input class="row-name small-input" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'N° chambre' : 'N° appart.'}" />
       <input class="row-name small-input" data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="Étage" />
       <input type="date" class="small-input" data-row-field="date" value="${esc(row.date)}" />

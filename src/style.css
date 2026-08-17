@@ -882,6 +882,44 @@ input:disabled { opacity: 0.55; }
   border: 1px solid transparent;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+/* Poignee de deplacement : la colonne de points annonce que le badge se
+   saisit, et touch-action:none rend le glissement au doigt possible (sans
+   quoi le navigateur y verrait un defilement de la page). */
+.piece-badge[data-grip] {
+  display: flex;
+  gap: 4px;
+  width: 34px;
+  cursor: grab;
+  touch-action: none;
+}
+.piece-badge[data-grip]::before {
+  content: '';
+  width: 3px;
+  height: 13px;
+  flex-shrink: 0;
+  background: radial-gradient(circle at 50% 50%, currentColor 40%, transparent 44%) 0 0 / 3px 4.5px repeat-y;
+  opacity: 0.45;
+}
+.piece-badge[data-grip]:active { cursor: grabbing; }
+
+/* Carte en vol : elle a quitte le flux et suit le doigt (voir ui/dragsort.js). */
+.row-card.row-dragging {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  margin: 0;
+  transform: scale(1.025);
+  box-shadow: 0 20px 36px -16px rgba(20, 18, 16, 0.45), var(--shadow-md);
+}
+body.dragging-rows { user-select: none; -webkit-user-select: none; }
+
+/* La place qu'elle prendra si on lache maintenant. */
+.row-placeholder {
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 55%, var(--line-strong));
+  background: var(--accent-soft);
+  border-radius: var(--radius-lg);
+}
+
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
 .piece-name { font-weight: 700; font-size: 14.5px; padding: 5px 4px; }
 .field-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }

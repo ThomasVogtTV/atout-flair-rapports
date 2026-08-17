@@ -9,6 +9,7 @@ import { fileToPhoto, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
 import { pendingCount, flushQueue } from './mailer.js'
 import { root, toast, pulse } from './ui/dom.js'
+import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
 import { toggleTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
@@ -245,6 +246,17 @@ async function moveRow(rowId, dir) {
   card?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
+// Fin d'un glissement : la carte a ete deposee a un nouveau rang, le modele
+// suit. Pas de scrollIntoView ici - la carte est deja sous les yeux, c'est le
+// doigt qui l'y a mise.
+async function dropRow(from, to) {
+  const rows = view.report.rows
+  const [row] = rows.splice(from, 1)
+  rows.splice(to, 0, row)
+  await S.saveReport(view.report)
+  render()
+}
+
 // Une piece declaree contaminee contredit le constat par defaut ("aucune
 // trace visible") : on le retire tant qu'il n'a pas ete touche, pour qu'un
 // rapport ne puisse pas partir en affirmant l'inverse de son tableau.
@@ -286,6 +298,16 @@ async function removeRowAnimated(rowId) {
   card.addEventListener('transitionend', commit, { once: true })
   setTimeout(commit, 320) // filet de securite si transitionend ne part pas
 }
+
+// Glissement d'une carte par son badge numerote. Sur une poignee dediee plutot
+// que sur la carte entiere : ailleurs, le meme geste doit continuer a faire
+// defiler la page et a saisir dans les champs.
+root.addEventListener('pointerdown', (ev) => {
+  const grip = ev.target.closest?.('[data-grip]')
+  if (!grip || ev.button > 0) return
+  ev.preventDefault()
+  startRowDrag(ev, grip, dropRow)
+})
 
 root.addEventListener('click', async (ev) => {
   const el = ev.target

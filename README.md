@@ -18,8 +18,10 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
   enregistrée une fois sur l'appareil, elle remplit la case « Le technicien » de chaque
   nouveau rapport. Le nom et la signature restent modifiables dans le rapport, sans
   toucher au réglage — le cas du collègue envoyé faire une détection.
-- **Pièces réordonnables** : les flèches ↑ / ↓ d'une carte changent son rang, donc son
-  numéro, dans l'écran de saisie comme dans le PDF.
+- **Pièces réordonnables au doigt** : on attrape une carte par son badge numéroté et on la
+  fait glisser où l'on veut — la liste défile toute seule quand on approche d'un bord, un
+  espace en pointillé montre la place visée. Les flèches ↑ / ↓ restent là pour un décalage
+  d'un cran. L'ordre à l'écran est celui du PDF.
 - **Un seul PDF** : rapport + photos annotées + rapports individuels des appartements
   contaminés (immeuble).
 - **Hors ligne** : l'app démarre et fonctionne sans réseau (cave, sous-sol, hôtel sans
@@ -90,7 +92,7 @@ L'icône se comporte ensuite comme une application : plein écran, démarrage ho
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
 | `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
 | `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js` |
-| `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js` |
+| `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js`, `dragsort.js` (glissement des cartes) |
 | `src/send.js` | Aperçu PDF, dialogue d'envoi, partage vers la messagerie |
 | `src/contact-dialog.js` | Formulaire d'ajout/modification d'un contact |
 | `src/photo.js` | Capture, compression, éditeur d'annotations |
