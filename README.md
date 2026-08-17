@@ -12,8 +12,12 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
 - **Trois types de rapport** : détection (appartement / maison), immeuble, hôtel.
   La mise en page PDF reprend les modèles Excel existants, logo compris.
 - **Carnet de mandants** : régies et gérances enregistrées, saisies une seule fois.
+- **Le moins de saisie possible sur place** : date et heure du jour déjà posées, deux cases
+  pour reprendre du mandant son adresse et son nom quand il est aussi l'occupant, et le
+  constat le plus fréquent déjà écrit dans les remarques. Rien à taper quand rien n'est
+  trouvé.
 - **Photos rattachées à la pièce** : la photo prise depuis une ligne porte déjà le nom de
-  la pièce ; annotation au doigt (cercle, flèche, texte) en rouge, comme sous Paint.
+  la pièce ; annotation au doigt (cercle, flèche, texte) en cyan, comme sous Paint.
 - **Signature tactile** du locataire, et signature du technicien reprise d'office :
   enregistrée une fois sur l'appareil, elle remplit la case « Le technicien » de chaque
   nouveau rapport. Le nom et la signature restent modifiables dans le rapport, sans
@@ -93,6 +97,7 @@ rouvrir.
 
 | Fichier | Rôle |
 | --- | --- |
+| `src/main.js` | Démarrage, service worker, rechargement automatique des mises à jour |
 | `src/templates.js` | Définition des trois types de rapport (colonnes, champs, pièces) |
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
@@ -105,6 +110,7 @@ rouvrir.
 | `src/signature.js` | Pad de signature |
 | `src/pdf.js` | Génération du PDF (mise en page Atout Flair) |
 | `src/mailer.js` | Envoi et file d'attente hors ligne |
+| `src/style.css` | Toute la mise en forme, jetons de couleur en tête de fichier |
 | `api/send.js` | Fonction serveur d'envoi du mail |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |
 
@@ -132,3 +138,6 @@ ne contient plus que l'enchaînement des écrans et les réactions aux gestes de
 - Identifiants SMTP de `info@atout-flair.ch`.
 - Le logo utilisé (`public/logo.jpg`) est extrait des PDF existants ; le remplacer par
   le fichier d'origine en haute définition dès qu'il est disponible.
+- Le nom d'expéditeur des mails est resté « Atout Flair » alors que le PDF signe
+  « Atout-Flair Sàrl ». Rien à changer dans le code : il suffit de définir `MAIL_FROM`
+  sur `Atout-Flair Sàrl <info@atout-flair.ch>` dans Vercel.

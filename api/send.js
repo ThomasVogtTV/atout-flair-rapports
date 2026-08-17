@@ -17,7 +17,7 @@
 
 // Rappel : la plateforme plafonne le corps d'une requete a 4,5 Mo. Le client
 // reduit les photos pour rester sous cette limite et bascule sur le partage
-// manuel si un rapport reste trop lourd (voir PDF_MAX dans src/app.js).
+// manuel si un rapport reste trop lourd (voir PDF_MAX dans src/send.js).
 
 const MAILBOX = 'info@atout-flair.ch'
 // APP_CODE est obligatoire : sans lui, l'URL du site suffirait a n'importe qui
