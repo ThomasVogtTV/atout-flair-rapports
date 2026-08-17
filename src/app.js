@@ -13,7 +13,7 @@ import { confirmLeave } from './ui/dialogs.js'
 import { toggleTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
-import { editorView, rowCardHTML, applySameAddress, LIEU_ADDR_KEYS } from './views/editor.js'
+import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog } from './send.js'
 
@@ -64,6 +64,9 @@ async function openContacts() {
 async function openReport(id) {
   const report = await S.loadReport(id)
   if (!report) return goHome()
+  // Rapport cree avant l'arrivee de la rubrique "Le technicien" : il reprend le
+  // technicien par defaut a l'ouverture, comme un rapport neuf.
+  if (!report.technicien) report.technicien = await S.loadTechnicien()
   view.report = report
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
@@ -73,6 +76,7 @@ async function openReport(id) {
 
 async function createReport(type) {
   const report = S.newReport(type)
+  report.technicien = await S.loadTechnicien()
   await S.saveReport(report)
   openReport(report.id)
 }
@@ -113,19 +117,29 @@ function rowOf(el) {
   return view.report.rows.find((r) => r.id === id)
 }
 
+// Recopie dans les champs affiches les valeurs du lieu recalculees a partir du
+// mandant (cases "meme adresse" / "meme nom").
+function mirrorLieuFields(keys) {
+  keys.forEach((key) => {
+    const target = root.querySelector(`[data-path="lieu.${key}"]`)
+    if (target) target.value = view.report.lieu[key] ?? ''
+  })
+}
+
 root.addEventListener('input', (ev) => {
   const el = ev.target
   if (el.dataset.path) {
     set(el.dataset.path, el.value)
-    // Case "meme adresse que le mandant" cochee : les champs adresse du
+    // Cases "meme adresse / meme nom que le mandant" cochees : les champs du
     // lieu restent en phase pendant la saisie, sans re-rendu complet pour
     // ne pas faire perdre le focus/curseur du champ mandant en cours.
     if (view.report.lieu.sameAsMandant && (el.dataset.path === 'mandant.adresse' || el.dataset.path === 'mandant.npaLieu')) {
       applySameAddress(view.report)
-      LIEU_ADDR_KEYS.forEach((key) => {
-        const target = root.querySelector(`[data-path="lieu.${key}"]`)
-        if (target) target.value = view.report.lieu[key] ?? ''
-      })
+      mirrorLieuFields(LIEU_ADDR_KEYS)
+    }
+    if (view.report.lieu.sameNameAsMandant && (el.dataset.path === 'mandant.nom' || el.dataset.path === 'mandant.prenom')) {
+      applySameName(view.report)
+      mirrorLieuFields(['locataire'])
     }
     scheduleSave()
   } else if (el.dataset.rowField) {
@@ -151,6 +165,14 @@ root.addEventListener('change', async (ev) => {
     return
   }
 
+  if (el.dataset.sameName !== undefined) {
+    view.report.lieu.sameNameAsMandant = el.checked
+    if (el.checked) applySameName(view.report)
+    await S.saveReport(view.report)
+    render()
+    return
+  }
+
   // Le carnet remplit le reste des coordonnees des que le nom correspond -
   // le nom saisi seul, ou le nom complet propose par la liste du carnet.
   if (el.dataset.path !== 'mandant.nom') return
@@ -169,6 +191,7 @@ root.addEventListener('change', async (ev) => {
     tel: match.tel,
   }
   if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
+  if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
   await S.saveReport(view.report)
   render()
 })
@@ -205,6 +228,33 @@ function insertNewRow() {
   card.querySelector('.row-name')?.focus({ preventScroll: true })
   refreshCounters()
   S.saveReport(view.report)
+}
+
+// Deplace une ligne d'un cran. Les numeros des cartes etant leur position, la
+// carte entiere est redessinee, puis ramenee sous les yeux : sans cela, la
+// ligne qu'on vient de monter sort du champ de vision au premier appui.
+async function moveRow(rowId, dir) {
+  const rows = view.report.rows
+  const i = rows.findIndex((r) => r.id === rowId)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= rows.length) return
+  ;[rows[i], rows[j]] = [rows[j], rows[i]]
+  await S.saveReport(view.report)
+  render()
+  const card = root.querySelector(`[data-row="${rowId}"]`)
+  card?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
+// Une piece declaree contaminee contredit le constat par defaut ("aucune
+// trace visible") : on le retire tant qu'il n'a pas ete touche, pour qu'un
+// rapport ne puisse pas partir en affirmant l'inverse de son tableau.
+function clearDefaultRemarques() {
+  if (!S.contaminatedCount(view.report)) return
+  if (view.report.remarques !== S.DEFAULT_REMARQUES) return
+  view.report.remarques = ''
+  const ta = root.querySelector('[data-path="remarques"]')
+  if (ta) ta.value = ''
+  toast('Remarques à compléter : une pièce est contaminée.')
 }
 
 // Supprime une ligne avec une petite animation de sortie, et demande
@@ -299,6 +349,8 @@ root.addEventListener('click', async (ev) => {
   if (chip && chip.closest('[data-mandant-type]')) {
     const value = chip.dataset.val
     view.report.mandant.type = view.report.mandant.type === value ? '' : value
+    // Une gerance n'a pas de prenom : le nom repris pour le locataire change.
+    if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
     // Un choix referme le selecteur, comme une liste deroulante.
     view.mandantOpen = false
     scheduleSave()
@@ -318,6 +370,10 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
+  // --- deplacement d'une ligne (monter / descendre)
+  const moveDir = el.closest('[data-move]')?.dataset.move
+  if (moveDir) return moveRow(el.closest('[data-row]')?.dataset.row, moveDir === 'up' ? -1 : 1)
+
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')
   if (segBtn) {
@@ -330,6 +386,7 @@ root.addEventListener('click', async (ev) => {
       segRow.querySelectorAll('.seg-btn').forEach((b) => b.classList.toggle('on', b.dataset.val === row.contamine))
       segRow.closest('.row-card').dataset.status = row.contamine || ''
       refreshCounters()
+      clearDefaultRemarques()
     } else if (segPath) {
       const current = get(segPath.dataset.seg)
       const next = current === value ? '' : value
@@ -399,12 +456,36 @@ root.addEventListener('click', async (ev) => {
     return
   }
   if (act === 'sign') {
-    const sig = await openSignaturePad(view.report.signature)
+    const sig = await openSignaturePad(view.report.signature, { title: 'Signature du locataire' })
     if (sig !== undefined) {
       view.report.signature = sig
       await S.saveReport(view.report)
       render()
     }
+    return
+  }
+  if (act === 'sign-tech') {
+    const tech = (view.report.technicien ??= { nom: S.TECHNICIEN_NOM_DEFAUT, signature: null })
+    const sig = await openSignaturePad(tech.signature, { title: 'Signature du technicien' })
+    if (sig !== undefined) {
+      tech.signature = sig
+      await S.saveReport(view.report)
+      // Premiere signature de technicien enregistree sur l'appareil : elle
+      // devient le defaut sans rien demander, c'est le geste attendu. Une
+      // modification ulterieure reste locale au rapport (collegue de passage)
+      // et ne se generalise que par "Enregistrer par defaut".
+      const current = await S.loadTechnicien()
+      if (sig && !current.signature) {
+        await S.saveTechnicien(tech)
+        toast('Signature enregistrée par défaut')
+      }
+      render()
+    }
+    return
+  }
+  if (act === 'tech-default') {
+    await S.saveTechnicien(view.report.technicien ?? {})
+    toast('Technicien enregistré par défaut')
     return
   }
   if (act === 'preview') return previewPdf(view.report, view.children)

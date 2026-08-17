@@ -17,6 +17,16 @@
   --fill-text: #fff;
   --header-bg: rgba(252, 251, 249, 0.86);
   --bar-bg: rgba(255, 255, 255, 0.9);
+  /* Le rouge ne signale plus qu'une chose dans l'app comme dans le PDF : la
+     presence de punaises de lit (bouton "Contaminee", liseret et badge de la
+     carte, compteur de pieces contaminees, bandeau de verdict). Tout le decor
+     - liserets, filets, pastilles d'icones, mise au point des champs,
+     annotations sur les photos - porte l'accent vert de la maison. Un rouge
+     qui n'apparait que la ou il compte se voit de loin. */
+  --accent: #26985f;
+  --accent-soft: #e8f6ee;
+  --accent-ink: #1b7a49; /* pour du texte/une icone posee sur --accent-soft */
+  --accent-fill: #1b7a49; /* pour une surface pleine qui porte du blanc */
   --red: #c02a2a;
   --red-soft: #fbeaea;
   --green: #1f7a4d;
@@ -54,6 +64,10 @@
     --fill-text: #171513;
     --header-bg: rgba(23, 21, 19, 0.86);
     --bar-bg: rgba(33, 31, 28, 0.9);
+    --accent: #5ec98d;
+    --accent-soft: #16311f;
+    --accent-ink: #5ec98d;
+    --accent-fill: #2b8a58;
     --red: #e8615a;
     --red-soft: #3a1f1c;
     --green: #52b485;
@@ -82,6 +96,10 @@
   --fill-text: #171513;
   --header-bg: rgba(23, 21, 19, 0.86);
   --bar-bg: rgba(33, 31, 28, 0.9);
+  --accent: #5ec98d;
+  --accent-soft: #16311f;
+  --accent-ink: #5ec98d;
+  --accent-fill: #2b8a58;
   --red: #e8615a;
   --red-soft: #3a1f1c;
   --green: #52b485;
@@ -264,7 +282,7 @@ body[data-screen="home"] .folder {
   opacity: 0.9;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
-.hero-kicker::before { content: ''; width: 13px; height: 2px; flex-shrink: 0; background: var(--red); border-radius: 1px; }
+.hero-kicker::before { content: ''; width: 13px; height: 2px; flex-shrink: 0; background: var(--accent); border-radius: 1px; }
 .hero-caption h2 {
   margin: 9px 0 5px;
   font-size: clamp(20px, 6.2vw, 25px);
@@ -314,7 +332,7 @@ body[data-screen="home"] .folder {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--red);
+  background: var(--accent);
 }
 .top .logo {
   width: 44px;
@@ -402,11 +420,13 @@ body[data-screen="home"] .folder {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  background: var(--red-soft);
-  color: var(--red);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 20%, transparent);
 }
 .section-icon svg { width: 15px; height: 15px; }
+.section-icon.icon-accent { background: var(--accent-soft); color: var(--accent-ink); }
+.section-icon.icon-red { background: var(--red-soft); color: var(--red); }
 .section-icon.icon-blue { background: var(--blue-soft); color: var(--blue); }
 .section-icon.icon-plum { background: var(--plum-soft); color: var(--plum); }
 .section-icon.icon-amber { background: var(--amber-soft); color: var(--amber); }
@@ -533,8 +553,8 @@ input, textarea, select {
 textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
 input:focus, textarea:focus {
   outline: none;
-  border-color: var(--red);
-  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035), 0 0 0 3px var(--red-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035), 0 0 0 3px var(--accent-soft);
 }
 input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 input:disabled { opacity: 0.55; }
@@ -559,7 +579,7 @@ input:disabled { opacity: 0.55; }
   padding: 0;
   border: 1px solid var(--line-strong);
   box-shadow: none;
-  accent-color: var(--red);
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
@@ -637,30 +657,30 @@ input:disabled { opacity: 0.55; }
 
 /* --- accueil : les deux volets (creation / rangement) --- */
 
-/* Degrade/liseret/ombre teintes en rouge par defaut, la couleur de la
-   maison ; les variantes ci-dessous les reteintent par type. */
+/* Degrade/liseret/ombre teintes a l'accent de la maison par defaut ; les
+   variantes ci-dessous les reteintent par type. */
 .folder {
   background: var(--card);
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--red-soft) 60%, var(--card)));
+  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--accent-soft) 60%, var(--card)));
   border: 1px solid var(--line);
-  border: 1px solid color-mix(in srgb, var(--red) 20%, var(--line-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line-strong));
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--red) 50%, transparent), var(--shadow-sm);
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent) 50%, transparent), var(--shadow-sm);
 }
 
 /* Pastille d'icone : meme peinture pour la grande (en-tete d'un volet) et la
    petite (choix d'un type), seules les dimensions changent. */
 .type-icon, .type-chip-icon {
   flex-shrink: 0;
-  background: var(--red);
+  background: var(--accent-fill);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--red) 70%, white), var(--red) 85%);
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-fill) 78%, white), var(--accent-fill) 85%);
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--red) 65%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--accent) 65%, transparent);
 }
 .type-icon { width: 48px; height: 48px; border-radius: 15px; }
 .type-icon svg { width: 23px; height: 23px; }
@@ -693,7 +713,7 @@ input:disabled { opacity: 0.55; }
   padding: 11px 6px 10px;
   min-height: var(--tap);
   background: var(--card);
-  border: 1px solid color-mix(in srgb, var(--red) 22%, var(--line-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line-strong));
   border-radius: var(--radius-md);
   font: inherit;
   color: inherit;
@@ -840,8 +860,10 @@ input:disabled { opacity: 0.55; }
    la donnee la plus importante d'un rapport doit se scanner sans lire un mot. */
 .row-card[data-status="oui"] { border-left-color: var(--red); }
 .row-card[data-status="oui"] .piece-badge { background: var(--red-soft); color: var(--red); border-color: transparent; }
+/* "Non" est plein, la ou le badge en attente n'est que teinte : sinon les deux
+   verts (pas encore statuee / verifiee sans trace) se confondaient. */
 .row-card[data-status="non"] { border-left-color: var(--green); }
-.row-card[data-status="non"] .piece-badge { background: var(--green-soft); color: var(--green); border-color: transparent; }
+.row-card[data-status="non"] .piece-badge { background: var(--green); color: #fff; border-color: transparent; }
 .row-card[data-status="inconnu"] { border-left-color: var(--amber); }
 .row-card[data-status="inconnu"] .piece-badge { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
 
@@ -855,9 +877,9 @@ input:disabled { opacity: 0.55; }
   place-items: center;
   font-weight: 700;
   font-size: 12px;
-  background: var(--bg);
-  color: var(--muted-soft);
-  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px solid transparent;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
@@ -874,6 +896,20 @@ input:disabled { opacity: 0.55; }
 .small-input { padding: 8px 7px; font-size: 13px; }
 .row-actions { display: flex; gap: 7px; }
 .row-actions .btn { flex: 1; }
+/* Monter / descendre : largeur fixe, la place restante va aux boutons qui
+   portent du texte. Le bouton inutile (premiere ou derniere ligne) reste en
+   place, en retrait : la rangee ne bouge pas d'une carte a l'autre. */
+.move-btn {
+  flex: 0 0 44px;
+  padding: 0;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+.move-btn:disabled { opacity: 0.3; }
+
+.tech-sig { display: grid; gap: 6px; justify-items: center; }
+.tech-sig .btn.wide { margin-top: 4px; }
 
 @media (prefers-reduced-motion: no-preference) {
   @keyframes row-in {
@@ -998,7 +1034,9 @@ input:disabled { opacity: 0.55; }
   font-size: 17px;
   cursor: pointer;
 }
-.tool.active { background: var(--red); border-color: var(--red); }
+/* L'outil actif porte la couleur du trace (voir MARK dans photo.js) : ce qu'on
+   voit sur le bouton est ce qui va s'imprimer sur la photo. */
+.tool.active { background: var(--accent-fill); border-color: var(--accent-fill); }
 .annot-stage {
   flex: 1;
   display: grid;

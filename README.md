@@ -14,7 +14,12 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
 - **Carnet de mandants** : régies et gérances enregistrées, saisies une seule fois.
 - **Photos rattachées à la pièce** : la photo prise depuis une ligne porte déjà le nom de
   la pièce ; annotation au doigt (cercle, flèche, texte) en rouge, comme sous Paint.
-- **Signature tactile** du locataire.
+- **Signature tactile** du locataire, et signature du technicien reprise d'office :
+  enregistrée une fois sur l'appareil, elle remplit la case « Le technicien » de chaque
+  nouveau rapport. Le nom et la signature restent modifiables dans le rapport, sans
+  toucher au réglage — le cas du collègue envoyé faire une détection.
+- **Pièces réordonnables** : les flèches ↑ / ↓ d'une carte changent son rang, donc son
+  numéro, dans l'écran de saisie comme dans le PDF.
 - **Un seul PDF** : rapport + photos annotées + rapports individuels des appartements
   contaminés (immeuble).
 - **Hors ligne** : l'app démarre et fonctionne sans réseau (cave, sous-sol, hôtel sans
@@ -82,7 +87,7 @@ L'icône se comporte ensuite comme une application : plein écran, démarrage ho
 | --- | --- |
 | `src/templates.js` | Définition des trois types de rapport (colonnes, champs, pièces) |
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
-| `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi) |
+| `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
 | `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
 | `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js` |
 | `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js` |
@@ -97,6 +102,17 @@ L'icône se comporte ensuite comme une application : plein écran, démarrage ho
 
 Ajouter un quatrième type de rapport se fait dans `src/templates.js` : l'interface et le
 PDF s'y adaptent.
+
+Les coordonnées imprimées en pied de page (raison sociale, adresse, téléphone, site) et la
+ville des signatures sont en haut de `src/pdf.js` (`SOCIETE`, `VILLE`, `FOOTER_LINE1`,
+`FOOTER_LINE2`). Le constat pré-rempli dans « Remarques et recommandations » est
+`DEFAULT_REMARQUES` dans `src/state.js` : il disparaît de lui-même si une pièce est
+déclarée contaminée, pour qu'un rapport ne puisse pas contredire son propre tableau.
+
+Le rouge ne signale qu'une chose, dans l'app comme dans le PDF : la présence de punaises
+de lit. Tout le reste — liserets, filets, pastilles, annotations sur les photos — porte le
+vert de la maison (`--accent` dans `src/style.css`, `ACCENT` dans `src/pdf.js`, `MARK`
+dans `src/photo.js`).
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.

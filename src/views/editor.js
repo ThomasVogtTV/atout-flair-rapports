@@ -22,6 +22,13 @@ export function applySameAddress(report) {
   }
 }
 
+// Le mandant est souvent l'occupant lui-meme (proprietaire, particulier) :
+// meme geste que pour l'adresse, une case a cocher plutot qu'une seconde saisie
+// du meme nom.
+export function applySameName(report) {
+  report.lieu.locataire = S.fullName(report.mandant)
+}
+
 function fieldInput(f, value, disabled) {
   const id = `lieu.${f.key}`
   if (f.type === 'ouinon') {
@@ -45,6 +52,15 @@ function photoStrip(photos) {
       </div>`
     )
     .join('')}</div>`
+}
+
+// Boutons de deplacement d'une ligne. Places dans la rangee d'actions du bas
+// plutot que dans l'en-tete de la carte : la tete est deja pleine (badge, nom,
+// suppression) et une cible de 44px se tape sans viser, gants compris.
+function moveButtonsHTML(index, count) {
+  return `
+    <button class="btn ghost move-btn" data-move="up" title="Monter"${index === 0 ? ' disabled' : ''}>↑</button>
+    <button class="btn ghost move-btn" data-move="down" title="Descendre"${index === count - 1 ? ' disabled' : ''}>↓</button>`
 }
 
 // Carte d'une piece : badge numerote colore par statut, labels persistants,
@@ -79,7 +95,10 @@ function pieceCardHTML(r, t, row, index) {
       <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
     </label>
     ${photoStrip(photos)}
-    <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
+    <div class="row-actions">
+      ${moveButtonsHTML(index, r.rows.length)}
+      <button class="btn ghost" data-photo="${row.id}">+ Photo de cette pièce</button>
+    </div>
   </div>`
 }
 
@@ -109,6 +128,7 @@ function lineCardHTML(r, t, row, index, children) {
     </label>
     ${photoStrip(photos)}
     <div class="row-actions">
+      ${moveButtonsHTML(index, r.rows.length)}
       <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
       ${
         isHotel
@@ -167,10 +187,35 @@ function lignesSection(view, r, t) {
 
 function signatureSection(r) {
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'green')}Signature</span></h2>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'green')}Signature du locataire</span></h2>
     <div class="card sig-card">
       ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
       <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
+    </div>`
+}
+
+// Nom et signature deja remplis a l'ouverture du rapport (technicien par
+// defaut de l'appareil). Les modifier ici ne vaut que pour ce rapport - le cas
+// du collegue envoye faire la detection ; "Enregistrer par defaut" change le
+// reglage de l'appareil pour les rapports suivants.
+function technicienSection(r) {
+  const tech = r.technicien ?? {}
+  return `
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'accent')}Le technicien</span>
+      <button class="link" data-act="tech-default">Enregistrer par défaut</button>
+    </h2>
+    <div class="card grid2">
+      <label class="full">Nom
+        <input data-path="technicien.nom" value="${esc(tech.nom ?? '')}" autocomplete="off" />
+      </label>
+      <div class="full tech-sig">
+        ${
+          tech.signature
+            ? `<img class="sig-preview" src="${tech.signature}" alt="Signature du technicien" />`
+            : `<p class="muted small">Aucune signature enregistrée sur cet appareil</p>`
+        }
+        <button class="btn ghost wide" data-act="sign-tech">${tech.signature ? 'Refaire ma signature' : 'Ajouter ma signature'}</button>
+      </div>
     </div>`
 }
 
@@ -205,16 +250,27 @@ function lieuSection(r, t) {
     .filter((f) => !f.derived)
     .map((f) => {
       const isAddrField = f.key === 'adresseIntervention' || f.key === 'adresse'
-      const disabled = LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant
-      const field = `<label class="${isAddrField ? 'full' : ''}">
+      const isLocataire = f.key === 'locataire'
+      const disabled =
+        (LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant) || (isLocataire && r.lieu.sameNameAsMandant)
+      const field = `<label class="${isAddrField || isLocataire ? 'full' : ''}">
         ${esc(f.label)}${fieldInput(f, r.lieu[f.key], disabled)}
       </label>`
-      if (!isAddrField) return field
-      return `${field}
+      if (isAddrField) {
+        return `${field}
         <label class="full same-addr">
           <input type="checkbox" data-same-addr${r.lieu.sameAsMandant ? ' checked' : ''} />
           Même adresse que le mandant
         </label>`
+      }
+      if (isLocataire) {
+        return `${field}
+        <label class="full same-addr">
+          <input type="checkbox" data-same-name${r.lieu.sameNameAsMandant ? ' checked' : ''} />
+          Même nom que le mandant
+        </label>`
+      }
+      return field
     })
     .join('')
 
@@ -254,6 +310,8 @@ export function editorView(view) {
       <div class="card">
         <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
       </div>
+
+      ${technicienSection(r)}
 
       ${t.hasSignature ? signatureSection(r) : ''}
     </section>

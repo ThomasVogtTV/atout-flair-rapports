@@ -1,11 +1,14 @@
-// Petit wrapper IndexedDB (aucune dependance). Trois magasins :
+// Petit wrapper IndexedDB (aucune dependance). Quatre magasins :
 //   reports  : les rapports, brouillons compris
 //   contacts : carnet d'adresses des mandants / regies
 //   queue    : envois en attente de reseau
+//   settings : reglages de l'appareil (technicien par defaut et sa signature)
 
 const DB_NAME = 'atout-flair'
-const DB_VERSION = 1
-const STORES = ['reports', 'contacts', 'queue']
+// v2 : ajout du magasin "settings". onupgradeneeded ne cree que ce qui manque,
+// les rapports deja saisis sur l'appareil sont conserves.
+const DB_VERSION = 2
+const STORES = ['reports', 'contacts', 'queue', 'settings']
 
 let dbPromise = null
 

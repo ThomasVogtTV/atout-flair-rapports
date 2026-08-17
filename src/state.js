@@ -51,6 +51,14 @@ function nextRef() {
   return `AF-${String(n).padStart(5, '0')}`
 }
 
+// Constat par defaut, pre-rempli a la creation : c'est le cas le plus frequent
+// et l'issue qu'un rapport doit enoncer explicitement plutot que de laisser
+// vide. Le champ reste modifiable, et l'app le vide d'elle-meme des qu'une
+// piece est declaree contaminee (voir app.js) pour qu'un rapport ne puisse pas
+// affirmer l'inverse de son propre tableau.
+export const DEFAULT_REMARQUES =
+  'Aucun marquage du chien de recherche. Aucune trace de punaises de lit visible.'
+
 export function newReport(type) {
   const t = TYPES[type]
   const report = {
@@ -63,7 +71,12 @@ export function newReport(type) {
     mandant: { type: '', nom: '', prenom: '', adresse: '', npaLieu: '', email: '', tel: '' },
     lieu: {},
     rows: [],
-    remarques: '',
+    remarques: DEFAULT_REMARQUES,
+    // Qui a fait la detection : recopie du technicien par defaut a l'ouverture
+    // (voir app.js). Stocke dans le rapport et non lu au moment du PDF, pour
+    // qu'un rapport garde la signature de celui qui etait sur place, meme si
+    // le technicien par defaut change ensuite.
+    technicien: { nom: '', signature: null },
     signature: null,
     photos: [],
     sentAt: null,
@@ -132,6 +145,21 @@ export async function rememberContact(mandant) {
 }
 
 export const deleteContact = (id) => db.del('contacts', id)
+
+// --- technicien par defaut -------------------------------------------------
+
+// Nom et signature repris d'office par chaque nouveau rapport. Un rapport
+// confie a un collegue se modifie ensuite dans le rapport lui-meme, sans
+// toucher a ce reglage - c'est tout l'interet de le stocker a part.
+export const TECHNICIEN_NOM_DEFAUT = 'Oberli Stessy'
+
+export async function loadTechnicien() {
+  const saved = await db.get('settings', 'technicien')
+  return { nom: saved?.nom || TECHNICIEN_NOM_DEFAUT, signature: saved?.signature ?? null }
+}
+
+export const saveTechnicien = ({ nom, signature }) =>
+  db.put('settings', { id: 'technicien', nom: (nom || '').trim() || TECHNICIEN_NOM_DEFAUT, signature: signature ?? null })
 
 // Enregistrement direct (carnet de contacts) : contrairement a
 // rememberContact, met a jour l'id fourni sans re-chercher par nom -

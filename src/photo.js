@@ -43,15 +43,18 @@ function loadImage(src) {
   })
 }
 
-const RED = '#e2231a'
+// Couleur des annotations : le vert de la maison, franc et sature pour rester
+// visible sur un matelas clair comme sur un sommier sombre. Le rouge est
+// reserve au signalement d'une contamination (voir style.css).
+const MARK = '#14c25a'
 
 function drawShapes(ctx, shapes, imgW) {
   const base = Math.max(3, imgW / 320)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   for (const s of shapes) {
-    ctx.strokeStyle = RED
-    ctx.fillStyle = RED
+    ctx.strokeStyle = MARK
+    ctx.fillStyle = MARK
     ctx.lineWidth = base
     if (s.type === 'circle') {
       const rx = Math.abs(s.x2 - s.x1) / 2

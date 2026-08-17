@@ -30,14 +30,21 @@ const LINE_HAIR = rgb(0.72, 0.70, 0.67)     // filet fin (doit rester lisible ap
 const LINE_FRAME = rgb(0.55, 0.54, 0.52)    // cadre des tableaux et blocs
 const FILL_HEAD = rgb(0.945, 0.938, 0.925)  // trame des bandeaux et entetes de tableau
 const FILL_ZEBRA = rgb(0.976, 0.972, 0.964) // trame tres legere, une ligne sur deux
-const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : accent de marque
+// Le rouge ne dit qu'une chose dans ce document : la presence de punaises de
+// lit (bandeau de verdict, croix "OUI", nombre de pieces contaminees). Tout ce
+// qui n'est que decor - liserets, filets, numero de rapport, trait du pied de
+// page - porte le vert de la maison : quand du rouge apparait, il compte.
+const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : contamination, uniquement
 const RED_SOFT = rgb(0.984, 0.918, 0.918)   // = --red-soft #fbeaea
 const GREEN = rgb(0.122, 0.478, 0.302)      // = --green #1f7a4d : rapport sans contamination
 const GREEN_SOFT = rgb(0.906, 0.961, 0.933) // = --green-soft #e7f5ee
+const ACCENT = rgb(0.149, 0.596, 0.373)     // = --accent #26985f : accent de marque
 
 // Coordonnees de l'entreprise, imprimees en pied de chaque page.
-const FOOTER_LINE1 = 'Atout Flair · Oberli Stessy · Froideville 1, 1422 Grandson (VD) · 079 269 94 96 · info@atout-flair.ch'
-const FOOTER_LINE2 = 'Chiens certifiés Bed Bug Foundation'
+const SOCIETE = 'Atout-Flair Sàrl'
+const VILLE = 'Vaugondry'
+const FOOTER_LINE1 = `${SOCIETE} · Oberli Stessy · Rue des Fontaines 6, 1423 ${VILLE} · 079 269 94 96 · info@atout-flair.ch`
+const FOOTER_LINE2 = 'www.atout-flair.ch · Chiens certifiés Bed Bug Foundation'
 
 // Les polices standard sont encodees en WinAnsi : on remplace ce qui n'y passe pas.
 function san(s) {
@@ -133,9 +140,9 @@ class Sheet {
     this.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness, color })
   }
 
-  // Liseret rouge sur le bord gauche d'un bandeau - meme registre que les
-  // titres de section colores de l'app.
-  stripe(x, y, h, color = RED) {
+  // Liseret sur le bord gauche d'un bandeau - meme registre que les titres de
+  // section colores de l'app.
+  stripe(x, y, h, color = ACCENT) {
     this.page.drawRectangle({ x, y, width: 2.6, height: h, color })
   }
 
@@ -196,14 +203,14 @@ function drawMasthead(sh, report, t, logo) {
   const titleW = [...title].reduce((w, c) => w + sh.width(c, true, size) + gap, -gap)
   sh.spacedText(title, RIGHT - titleW, top - 22, { size, bold: true, gap })
 
-  sh.text(`N° ${report.ref}`, RIGHT, top - 40, { size: 10, bold: true, align: 'right', color: RED })
+  sh.text(`N° ${report.ref}`, RIGHT, top - 40, { size: 10, bold: true, align: 'right', color: ACCENT })
 
   const lieu = report.lieu?.dateIntervention || report.rows?.[0]?.date
   const date = frDate(lieu) || frDate(new Date().toISOString().slice(0, 10))
   sh.text(`Intervention du ${date}`, RIGHT, top - 54, { size: 8.5, align: 'right', color: INK_SOFT })
 
   const y = top - logoH - 12
-  sh.page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 1.6, color: RED })
+  sh.page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 1.6, color: ACCENT })
   return y - 22
 }
 
@@ -263,9 +270,9 @@ function verdictBanner(sh, y, { count, total, unit, unitPlural }) {
   return y - h
 }
 
-/** Intitule de rubrique : filet rouge court + capitales espacees. */
+/** Intitule de rubrique : filet court + capitales espacees. */
 function sectionTitle(sh, label, y, w = CW) {
-  sh.page.drawRectangle({ x: M, y: y + 1.5, width: 18, height: 2, color: RED })
+  sh.page.drawRectangle({ x: M, y: y + 1.5, width: 18, height: 2, color: ACCENT })
   sh.spacedText(san(label).toUpperCase(), M + 24, y, { size: 8, bold: true, gap: 0.8, maxW: w - 30 })
   return y - 12
 }
@@ -274,13 +281,19 @@ function sectionTitle(sh, label, y, w = CW) {
  * Bloc de signatures : l'entreprise a gauche, la personne presente a droite.
  * Une signature sans nom ni date ne vaut pas grand-chose : les deux lignes
  * sont donc toujours imprimees, remplies ou non.
+ *
+ * Le technicien signe d'office (signature enregistree sur l'appareil, recopiee
+ * dans le rapport a son ouverture) : c'est celui qui etait sur place qui
+ * apparait, meme si le rapport est repris des semaines plus tard.
  */
 async function signatureBlock(sh, report, y) {
   const h = 84
   const colW = (CW - 16) / 2
-  const dateStr = frDate(report.lieu?.dateIntervention) || ''
+  // Immeuble / hotel n'ont pas de date d'intervention unique : on prend celle
+  // de la premiere ligne, comme l'en-tete du document.
+  const dateStr = frDate(report.lieu?.dateIntervention || report.rows?.[0]?.date) || ''
 
-  const drawCol = (x, title, name) => {
+  const drawCol = async (x, title, name, signature) => {
     sh.rect(x, y - h, colW, h, 0.7)
     sh.band(x, y - 16, colW, 16, FILL_HEAD)
     sh.line(x, y - 16, x + colW, 0.7, LINE_FRAME)
@@ -288,26 +301,30 @@ async function signatureBlock(sh, report, y) {
     sh.spacedText(san(title).toUpperCase(), x + 9, y - 11, { size: 7, bold: true, gap: 0.7, maxW: colW - 16 })
     sh.line(x + 12, y - h + 26, x + colW - 12, 0.5)
     sh.text(name || '', x + 12, y - h + 15, { size: 7.6, color: INK_SOFT, maxW: colW - 24 })
-    sh.text(dateStr ? `Grandson, le ${dateStr}` : '', x + colW - 12, y - h + 15, {
+    sh.text(dateStr ? `${VILLE}, le ${dateStr}` : '', x + colW - 12, y - h + 15, {
       size: 7, color: MUTED, align: 'right',
     })
-  }
-
-  drawCol(M, 'Le technicien', 'Oberli Stessy · Atout Flair')
-  drawCol(M + colW + 16, 'Le locataire / le mandant', report.lieu?.locataire || fullName(report.mandant) || '')
-
-  if (report.signature) {
-    const img = await sh.doc.embedPng(dataUrlToBytes(report.signature))
+    if (!signature) return
+    const img = await sh.doc.embedPng(dataUrlToBytes(signature))
     const boxW = colW - 30
     const boxH = h - 52
     const scale = Math.min(boxW / img.width, boxH / img.height)
     sh.page.drawImage(img, {
-      x: M + colW + 16 + (colW - img.width * scale) / 2,
+      x: x + (colW - img.width * scale) / 2,
       y: y - h + 30,
       width: img.width * scale,
       height: img.height * scale,
     })
   }
+
+  const tech = report.technicien ?? {}
+  await drawCol(M, 'Le technicien', [tech.nom, SOCIETE].filter(Boolean).join(' · '), tech.signature)
+  await drawCol(
+    M + colW + 16,
+    'Le locataire / le mandant',
+    report.lieu?.locataire || fullName(report.mandant) || '',
+    report.signature
+  )
   return y - h
 }
 
@@ -617,7 +634,9 @@ async function drawLignes(sh, report, logo) {
     y -= sh.wrap(report.remarques, M, y - 2, { size: 8.4, maxW: CW - 4, lh: 11 }) + 6
   }
 
-  if (t.hasSignature || report.signature) {
+  // Immeuble / hotel : pas de signature du locataire a l'ecran, mais le
+  // rapport porte quand meme celle du technicien qui l'a etabli.
+  if (t.hasSignature || report.signature || report.technicien?.signature) {
     if (y - 84 < BOTTOM) {
       sh.newPage()
       y = PAGE.H - 60
@@ -646,7 +665,7 @@ async function drawPhotos(sh, report) {
     sh.spacedText('ANNEXE PHOTOGRAPHIQUE', M, y, { size: 8.6, bold: true, gap: 0.9 })
     sh.text(`${san(t.badge)} N° ${report.ref}`, RIGHT, y, { size: 8, align: 'right', color: INK_SOFT })
     y -= 8
-    sh.page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 1.2, color: RED })
+    sh.page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 1.2, color: ACCENT })
 
     const row = report.rows.find((r) => r.id === photo.rowId)
     const where = row ? row.nom || [row.numero && `N° ${row.numero}`, row.etage].filter(Boolean).join(' - ') : ''
@@ -695,7 +714,7 @@ async function paginate(doc) {
       start: { x: PAGE.W / 2 - 16, y: y + 20 },
       end: { x: PAGE.W / 2 + 16, y: y + 20 },
       thickness: 1.4,
-      color: RED,
+      color: ACCENT,
     })
     center(FOOTER_LINE1, y + 8, 6.3, MUTED)
     center(FOOTER_LINE2, y, 6.3, MUTED)
@@ -733,8 +752,8 @@ async function buildDoc(report) {
 
   doc.setTitle(`${TYPES[report.type].label} N° ${report.ref}`)
   doc.setSubject(`Détection canine de punaises de lit - ${report.lieu?.adresseIntervention || report.lieu?.adresse || ''}`)
-  doc.setAuthor('Atout Flair - Oberli Stessy')
-  doc.setProducer('Atout Flair')
+  doc.setAuthor([SOCIETE, report.technicien?.nom].filter(Boolean).join(' - '))
+  doc.setProducer(SOCIETE)
   doc.setCreator('Atout Flair - Rapports')
   return doc
 }

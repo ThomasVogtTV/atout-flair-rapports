@@ -1,13 +1,13 @@
 // Pad de signature tactile. Retourne un PNG transparent, recadre au trace.
 
-export function openSignaturePad(existing = null) {
+export function openSignaturePad(existing = null, { title = 'Signature du locataire' } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div')
     overlay.className = 'overlay signature'
     overlay.innerHTML = `
       <div class="annot-bar">
         <button class="btn ghost" data-act="cancel">Annuler</button>
-        <span class="sig-title">Signature du locataire</span>
+        <span class="sig-title">${title}</span>
         <button class="btn primary" data-act="save">Valider</button>
       </div>
       <div class="sig-stage"><canvas></canvas></div>

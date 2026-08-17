@@ -25,8 +25,7 @@ export function sectionIcon(key, tone) {
   return `<span class="section-icon icon-${tone}">${ICONS[key]}</span>`
 }
 
-// Meme code couleur que les cartes/dossiers de l'accueil (rouge/bleu/violet
+// Meme code couleur que les cartes/dossiers de l'accueil (vert/bleu/violet
 // selon le type), pour que l'icone "Pieces/Appartements/Chambres" du
-// rapport ouvert reprenne la teinte de son type plutot que d'etre toujours
-// rouge.
-export const TYPE_TONE = { detection: 'red', immeuble: 'blue', hotel: 'plum' }
+// rapport ouvert reprenne la teinte de son type.
+export const TYPE_TONE = { detection: 'accent', immeuble: 'blue', hotel: 'plum' }
