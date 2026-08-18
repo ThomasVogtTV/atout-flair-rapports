@@ -141,16 +141,13 @@ export function homeView(view) {
   return `
     <header class="top">
       <img src="/logo.jpg" alt="Atout Flair" class="logo" />
-      <div class="top-title">
-        <h1>Atout Flair</h1>
-      </div>
       <span class="top-actions">
         <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet et réglages">${ICONS.contacts}</button>
       </span>
     </header>
     <div class="hero-caption">
-      <span class="hero-kicker">Détection canine professionnelle</span>
-      <h2>Rapports de détection</h2>
+      <img src="/logo-complet.png" class="hero-logo"
+           alt="Atout Flair, détection canine en Suisse romande" />
       <p>Saisie, photos, signature et envoi sur place</p>
     </div>
     <section class="content-sheet">

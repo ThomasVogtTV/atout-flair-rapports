@@ -363,6 +363,22 @@ body[data-screen="home"] .content-sheet {
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
 }
+/* Le logo complet, en tete de l'accueil, sur la photo. Il ne peut pas vivre
+   dans la barre du haut : ramene a 44 px, son lettrage tombe a 6 px de haut et
+   la mention "en Suisse romande" disparait. Ici il a la largeur qu'il lui faut.
+   Plaque blanche parce qu'il porte du bleu nuit sur fond transparent : sur la
+   photo comme en theme sombre, la moitie du lettrage s'evanouirait sans elle. */
+.hero-logo {
+  display: block;
+  width: min(56vw, 205px);
+  height: auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
 .top-title { min-width: 0; }
 .top-title h1 {
   margin: 0;

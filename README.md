@@ -191,6 +191,15 @@ rendre la main au réglage du téléphone.
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
 
+Deux logos cohabitent : `public/logo.jpg`, la vignette carrée qui tient dans la barre du
+haut, et `public/logo-complet.png`, le bloc complet (illustration, nom, « détection canine
+en Suisse romande »). Le second ne peut pas vivre dans la barre : ramené à 44 px de haut,
+son lettrage tombe à 6 px et la mention du canton disparaît. Il est donc posé en grand sur
+la photo d'accueil, sur une plaque blanche — il porte du bleu nuit sur fond transparent,
+qui s'évanouirait sur la photo comme en thème sombre. L'original faisait 1,5 Mo ; il est
+détouré et réduit à 400 px de large, soit 92 Ko, parce qu'il entre dans le socle chargé au
+premier démarrage.
+
 ## À compléter
 
 - Identifiants SMTP de `info@atout-flair.ch`.
