@@ -123,12 +123,21 @@ ville des signatures sont en haut de `src/pdf.js` (`SOCIETE`, `VILLE`, `FOOTER_L
 `DEFAULT_REMARQUES` dans `src/state.js` : il disparaît de lui-même si une pièce est
 déclarée contaminée, pour qu'un rapport ne puisse pas contredire son propre tableau.
 
-Trois couleurs, trois sens, dans l'app comme dans le PDF : le **rouge** dit la présence de
-punaises de lit, le **vert** son absence, et le **cyan** n'est que du décor — liserets,
-filets, pastilles, annotations sur les photos. Une couleur qui n'apparaît que là où elle
-compte se voit de loin. Les teintes sont dans `--accent` (`src/style.css`), `ACCENT`
-(`src/pdf.js`) et `MARK` (`src/photo.js`) ; celle du PDF est volontairement assombrie pour
-tenir la photocopie, celle des annotations franche pour ressortir sur une photo.
+Les couleurs ne sont pas réparties de la même façon à l'écran et sur le papier, et c'est
+voulu.
+
+Sur le **PDF**, le rouge est la marque de la maison : numéro de rapport, tirets des
+intitulés de rubrique, liserets à gauche des bandeaux — et c'est aussi lui qui signale la
+contamination (bandeau de verdict, croix « OUI »). Le vert dit l'absence de punaises. Le
+cyan ne tient que les deux longs filets, sous le logo et au pied de page.
+
+Dans l'**app**, le rouge ne dit qu'une chose : contaminée. Badges, liserets de carte,
+bouton « Contaminée », compteur — tous des repères de la même taille, où un rouge
+décoratif prêterait à confusion. Tout le décor y est donc cyan.
+
+Les teintes sont dans `--accent` (`src/style.css`), `ACCENT` et `RED` (`src/pdf.js`) et
+`MARK` (`src/photo.js`) ; le cyan du PDF est volontairement assombri pour tenir la
+photocopie, celui des annotations franc pour ressortir sur une photo.
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
