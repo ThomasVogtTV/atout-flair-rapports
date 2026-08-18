@@ -271,11 +271,11 @@ body[data-screen="home"] {
   --card: color-mix(in srgb, var(--card-solid) 78%, transparent);
   --bg: color-mix(in srgb, var(--bg-solid) 30%, transparent);
 }
-/* Le flou d'arriere-plan ne porte que sur les deux volets. Le repeter sur les
-   pastilles et les lignes qu'ils contiennent ne change rien a l'oeil - leur
-   arriere-plan est deja le volet flou - et multipliait par huit le nombre de
-   surfaces a recalculer a chaque image du defilement. */
-body[data-screen="home"] .folder {
+/* Le flou ne porte que sur la feuille elle-meme. Le repeter sur les rubriques,
+   les pastilles et les lignes qu'elle contient ne change rien a l'oeil - leur
+   arriere-plan est deja la feuille floue - et multiplierait par dix le nombre
+   de surfaces a recalculer a chaque image du defilement. */
+body[data-screen="home"] .content-sheet {
   backdrop-filter: blur(13px) saturate(135%);
   -webkit-backdrop-filter: blur(13px) saturate(135%);
 }
@@ -647,20 +647,6 @@ input:disabled { opacity: 0.55; }
    plusieurs, d'ou l'espace qui les detache du champ. */
 .quick-notes { margin-top: 9px; }
 
-/* --- accueil : les deux volets (creation / rangement) --- */
-
-/* Degrade/liseret/ombre teintes a l'accent de la maison par defaut ; les
-   variantes ci-dessous les reteintent par type. */
-.folder {
-  background: var(--card);
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--accent-soft) 60%, var(--card)));
-  border: 1px solid var(--line);
-  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line-strong));
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent) 50%, transparent), var(--shadow-sm);
-}
-
 /* Pastille d'icone : un objet, pas un aplat. Meme peinture pour la grande
    (en-tete d'un volet) et la petite (choix d'un type), seules les dimensions
    changent.
@@ -733,8 +719,7 @@ input:disabled { opacity: 0.55; }
 /* Elevation au survol, enfoncement a l'appui. Le survol est reserve aux
    pointeurs : sur un ecran tactile, il resterait colle apres le tap. */
 @media (hover: hover) {
-  .type-chip:hover .type-chip-icon,
-  .folder-head:hover .type-icon {
+  .type-chip:hover .type-chip-icon {
     transform: translateY(-1.5px);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.66),
@@ -745,8 +730,7 @@ input:disabled { opacity: 0.55; }
       0 2px 4px rgba(20, 18, 16, 0.2);
   }
 }
-.type-chip:active .type-chip-icon,
-.folder-head:active .type-icon {
+.type-chip:active .type-chip-icon {
   transform: translateY(0.5px) scale(0.97);
   box-shadow:
     inset 0 2px 5px rgba(0, 0, 0, 0.42),
@@ -841,44 +825,46 @@ input:disabled { opacity: 0.55; }
 .pill.sent { background: var(--green-soft); color: var(--green); }
 .pill.queued { background: var(--amber-soft); color: var(--amber); }
 
-/* Raccourci de reprise : une pastille seule, en tete du contenu. L'ordre des
-   trois blocs suit celui des questions qu'on se pose en rouvrant l'app sur le
-   terrain - je continue ? je commence ? je cherche ? - et non l'inverse : sous
-   les rapports, la pastille tombait 89px hors de l'ecran d'un petit telephone,
-   soit le seul geste utile qu'il fallait aller chercher.
-   Elle n'apparait que lorsqu'un brouillon attend, et disparait des qu'il est
-   envoye - d'ou une simple pastille et non une rubrique de plus, qui
-   laisserait un trou. */
-.resume-shortcut {
+/* --- "En cours" : la ligne de reprise ------------------------------------
+   Meme silhouette qu'une ligne de la liste, avec une pastille en tete et le
+   liseret de la maison a gauche : on la reconnait comme un rapport, et on voit
+   du premier coup d'oeil lequel. Elle n'apparait que s'il y a un brouillon. */
+.lead-row {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  /* 15px et non 14 : les cartes ont une bordure d'un pixel, et leurs pastilles
-     commencent donc un pixel plus a droite. Les trois s'alignent en colonne. */
-  margin: 0 0 13px 15px;
-  padding: 0;
-  background: none;
-  border: none;
+  gap: 11px;
+  padding: 11px 13px;
+  background: linear-gradient(180deg, var(--card), color-mix(in srgb, var(--accent) 7%, var(--card)));
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line-strong));
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   font: inherit;
   color: inherit;
+  text-align: left;
   cursor: pointer;
-  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
 }
-.resume-tag {
-  font-size: 12.5px;
-  font-weight: 650;
-  color: var(--accent-ink);
-}
-.type-icon.icon-resume {
+.lead-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.lead-name, .lead-where { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-name { font-weight: 700; font-size: 14.5px; }
+.lead-where { font-size: 12px; color: var(--muted); }
+.lead-go { display: flex; flex-shrink: 0; color: var(--accent); }
+.lead-go svg { width: 17px; height: 17px; }
+.type-chip-icon.icon-resume {
   --c-haut: color-mix(in srgb, var(--accent) 78%, white);
   --c-bas: var(--accent-fill);
   --c-ombre: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 @media (hover: hover) {
-  .resume-shortcut:hover { transform: translateY(-1.5px); }
+  .lead-row:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 12px 20px -14px color-mix(in srgb, var(--accent) 70%, transparent), var(--shadow-sm);
+  }
 }
-.resume-shortcut:active { transform: scale(0.97); }
-.resume-shortcut:active .type-icon {
+.lead-row:active { transform: scale(0.985); box-shadow: inset 0 1px 4px rgba(28, 28, 30, 0.1); }
+.lead-row:active .type-chip-icon {
   transform: translateY(0.5px) scale(0.97);
   box-shadow:
     inset 0 2px 5px rgba(0, 0, 0, 0.42),
@@ -886,65 +872,15 @@ input:disabled { opacity: 0.55; }
     0 2px 6px -4px var(--c-ombre);
 }
 
-/* --- bloc "Mes rapports" : un seul volet, ouvert d'un clic --- */
-.my-reports { margin-top: 22px; }
-.folder { overflow: hidden; }
-/* Gris graphite plutot qu'une des trois couleurs de type : le bloc les
-   contient toutes, il ne doit en revendiquer aucune. */
-.folder.card-all {
-  background: linear-gradient(160deg, var(--card), color-mix(in srgb, var(--line) 45%, var(--card)));
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-sm);
-}
-.type-icon.icon-all {
-  --c-haut: #bab5ac;
-  --c-bas: #78726a;
-  --c-ombre: rgba(90, 85, 78, 0.45);
-}
-.folder-head {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 13px 14px;
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.folder-head:active { background: color-mix(in srgb, var(--bg) 70%, transparent); }
-.folder.open .folder-head { border-bottom: 1px solid var(--line); }
-.folder-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.folder-name { font-weight: 700; font-size: 15px; letter-spacing: -0.15px; }
-.folder-summary { font-size: 12px; color: var(--muted); }
-/* Compteur : une pastille pleine et non un cercle vide. Elle porte le nombre
-   de rapports gardes, c'est le repere que l'oeil cherche en revenant. */
-.folder-count {
-  font-size: 12.5px;
-  font-weight: 750;
-  color: var(--ink-soft);
-  background: linear-gradient(180deg, var(--card), var(--bg));
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  min-width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  padding: 0 8px;
-  flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(28, 28, 30, 0.06);
-}
-.folder-chevron { color: var(--muted-soft); flex-shrink: 0; transition: transform 0.2s ease; }
-.folder-chevron svg { width: 16px; height: 16px; }
-.folder.open .folder-chevron { transform: rotate(90deg); }
-.folder-panel { padding: 10px; background: var(--bg); display: grid; gap: 9px; }
+/* La premiere rubrique de l'accueil colle au haut de la feuille : c'est le
+   bord arrondi qui fait la respiration, pas une marge en plus. */
+.content-sheet > .section-title:first-child { margin-top: 0; }
+.content-sheet .report-filters { margin-top: 2px; }
+
 /* Sans cela, la barre de filtres et les lignes de rapport imposent leur
-   largeur de contenu au volet et debordent de l'ecran (le bouton de
-   suppression sortait a droite). */
-.folder-panel > *, .report-list > * { min-width: 0; }
+   largeur de contenu et debordent de l'ecran (le bouton de suppression
+   sortait a droite). */
+.report-list > * { min-width: 0; }
 
 /* Filtres de la liste : une seule ligne, qui defile lateralement si les
    libelles depassent, plutot que de casser la hauteur du volet. */

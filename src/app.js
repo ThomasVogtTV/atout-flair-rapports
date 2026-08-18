@@ -18,16 +18,16 @@ import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEY
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 
-// newOpen / reportsOpen / filter : etat des deux volets de l'accueil. Il survit
-// aux allers-retours vers un rapport (goHome recopie la vue), de sorte qu'on
-// retrouve la liste ouverte sur le meme filtre en revenant.
+// reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
+// derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
+// vers un rapport (goHome recopie la vue), de sorte qu'on retrouve la liste
+// dans l'etat ou on l'a laissee.
 let view = {
   screen: 'home',
   report: null,
   children: [],
   reports: [],
   contacts: [],
-  newOpen: true,
   reportsOpen: false,
   filter: 'tous',
 }
@@ -298,11 +298,6 @@ root.addEventListener('click', async (ev) => {
 
   const newType = el.closest('[data-new]')?.dataset.new
   if (newType) return createReport(newType)
-
-  if (el.closest('[data-toggle-new]')) {
-    view.newOpen = !view.newOpen
-    return render()
-  }
 
   if (el.closest('[data-toggle-reports]')) {
     view.reportsOpen = !view.reportsOpen

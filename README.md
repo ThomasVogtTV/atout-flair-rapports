@@ -170,11 +170,16 @@ matelas clair comme sur un sommier sombre — et il ne suit pas l'habillage de l
 c'est dans le PDF qu'il finit.
 
 L'accueil suit l'ordre des questions qu'on se pose en rouvrant l'app sur le terrain :
-**je continue ?** (la pastille « Reprendre », présente seulement s'il y a un brouillon),
-**je commence ?** (« Nouveau rapport »), **je cherche ?** (« Mes rapports »). Les trois
-pastilles s'alignent en colonne. L'en-tête ne garde que ce qui n'est pas un document : le
-carnet de contacts — une destination, donc une pastille pleine — et le thème clair/sombre,
-un réglage qu'on touche deux fois par an, donc une icône nue.
+**je continue ?** (« En cours », présent seulement s'il y a un brouillon), **je commence ?**
+(« Nouveau rapport »), **je cherche ?** (« Mes rapports », replié sur les trois derniers).
+Il parle la même langue que l'écran de saisie — des rubriques à petite icône, intitulé en
+capitales et filet jusqu'au bord — au lieu des volets repliables qu'il s'était inventés :
+une seule grammaire pour toute l'app, et le flou d'arrière-plan porté par la feuille elle-
+même plutôt que par chaque volet.
+
+L'en-tête ne garde que ce qui n'est pas un document : le carnet de contacts — une
+destination, donc une pastille pleine — et le thème clair/sombre, un réglage qu'on touche
+deux fois par an, donc une icône nue.
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
