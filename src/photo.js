@@ -5,6 +5,34 @@
 const MAX_DIM = 1280
 const QUALITY = 0.72
 
+// Horodatage appose en bas a droite. Discret mais indelebile : il est cuit dans
+// l'image des la prise, donc il traverse l'annotation, le re-encodage avant
+// envoi et le PDF. Un rapport photographie l'apres-midi et redige le soir porte
+// ainsi l'heure du terrain, pas celle de la redaction.
+function stampTime(ctx, w, h, moment) {
+  const d = new Date(moment)
+  const deux = (n) => String(n).padStart(2, '0')
+  const texte = `${deux(d.getDate())}.${deux(d.getMonth() + 1)}.${d.getFullYear()}  ${deux(d.getHours())}:${deux(d.getMinutes())}`
+  const taille = Math.max(11, Math.round(w / 38))
+  const marge = Math.round(taille * 0.9)
+  ctx.save()
+  ctx.font = `600 ${taille}px "Segoe UI", Arial, sans-serif`
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+  // Blanc cerne de noir plutot qu'un bandeau : le texte reste lisible sur un
+  // drap blanc comme sur un sommier sombre, sans masquer un centimetre de la
+  // photo. Un simple blanc ombre disparaissait sur une literie claire - le cas
+  // le plus frequent.
+  ctx.lineWidth = Math.max(2, taille / 4.5)
+  ctx.lineJoin = 'round'
+  ctx.miterLimit = 2
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.62)'
+  ctx.strokeText(texte, w - marge, h - marge)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
+  ctx.fillText(texte, w - marge, h - marge)
+  ctx.restore()
+}
+
 export async function fileToPhoto(file) {
   // imageOrientation: 'from-image' applique l'orientation EXIF du telephone.
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
@@ -17,6 +45,10 @@ export async function fileToPhoto(file) {
   const ctx = canvas.getContext('2d')
   ctx.drawImage(bitmap, 0, 0, w, h)
   bitmap.close?.()
+  // lastModified porte l'instant de la prise de vue quand la photo vient de
+  // l'appareil ; une image choisie dans la galerie garde sa date d'origine.
+  // Le repli sur l'heure courante ne sert qu'aux fichiers sans date.
+  stampTime(ctx, w, h, file.lastModified || Date.now())
   return { dataUrl: canvas.toDataURL('image/jpeg', QUALITY), width: w, height: h }
 }
 

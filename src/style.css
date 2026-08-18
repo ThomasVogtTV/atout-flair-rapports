@@ -673,6 +673,58 @@ input:disabled { opacity: 0.55; }
   padding: 4px 0;
 }
 
+/* Reprise du rapport en cours, en tete d'accueil : plus plate que les volets,
+   pour annoncer un raccourci et non une troisieme rubrique. */
+.resume-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 9px;
+  background: linear-gradient(180deg, var(--card), color-mix(in srgb, var(--accent) 9%, var(--card)));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line-strong));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
+}
+.resume-body { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.resume-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.resume-name, .resume-where { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-name { font-weight: 700; font-size: 14.5px; }
+.resume-where { font-size: 12px; color: var(--muted); }
+.resume-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--accent-ink);
+}
+.resume-go svg { width: 15px; height: 15px; }
+@media (hover: hover) {
+  .resume-card:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 10px 18px -12px color-mix(in srgb, var(--accent) 70%, transparent), var(--shadow-sm);
+  }
+}
+.resume-card:active { transform: scale(0.985); }
+
+/* Puces de recommandation : elles restent sous les remarques, on en empile
+   plusieurs, d'ou l'espace qui les detache du champ. */
+.quick-notes { margin-top: 9px; }
+
 /* --- accueil : les deux volets (creation / rangement) --- */
 
 /* Degrade/liseret/ombre teintes a l'accent de la maison par defaut ; les

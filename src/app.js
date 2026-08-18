@@ -8,7 +8,7 @@ import * as S from './state.js'
 import { fileToPhoto, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
 import { pendingCount, flushQueue } from './mailer.js'
-import { root, toast, pulse } from './ui/dom.js'
+import { root, toast, pulse, showLoading, hideLoading } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
 import { toggleTheme } from './ui/theme.js'
@@ -16,7 +16,7 @@ import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
 import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
-import { loadPdfEngine, previewPdf, openSendDialog } from './send.js'
+import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 
 // newOpen / reportsOpen / filter : etat des deux volets de l'accueil. Il survit
 // aux allers-retours vers un rapport (goHome recopie la vue), de sorte qu'on
@@ -150,6 +150,9 @@ root.addEventListener('input', (ev) => {
     if (el.dataset.rowField === 'nom') {
       refreshCounters()
       if (el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
+    }
+    if ((el.dataset.rowField === 'info' || el.dataset.rowField === 'infos') && el.value) {
+      el.closest('.row-card')?.querySelector('.quick-constats')?.remove()
     }
     scheduleSave()
   }
@@ -377,6 +380,34 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
+  // --- puce de constat : remplit "Informations" et s'efface avec ses voisines
+  const quickInfo = el.closest('[data-quick-info]')?.dataset.quickInfo
+  if (quickInfo) {
+    const card = el.closest('.row-card')
+    const row = rowOf(el)
+    const champ = typeOf(view.report).layout === 'pieces' ? 'info' : 'infos'
+    row[champ] = quickInfo
+    card.querySelector(`[data-row-field="${champ}"]`).value = quickInfo
+    card.querySelector('.quick-constats')?.remove()
+    scheduleSave()
+    return
+  }
+
+  // --- puce de recommandation : s'ajoute a la suite des remarques, une par
+  // ligne. Les puces restent affichees, on en empile plusieurs ; un texte deja
+  // present n'est pas redonne, pour qu'un double appui ne fasse pas de doublon.
+  const quickNote = el.closest('[data-quick-note]')?.dataset.quickNote
+  if (quickNote) {
+    const ta = root.querySelector('[data-path="remarques"]')
+    const actuel = ta.value.trim()
+    if (!actuel.includes(quickNote)) {
+      ta.value = actuel ? `${actuel}\n${quickNote}` : quickNote
+      set('remarques', ta.value)
+      scheduleSave()
+    }
+    return
+  }
+
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')
   if (segBtn) {
@@ -489,6 +520,46 @@ root.addEventListener('click', async (ev) => {
   if (act === 'tech-default') {
     await S.saveTechnicien(view.report.technicien ?? {})
     toast('Technicien enregistré par défaut')
+    return
+  }
+  if (act === 'export-backup') {
+    showLoading('Préparation de la sauvegarde…')
+    try {
+      const data = await S.exportBackup()
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+      hideLoading()
+      await shareOrDownload(blob, S.backupFilename())
+      toast(`${data.reports.length} rapport(s) et ${data.contacts.length} contact(s) sauvegardés.`)
+    } catch (err) {
+      hideLoading()
+      console.error('Sauvegarde impossible', err)
+      toast('Sauvegarde impossible.')
+    }
+    return
+  }
+  if (act === 'import-backup') {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/json,.json'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      try {
+        const data = JSON.parse(await file.text())
+        const n = (data.reports ?? []).length
+        if (!confirm(`Restaurer cette sauvegarde ?\n${n} rapport(s) et ${(data.contacts ?? []).length} contact(s) seront ajoutés à ceux déjà présents. Rien ne sera effacé.`)) return
+        showLoading('Restauration…')
+        const bilan = await S.importBackup(data)
+        hideLoading()
+        toast(`${bilan.reports} rapport(s) et ${bilan.contacts} contact(s) restaurés.`)
+        await refreshContacts()
+      } catch (err) {
+        hideLoading()
+        console.error('Restauration impossible', err)
+        toast(err?.message === 'Fichier de sauvegarde non reconnu' ? err.message : 'Fichier illisible.')
+      }
+    }
+    input.click()
     return
   }
   if (act === 'preview') return previewPdf(view.report, view.children)

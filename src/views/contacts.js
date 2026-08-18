@@ -3,6 +3,7 @@
 
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
+import { sectionIcon } from '../ui/icons.js'
 import { mandantTypeLabel } from '../ui/chips.js'
 
 export function contactsView(view) {
@@ -35,5 +36,15 @@ export function contactsView(view) {
     <section class="pad">
       <ul class="report-list">${rows}</ul>
       <button class="btn ghost wide" data-act="add-contact">+ Ajouter un contact</button>
+
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>
+      <div class="card">
+        <p class="muted small">Rapports, carnet et signature n'existent que dans cet appareil. Le fichier de
+        sauvegarde les rassemble : envoyez-le-vous par mail, il vous rendra tout sur un téléphone neuf.</p>
+        <div class="row-actions">
+          <button class="btn ghost" data-act="export-backup">Exporter</button>
+          <button class="btn ghost" data-act="import-backup">Restaurer</button>
+        </div>
+      </div>
     </section>`
 }

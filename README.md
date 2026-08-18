@@ -13,11 +13,19 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
   La mise en page PDF reprend les modèles Excel existants, logo compris.
 - **Carnet de mandants** : régies et gérances enregistrées, saisies une seule fois.
 - **Le moins de saisie possible sur place** : date et heure du jour déjà posées, deux cases
-  pour reprendre du mandant son adresse et son nom quand il est aussi l'occupant, et le
-  constat le plus fréquent déjà écrit dans les remarques. Rien à taper quand rien n'est
-  trouvé.
+  pour reprendre du mandant son adresse et son nom quand il est aussi l'occupant, le
+  constat le plus fréquent déjà écrit dans les remarques, et des puces de texte à une
+  touche — constats pour le champ « Informations » d'une ligne, recommandations qui
+  s'empilent dans les remarques. Rien à taper quand rien n'est trouvé.
 - **Photos rattachées à la pièce** : la photo prise depuis une ligne porte déjà le nom de
-  la pièce ; annotation au doigt (cercle, flèche, texte) en cyan, comme sous Paint.
+  la pièce ; annotation au doigt (cercle, flèche, texte) en cyan, comme sous Paint. Date et
+  heure de **prise de vue** apposées en bas à droite — on photographie sur place et on
+  termine le rapport le soir.
+- **Rien ne se perd** : le rapport en cours s'enregistre tout seul dans l'appareil, se
+  reprend d'un geste depuis l'accueil, et la base locale est déclarée persistante auprès du
+  navigateur pour qu'il ne la vide pas en manquant de place. Un fichier de sauvegarde
+  exportable (carnet de contacts → « Sauvegarde ») rassemble rapports, contacts et
+  signature : c'est la seule façon de retrouver son travail sur un téléphone neuf.
 - **Signature tactile** du locataire, et signature du technicien reprise d'office :
   enregistrée une fois sur l'appareil, elle remplit la case « Le technicien » de chaque
   nouveau rapport. Le nom et la signature restent modifiables dans le rapport, sans
@@ -113,6 +121,9 @@ rouvrir.
 | `src/style.css` | Toute la mise en forme, jetons de couleur en tête de fichier |
 | `api/send.js` | Fonction serveur d'envoi du mail |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |
+
+Les phrases des puces de saisie rapide (`CONSTATS`, `RECOMMANDATIONS`) sont en tête de
+`src/templates.js` : c'est là, et nulle part ailleurs, qu'on les corrige.
 
 Ajouter un quatrième type de rapport se fait dans `src/templates.js` : l'interface et le
 PDF s'y adaptent.

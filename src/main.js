@@ -3,6 +3,22 @@ import { boot } from './app.js'
 
 boot()
 
+// La base locale est la seule copie des rapports en cours, du carnet de mandants
+// et de la signature du technicien. Par defaut un navigateur la classe
+// "best-effort" : il peut la vider sans prevenir quand le telephone manque de
+// place. On demande donc qu'elle soit conservee. La demande ne montre aucune
+// fenetre a l'utilisateur - elle est accordee d'office a une app installee sur
+// l'ecran d'accueil, et refusee sans bruit sinon.
+if (navigator.storage?.persist) {
+  navigator.storage
+    .persisted()
+    .then((deja) => (deja ? true : navigator.storage.persist()))
+    .then((ok) => {
+      if (!ok) console.warn("Stockage local non protege : le navigateur peut le vider s'il manque de place.")
+    })
+    .catch(() => {})
+}
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   // Vrai si cette page a demarre sous un service worker deja en place : un
   // changement de controleur signifie alors qu'une nouvelle version vient de

@@ -1,7 +1,7 @@
 // Ecran d'un rapport ouvert : mandant, lieu d'intervention, lignes
 // (pieces / appartements / chambres), photos libres, remarques, signature.
 
-import { typeOf } from '../templates.js'
+import { typeOf, CONSTATS, RECOMMANDATIONS } from '../templates.js'
 import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
@@ -40,6 +40,16 @@ function fieldInput(f, value, disabled) {
   }
   const type = f.type === 'date' ? 'date' : f.type === 'time' ? 'time' : 'text'
   return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}"${disabled ? ' disabled' : ''} />`
+}
+
+// Puces de constat sous le champ "Informations" d'une ligne. Meme regle que les
+// noms de pieces : visibles tant que le champ est vide, elles disparaissent des
+// qu'il porte quelque chose - une carte remplie n'a plus a etre encombree.
+function constatChips(valeur) {
+  if (valeur) return ''
+  return `<div class="quick-rooms quick-constats">${CONSTATS.map(
+    (c) => `<button type="button" class="chip chip-sm" data-quick-info="${esc(c)}">${esc(c)}</button>`
+  ).join('')}</div>`
 }
 
 function photoStrip(photos) {
@@ -85,6 +95,7 @@ function pieceCardHTML(r, t, row, index) {
     <label class="field-info"><span class="field-label">Informations</span>
       <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
     </label>
+    ${constatChips(row.info)}
     ${photoStrip(photos)}
     <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
   </div>`
@@ -114,6 +125,7 @@ function lineCardHTML(r, t, row, index, children) {
     <label class="field-info"><span class="field-label">Infos</span>
       <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Téléphone, chien sur place, conseil…" />
     </label>
+    ${constatChips(row.infos)}
     ${photoStrip(photos)}
     <div class="row-actions">
       <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
@@ -296,6 +308,9 @@ export function editorView(view) {
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'neutral')}Remarques et recommandations</span></h2>
       <div class="card">
         <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
+        <div class="quick-rooms quick-notes">${RECOMMANDATIONS.map(
+          (n) => `<button type="button" class="chip chip-sm" data-quick-note="${esc(n.texte)}">+ ${esc(n.label)}</button>`
+        ).join('')}</div>
       </div>
 
       ${technicienSection(r)}

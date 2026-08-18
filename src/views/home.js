@@ -139,6 +139,25 @@ function newReportHTML(view) {
     </div>`
 }
 
+// Le rapport le plus recemment touche, s'il est encore en brouillon. L'app
+// rouvre toujours sur l'accueil : sans ce rappel, reprendre une saisie
+// interrompue demandait d'ouvrir le volet, puis de retrouver la bonne ligne.
+function resumeHTML(reports) {
+  const dernier = reports[0]
+  if (!dernier || dernier.status !== 'draft') return ''
+  const qui = dernier.lieu?.locataire || fullName(dernier.mandant) || 'Sans nom'
+  const ou = dernier.lieu?.adresseIntervention || dernier.lieu?.adresse || ''
+  return `
+    <button type="button" class="resume-card" data-open="${dernier.id}">
+      <span class="resume-body">
+        <span class="resume-kicker">Rapport en cours</span>
+        <span class="resume-name">${esc(qui)}</span>
+        ${ou ? `<span class="resume-where">${esc(ou)}</span>` : ''}
+      </span>
+      <span class="resume-go">Reprendre ${ICONS.chevron}</span>
+    </button>`
+}
+
 export function homeView(view) {
   return `
     <header class="top">
@@ -155,6 +174,7 @@ export function homeView(view) {
       <p>Saisie, photos, signature et envoi sur place</p>
     </div>
     <section class="content-sheet">
+      ${resumeHTML(view.reports)}
       ${newReportHTML(view)}
       <div class="my-reports">${myReportsHTML(view)}</div>
     </section>`

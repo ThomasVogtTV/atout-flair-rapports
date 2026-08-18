@@ -170,6 +170,50 @@ export async function saveContact(contact) {
   await db.put('contacts', { ...contact, id: contact.id ?? uid(), nom })
 }
 
+// --- sauvegarde exportable --------------------------------------------------
+
+// Les rapports, le carnet et la signature du technicien n'existent que dans ce
+// telephone. Perdu, casse ou vole, tout part avec lui : d'ou un fichier unique
+// qu'on peut s'envoyer par mail et ranger ailleurs.
+const BACKUP_FORMAT = 'atout-flair-sauvegarde-1'
+
+export async function exportBackup() {
+  const [reports, contacts, technicien] = await Promise.all([
+    db.all('reports'),
+    db.all('contacts'),
+    db.get('settings', 'technicien'),
+  ])
+  return {
+    format: BACKUP_FORMAT,
+    date: new Date().toISOString(),
+    refSeq: localStorage.getItem('af-ref-seq') ?? '0',
+    reports,
+    contacts,
+    settings: technicien ? [technicien] : [],
+  }
+}
+
+export async function importBackup(data) {
+  if (data?.format !== BACKUP_FORMAT) throw new Error('Fichier de sauvegarde non reconnu')
+  // Fusion, jamais remplacement : restaurer une sauvegarde ne doit pas effacer
+  // ce qui a ete saisi depuis. Un enregistrement de meme identifiant est repris
+  // du fichier, les autres restent en place.
+  for (const r of data.reports ?? []) await db.put('reports', r)
+  for (const c of data.contacts ?? []) await db.put('contacts', c)
+  for (const s of data.settings ?? []) await db.put('settings', s)
+  // Le compteur de numeros repart au plus haut des deux : sans cela, un rapport
+  // restaure sur un appareil neuf reattribuerait un numero deja imprime.
+  const seq = Math.max(Number(localStorage.getItem('af-ref-seq') ?? '0'), Number(data.refSeq ?? '0'))
+  localStorage.setItem('af-ref-seq', String(seq))
+  return { reports: (data.reports ?? []).length, contacts: (data.contacts ?? []).length }
+}
+
+export function backupFilename() {
+  const d = new Date()
+  const deux = (n) => String(n).padStart(2, '0')
+  return `Atout Flair - sauvegarde du ${deux(d.getDate())}.${deux(d.getMonth() + 1)}.${d.getFullYear()}.json`
+}
+
 // --- nom de fichier --------------------------------------------------------
 
 const slug = (s) =>

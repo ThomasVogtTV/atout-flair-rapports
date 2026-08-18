@@ -15,6 +15,33 @@ const DETECTION_ROOM_SUGGESTIONS = [
   'Bureau', 'Couloir', 'Hall', 'Cuisine', 'Salle de bain', 'Buanderie', 'Balcon', 'Cave', 'Galetas', 'Garage',
 ]
 
+// Vocabulaire de terrain, a une touche. Les constats remplissent le champ
+// "Informations" d'une ligne ; les recommandations s'ajoutent les unes sous les
+// autres dans les remarques du rapport, d'ou l'etiquette courte sur la puce et
+// la phrase entiere a l'insertion.
+//
+// C'est ici, et nulle part ailleurs, qu'on corrige ces formulations.
+export const CONSTATS = [
+  'Aucun marquage',
+  'Marquage franc du chien',
+  'Punaises vivantes visibles',
+  'Traces et déjections',
+  'Literie neuve',
+  'Pièce encombrée, contrôle à refaire',
+]
+
+export const RECOMMANDATIONS = [
+  { label: 'Rien trouvé', texte: 'Aucun marquage du chien de recherche. Aucune trace de punaises de lit visible.' },
+  { label: 'Traitement', texte: 'Traitement thermique recommandé dans les dix jours.' },
+  { label: 'Lavage 60°', texte: 'Literie et textiles à laver à 60 °C.' },
+  { label: 'Contrôle', texte: 'Contrôle de suivi à prévoir trois semaines après le traitement.' },
+  {
+    label: 'Ne rien sortir',
+    texte:
+      'Ne pas sortir les affaires de la pièce avant le traitement, au risque de propager la contamination au reste du logement.',
+  },
+]
+
 export const TYPES = {
   detection: {
     id: 'detection',

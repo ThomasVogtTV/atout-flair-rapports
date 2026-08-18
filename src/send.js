@@ -83,7 +83,7 @@ export async function previewPdf(report, children) {
  * defaut le telecharge. Sert de sortie de secours a chaque fois que l'envoi
  * automatique ne peut pas aboutir.
  */
-async function shareOrDownload(blob, filename) {
+export async function shareOrDownload(blob, filename) {
   const file = new File([blob], filename, { type: 'application/pdf' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
