@@ -11,7 +11,7 @@ import { pendingCount, flushQueue } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
-import { toggleTheme } from './ui/theme.js'
+import { setTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
 import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
@@ -396,6 +396,13 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
+  // --- choix du theme, dans les reglages
+  const themeBtn = el.closest('[data-theme-choice] .seg-btn')
+  if (themeBtn) {
+    setTheme(themeBtn.dataset.val)
+    return render()
+  }
+
   // --- segments Oui / Non / ?
   const segBtn = el.closest('.seg-btn')
   if (segBtn) {
@@ -453,10 +460,6 @@ root.addEventListener('click', async (ev) => {
 
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
-  if (act === 'toggle-theme') {
-    toggleTheme()
-    return render()
-  }
   if (act === 'open-contacts') return openContacts()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
   if (act === 'home') {

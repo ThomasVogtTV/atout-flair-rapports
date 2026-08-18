@@ -49,7 +49,16 @@ const VILLE = 'Vaugondry'
 const FOOTER_LINE1 = `${SOCIETE} · Oberli Stessy · Rue des Fontaines 6, 1423 ${VILLE} · 079 269 94 96 · info@atout-flair.ch`
 const FOOTER_LINE2 = 'www.atout-flair.ch · Chiens certifiés Bed Bug Foundation'
 
-// Les polices standard sont encodees en WinAnsi : on remplace ce qui n'y passe pas.
+// Les polices standard du PDF sont encodees en WinAnsi (Latin-1). Ce qui n'y
+// passe pas est ramene a son equivalent le plus proche - et non supprime, comme
+// ce fut le cas jusqu'ici : un rapport qui imprimait "au cur du matelas" pour
+// "au coeur", ou "Mme Szymaska" pour "Szymanska", partait chez la regie avec
+// des lettres en moins, sans que rien ne le signale.
+const HORS_LATIN1 = {
+  'œ': 'oe', 'Œ': 'OE', 'ł': 'l', 'Ł': 'L', 'đ': 'd', 'Đ': 'D',
+  'ø': 'o', 'Ø': 'O', 'ƒ': 'f', '€': 'EUR', '№': 'No', 'ș': 's', 'Ș': 'S', 'ț': 't', 'Ț': 'T',
+}
+
 function san(s) {
   return String(s ?? '')
     .replace(/[‘’‛]/g, "'")
@@ -57,7 +66,11 @@ function san(s) {
     .replace(/[–—]/g, '-')
     .replace(/…/g, '...')
     .replace(/ /g, ' ')
-    .replace(/[^\x20-\x7E¡-ÿ]/g, '')
+    .replace(/[^\x20-\x7E¡-ÿ]/g, (c) =>
+      // Le repli general : on retire l'accent et on garde la lettre. "ń" devient
+      // "n", "ě" devient "e". Ce qui n'a meme pas de forme de base disparait.
+      HORS_LATIN1[c] ?? c.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^\x20-\x7E¡-ÿ]/g, '')
+    )
 }
 
 function dataUrlToBytes(dataUrl) {

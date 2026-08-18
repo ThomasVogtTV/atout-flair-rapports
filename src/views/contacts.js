@@ -4,6 +4,7 @@
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
+import { THEMES, themeChoice } from '../ui/theme.js'
 import { mandantTypeLabel } from '../ui/chips.js'
 
 export function contactsView(view) {
@@ -29,13 +30,26 @@ export function contactsView(view) {
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
       <div class="top-title">
-        <h1>Carnet de contacts</h1>
+        <h1>Carnet et réglages</h1>
         <p class="muted">${contacts.length} contact${contacts.length > 1 ? 's' : ''}</p>
       </div>
     </header>
     <section class="pad">
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Contacts</span>
+        <button class="link" data-act="add-contact">+ Ajouter</button>
+      </h2>
       <ul class="report-list">${rows}</ul>
-      <button class="btn ghost wide" data-act="add-contact">+ Ajouter un contact</button>
+
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('sun', 'amber')}Réglages</span></h2>
+      <div class="card">
+        <span class="field-label">Apparence</span>
+        <div class="seg" data-theme-choice>
+          ${THEMES.map(
+            (t) => `<button type="button" class="seg-btn${themeChoice() === t.key ? ' on' : ''}" data-val="${t.key}">${t.label}</button>`
+          ).join('')}
+        </div>
+        <p class="muted small reglage-note">« Système » suit le réglage du téléphone : sombre le soir s'il l'est.</p>
+      </div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>
       <div class="card">

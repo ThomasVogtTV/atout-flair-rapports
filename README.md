@@ -124,6 +124,11 @@ rouvrir.
 | `api/send.js` | Fonction serveur d'envoi du mail |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |
 
+Le PDF est écrit avec les polices standard, encodées en WinAnsi. `san()` dans
+`src/pdf.js` y ramène ce qui n'y passe pas — « cœur » devient « coeur », « Szymańska »
+devient « Szymanska » — au lieu de supprimer la lettre, ce qui faisait partir chez la régie
+des rapports amputés sans que rien ne le signale.
+
 Les phrases des puces de saisie rapide (`CONSTATS`, `RECOMMANDATIONS`) sont en tête de
 `src/templates.js` : c'est là, et nulle part ailleurs, qu'on les corrige.
 
@@ -177,9 +182,11 @@ capitales et filet jusqu'au bord — au lieu des volets repliables qu'il s'étai
 une seule grammaire pour toute l'app, et le flou d'arrière-plan porté par la feuille elle-
 même plutôt que par chaque volet.
 
-L'en-tête ne garde que ce qui n'est pas un document : le carnet de contacts — une
-destination, donc une pastille pleine — et le thème clair/sombre, un réglage qu'on touche
-deux fois par an, donc une icône nue.
+L'en-tête ne garde qu'un bouton, le carnet — une destination, pas un document. Le thème
+a rejoint l'écran « Carnet et réglages », avec la sauvegarde : c'est un réglage, pas une
+action de terrain. Il s'y choisit entre **Système**, **Clair** et **Sombre** ; l'ancien
+bouton bascule ne connaissait que les deux derniers et, une fois touché, ne savait plus
+rendre la main au réglage du téléphone.
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.

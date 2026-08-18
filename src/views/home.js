@@ -9,7 +9,6 @@ import { TYPE_LIST, typeOf } from '../templates.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
-import { currentTheme } from '../ui/theme.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -146,8 +145,7 @@ export function homeView(view) {
         <h1>Atout Flair</h1>
       </div>
       <span class="top-actions">
-        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
-        <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
+        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet et réglages">${ICONS.contacts}</button>
       </span>
     </header>
     <div class="hero-caption">
