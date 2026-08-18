@@ -163,8 +163,6 @@ export function homeView(view) {
       <p>Saisie, photos, signature et envoi sur place</p>
     </div>
     <section class="content-sheet">
-      ${newReportHTML(view)}
-      <div class="my-reports">${myReportsHTML(view)}</div>
       ${
         enCours
           ? `<button type="button" class="resume-shortcut" data-open="${enCours.id}" title="Reprendre le rapport en cours">
@@ -173,5 +171,7 @@ export function homeView(view) {
             </button>`
           : ''
       }
+      ${newReportHTML(view)}
+      <div class="my-reports">${myReportsHTML(view)}</div>
     </section>`
 }

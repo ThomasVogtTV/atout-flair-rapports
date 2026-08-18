@@ -841,17 +841,21 @@ input:disabled { opacity: 0.55; }
 .pill.sent { background: var(--green-soft); color: var(--green); }
 .pill.queued { background: var(--amber-soft); color: var(--amber); }
 
-/* Raccourci de reprise : une pastille seule, posee sous celle des rapports et
-   alignee sur elle (14px, le retrait de l'en-tete d'un volet). Elle n'apparait
-   que lorsqu'un brouillon attend, et disparait des qu'il est envoye - d'ou une
-   simple pastille et non une rubrique de plus, qui laisserait un trou. */
+/* Raccourci de reprise : une pastille seule, en tete du contenu. L'ordre des
+   trois blocs suit celui des questions qu'on se pose en rouvrant l'app sur le
+   terrain - je continue ? je commence ? je cherche ? - et non l'inverse : sous
+   les rapports, la pastille tombait 89px hors de l'ecran d'un petit telephone,
+   soit le seul geste utile qu'il fallait aller chercher.
+   Elle n'apparait que lorsqu'un brouillon attend, et disparait des qu'il est
+   envoye - d'ou une simple pastille et non une rubrique de plus, qui
+   laisserait un trou. */
 .resume-shortcut {
   display: flex;
   align-items: center;
   gap: 10px;
-  /* 15px et non 14 : la carte des rapports a une bordure d'un pixel, et sa
-     pastille commence donc un pixel plus a droite. */
-  margin: 11px 0 0 15px;
+  /* 15px et non 14 : les cartes ont une bordure d'un pixel, et leurs pastilles
+     commencent donc un pixel plus a droite. Les trois s'alignent en colonne. */
+  margin: 0 0 13px 15px;
   padding: 0;
   background: none;
   border: none;
