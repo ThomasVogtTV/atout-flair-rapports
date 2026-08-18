@@ -489,46 +489,15 @@ body[data-screen="home"] .folder {
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .grid2 .full { grid-column: 1 / -1; }
 
-/* Selecteur repliable (type de mandant) : une ligne qui montre le choix
-   courant et s'ouvre sur les possibilites, plutot que quatre pastilles
-   occupant deux lignes en permanence. */
-.picker {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--card);
-  overflow: hidden;
-}
-.picker-head {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-height: var(--tap);
-  padding: 0 11px;
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-.picker-head:active { background: var(--bg); }
-.picker-title { font-size: 11px; font-weight: 650; letter-spacing: 0.02em; color: var(--ink-soft); }
-.picker-value { flex: 1; text-align: right; font-size: 13px; font-weight: 650; }
-.picker-value.empty { color: var(--muted-soft); font-weight: 600; }
-.picker-chevron { display: flex; color: var(--muted-soft); transition: transform 0.2s ease; }
-.picker-chevron svg { width: 15px; height: 15px; }
-.picker.open .picker-chevron { transform: rotate(90deg); }
-.picker-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 9px 9px;
-  border-top: 1px solid var(--line);
-  padding-top: 9px;
-  background: var(--bg);
-}
-.picker-options .chip { flex: 1 1 auto; }
+/* Type de mandant : une ligne de pastilles, comme les noms de pieces et les
+   constats. Sur un ecran etroit la ligne defile lateralement plutot que de
+   passer a la ligne - le formulaire garde sa hauteur quoi qu'il arrive. */
+.type-picker { display: grid; gap: 4px; }
+/* Les quatre reponses doivent tenir d'un coup d'oeil sur un ecran de telephone,
+   sinon la quatrieme n'existe pas : pastilles un peu plus serrees qu'ailleurs. */
+.type-picker .chip { padding: 0 9px; font-size: 11.5px; min-height: 34px; }
+
+.chip { flex: 1 1 auto; }
 
 .chip {
   font: inherit;
@@ -640,27 +609,31 @@ input:disabled { opacity: 0.55; }
 .theme-toggle { flex-shrink: 0; display: grid; place-items: center; color: var(--ink-soft); }
 .theme-toggle svg { width: 20px; height: 20px; }
 
-/* badge glossy degrade, meme traitement que les icones des cartes/sections
-   (voir .type-icon) - repere fort en tete d'accueil plutot qu'un simple
-   glyphe transparent. Teinte ambre, cohérente avec l'icone Mandant. */
-.contacts-toggle {
-  margin-left: auto;
+/* Boutons d'action de l'en-tete : meme pastille en degrade que les icones de
+   type, en plus petit. Chacun sa teinte, posee par --pastille. */
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.contacts-toggle, .resume-toggle {
+  --pastille: var(--amber);
   flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: 11px;
-  background: var(--amber);
+  background: var(--pastille);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--amber) 70%, white), var(--amber) 85%);
+    linear-gradient(135deg, color-mix(in srgb, var(--pastille) 70%, white), var(--pastille) 85%);
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--amber) 65%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--pastille) 65%, transparent);
   transition: transform 0.1s ease;
 }
-.contacts-toggle svg { width: 19px; height: 19px; }
-.contacts-toggle:active { transform: scale(0.92); }
+/* La reprise porte la couleur de la maison : elle n'apparait que lorsqu'un
+   rapport attend, et doit se voir sans crier. */
+.resume-toggle { --pastille: var(--accent-fill); }
+.contacts-toggle svg, .resume-toggle svg { width: 19px; height: 19px; }
+.contacts-toggle:active, .resume-toggle:active { transform: scale(0.92); }
+
 .link {
   border: none;
   background: none;
@@ -672,54 +645,6 @@ input:disabled { opacity: 0.55; }
   cursor: pointer;
   padding: 4px 0;
 }
-
-/* Reprise du rapport en cours, en tete d'accueil : plus plate que les volets,
-   pour annoncer un raccourci et non une troisieme rubrique. */
-.resume-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  margin-bottom: 9px;
-  background: linear-gradient(180deg, var(--card), color-mix(in srgb, var(--accent) 9%, var(--card)));
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line-strong));
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
-}
-.resume-body { display: grid; gap: 1px; min-width: 0; flex: 1; }
-.resume-kicker {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--accent-ink);
-}
-.resume-name, .resume-where { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resume-name { font-weight: 700; font-size: 14.5px; }
-.resume-where { font-size: 12px; color: var(--muted); }
-.resume-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  font-size: 12.5px;
-  font-weight: 650;
-  color: var(--accent-ink);
-}
-.resume-go svg { width: 15px; height: 15px; }
-@media (hover: hover) {
-  .resume-card:hover {
-    transform: translateY(-1.5px);
-    box-shadow: 0 10px 18px -12px color-mix(in srgb, var(--accent) 70%, transparent), var(--shadow-sm);
-  }
-}
-.resume-card:active { transform: scale(0.985); }
 
 /* Puces de recommandation : elles restent sous les remarques, on en empile
    plusieurs, d'ou l'espace qui les detache du champ. */

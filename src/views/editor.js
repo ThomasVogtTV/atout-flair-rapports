@@ -42,11 +42,10 @@ function fieldInput(f, value, disabled) {
   return `<input type="${type}" data-path="${id}" value="${esc(value ?? '')}"${disabled ? ' disabled' : ''} />`
 }
 
-// Puces de constat sous le champ "Informations" d'une ligne. Meme regle que les
-// noms de pieces : visibles tant que le champ est vide, elles disparaissent des
-// qu'il porte quelque chose - une carte remplie n'a plus a etre encombree.
-function constatChips(valeur) {
-  if (valeur) return ''
+// Puces de constat sous le champ "Informations" d'une ligne. Elles restent
+// affichees en permanence : un constat s'ajoute souvent a un autre, et des
+// puces qui disparaissent au premier choix obligent a taper le second a la main.
+function constatChips() {
   return `<div class="quick-rooms quick-constats">${CONSTATS.map(
     (c) => `<button type="button" class="chip chip-sm" data-quick-info="${esc(c)}">${esc(c)}</button>`
   ).join('')}</div>`
@@ -95,7 +94,7 @@ function pieceCardHTML(r, t, row, index) {
     <label class="field-info"><span class="field-label">Informations</span>
       <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
     </label>
-    ${constatChips(row.info)}
+    ${constatChips()}
     ${photoStrip(photos)}
     <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
   </div>`
@@ -125,7 +124,7 @@ function lineCardHTML(r, t, row, index, children) {
     <label class="field-info"><span class="field-label">Infos</span>
       <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Téléphone, chien sur place, conseil…" />
     </label>
-    ${constatChips(row.infos)}
+    ${constatChips()}
     ${photoStrip(photos)}
     <div class="row-actions">
       <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
@@ -230,7 +229,7 @@ function mandantSection(view, r, contacts) {
       <button class="link" data-act="save-contact">Ajouter au carnet</button>
     </h2>
     <div class="card grid2">
-      <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type', open: view.mandantOpen })}</div>
+      <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
       <label class="${societe ? 'full' : ''}">Nom
         <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
         <datalist id="contacts">${contactOptions}</datalist>

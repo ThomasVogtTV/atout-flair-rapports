@@ -30,7 +30,6 @@ let view = {
   newOpen: true,
   reportsOpen: false,
   filter: 'tous',
-  mandantOpen: false,
 }
 let saveTimer = null
 
@@ -150,9 +149,6 @@ root.addEventListener('input', (ev) => {
     if (el.dataset.rowField === 'nom') {
       refreshCounters()
       if (el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
-    }
-    if ((el.dataset.rowField === 'info' || el.dataset.rowField === 'infos') && el.value) {
-      el.closest('.row-card')?.querySelector('.quick-constats')?.remove()
     }
     scheduleSave()
   }
@@ -349,20 +345,12 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
-  // --- type de mandant : bouton qui deplie les quatre choix
-  if (el.closest('[data-picker]')) {
-    view.mandantOpen = !view.mandantOpen
-    return render()
-  }
-
   const chip = el.closest('.chip')
   if (chip && chip.closest('[data-mandant-type]')) {
     const value = chip.dataset.val
     view.report.mandant.type = view.report.mandant.type === value ? '' : value
     // Une gerance n'a pas de prenom : le nom repris pour le locataire change.
     if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
-    // Un choix referme le selecteur, comme une liste deroulante.
-    view.mandantOpen = false
     scheduleSave()
     return render()
   }
@@ -380,16 +368,21 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
-  // --- puce de constat : remplit "Informations" et s'efface avec ses voisines
+  // --- puce de constat : s'ajoute a ce qui est deja ecrit, les puces restant
+  // affichees. Un constat en appelle souvent un second ("marquage franc, puis
+  // punaises visibles") ; la minuscule apres la virgule fait une phrase et non
+  // deux morceaux colles.
   const quickInfo = el.closest('[data-quick-info]')?.dataset.quickInfo
   if (quickInfo) {
     const card = el.closest('.row-card')
     const row = rowOf(el)
     const champ = typeOf(view.report).layout === 'pieces' ? 'info' : 'infos'
-    row[champ] = quickInfo
-    card.querySelector(`[data-row-field="${champ}"]`).value = quickInfo
-    card.querySelector('.quick-constats')?.remove()
-    scheduleSave()
+    const actuel = (row[champ] ?? '').trim()
+    if (!actuel.toLowerCase().includes(quickInfo.toLowerCase())) {
+      row[champ] = actuel ? `${actuel}, ${quickInfo[0].toLowerCase()}${quickInfo.slice(1)}` : quickInfo
+      card.querySelector(`[data-row-field="${champ}"]`).value = row[champ]
+      scheduleSave()
+    }
     return
   }
 

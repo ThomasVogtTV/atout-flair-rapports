@@ -23,7 +23,6 @@ const IDS = {
 export function openContactDialog(contact, onChanged) {
   const c = contact ?? { type: '', nom: '', prenom: '', adresse: '', npaLieu: '', tel: '', email: '' }
   let type = c.type || ''
-  let pickerOpen = false
 
   // Valeurs en cours de saisie : elles doivent survivre au redessin des champs
   // quand le type change (le prenom disparait pour une gerance).
@@ -51,7 +50,7 @@ export function openContactDialog(contact, onChanged) {
 
   const overlay = openOverlay(`
     <h2>${contact ? 'Modifier le contact' : 'Nouveau contact'}</h2>
-    <div data-picker-slot>${mandantPicker(type, { attr: 'data-contact-type', open: false })}</div>
+    <div data-picker-slot>${mandantPicker(type, { attr: 'data-contact-type' })}</div>
     <div class="grid2" data-fields></div>
     <div class="dialog-actions">
       ${contact ? `<button class="btn ghost danger" data-del>Supprimer</button>` : ''}
@@ -60,10 +59,7 @@ export function openContactDialog(contact, onChanged) {
     </div>`)
 
   const redraw = () => {
-    overlay.querySelector('[data-picker-slot]').innerHTML = mandantPicker(type, {
-      attr: 'data-contact-type',
-      open: pickerOpen,
-    })
+    overlay.querySelector('[data-picker-slot]').innerHTML = mandantPicker(type, { attr: 'data-contact-type' })
     overlay.querySelector('[data-fields]').innerHTML = fieldsHTML()
   }
 
@@ -76,19 +72,10 @@ export function openContactDialog(contact, onChanged) {
       return
     }
 
-    if (ev.target.closest('[data-picker]')) {
-      readFields()
-      pickerOpen = !pickerOpen
-      redraw()
-      return
-    }
-
     const chip = ev.target.closest('[data-contact-type] .chip')
     if (chip) {
-      // Un choix referme le selecteur : c'est le geste d'une liste deroulante.
       readFields()
       type = type === chip.dataset.val ? '' : chip.dataset.val
-      pickerOpen = false
       redraw()
       return
     }

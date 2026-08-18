@@ -139,34 +139,24 @@ function newReportHTML(view) {
     </div>`
 }
 
-// Le rapport le plus recemment touche, s'il est encore en brouillon. L'app
-// rouvre toujours sur l'accueil : sans ce rappel, reprendre une saisie
-// interrompue demandait d'ouvrir le volet, puis de retrouver la bonne ligne.
-function resumeHTML(reports) {
-  const dernier = reports[0]
-  if (!dernier || dernier.status !== 'draft') return ''
-  const qui = dernier.lieu?.locataire || fullName(dernier.mandant) || 'Sans nom'
-  const ou = dernier.lieu?.adresseIntervention || dernier.lieu?.adresse || ''
-  return `
-    <button type="button" class="resume-card" data-open="${dernier.id}">
-      <span class="resume-body">
-        <span class="resume-kicker">Rapport en cours</span>
-        <span class="resume-name">${esc(qui)}</span>
-        ${ou ? `<span class="resume-where">${esc(ou)}</span>` : ''}
-      </span>
-      <span class="resume-go">Reprendre ${ICONS.chevron}</span>
-    </button>`
-}
-
 export function homeView(view) {
+  // Le rapport le plus recemment touche, s'il est encore en brouillon. L'app
+  // rouvre toujours sur l'accueil : sans ce raccourci, reprendre une saisie
+  // interrompue demandait d'ouvrir le volet puis d'y retrouver la bonne ligne.
+  // Une icone de plus dans l'en-tete, qui n'apparait que s'il y a de quoi
+  // reprendre - pas une bande de plus en travers de l'ecran.
+  const enCours = view.reports.find((r) => r.status === 'draft')
   return `
     <header class="top">
       <img src="/logo.jpg" alt="Atout Flair" class="logo" />
       <div class="top-title">
         <h1>Atout Flair</h1>
       </div>
-      <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
-      <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
+      <span class="top-actions">
+        ${enCours ? `<button class="icon-btn resume-toggle" data-open="${enCours.id}" title="Reprendre le rapport en cours">${ICONS.note}</button>` : ''}
+        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
+        <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
+      </span>
     </header>
     <div class="hero-caption">
       <span class="hero-kicker">Détection canine professionnelle</span>
@@ -174,7 +164,6 @@ export function homeView(view) {
       <p>Saisie, photos, signature et envoi sur place</p>
     </div>
     <section class="content-sheet">
-      ${resumeHTML(view.reports)}
       ${newReportHTML(view)}
       <div class="my-reports">${myReportsHTML(view)}</div>
     </section>`

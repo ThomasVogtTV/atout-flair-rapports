@@ -15,14 +15,16 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
 - **Le moins de saisie possible sur place** : date et heure du jour déjà posées, deux cases
   pour reprendre du mandant son adresse et son nom quand il est aussi l'occupant, le
   constat le plus fréquent déjà écrit dans les remarques, et des puces de texte à une
-  touche — constats pour le champ « Informations » d'une ligne, recommandations qui
-  s'empilent dans les remarques. Rien à taper quand rien n'est trouvé.
+  touche qui restent affichées et s'ajoutent les unes aux autres — constats pour le champ
+  « Informations » d'une ligne, recommandations pour les remarques. Rien à taper quand rien
+  n'est trouvé.
 - **Photos rattachées à la pièce** : la photo prise depuis une ligne porte déjà le nom de
   la pièce ; annotation au doigt (cercle, flèche, texte) en cyan, comme sous Paint. Date et
   heure de **prise de vue** apposées en bas à droite — on photographie sur place et on
   termine le rapport le soir.
 - **Rien ne se perd** : le rapport en cours s'enregistre tout seul dans l'appareil, se
-  reprend d'un geste depuis l'accueil, et la base locale est déclarée persistante auprès du
+  reprend d'un geste depuis l'icône de l'en-tête, qui n'apparaît que s'il y a de quoi
+  reprendre, et la base locale est déclarée persistante auprès du
   navigateur pour qu'il ne la vide pas en manquant de place. Un fichier de sauvegarde
   exportable (carnet de contacts → « Sauvegarde ») rassemble rapports, contacts et
   signature : c'est la seule façon de retrouver son travail sur un téléphone neuf.
