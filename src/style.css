@@ -25,30 +25,32 @@
        vert   -> rien trouve (bouton "Non", badge plein) ;
        ambre  -> indetermine, et envoi en attente de reseau.
 
-     Le decor, une harmonie de voisins : encre -> ardoise -> prune. Trois teintes
-     proches sur la roue, qui se lisent comme un ensemble sans jamais se prendre
-     pour un signal. L'encre est la marque de l'app (bandeau du haut, volets,
-     mise au point des champs, badges en attente, type "Detection"), l'ardoise
-     va au lieu d'intervention et au type "Immeuble", la prune aux photos et au
-     type "Hotel".
+     Le decor prend ce qu'il reste : l'arc bleu -> violet -> magenta, seule
+     portion de la roue que les etats ne revendiquent pas. Trois teintes
+     franchement ecartees (110 degres d'un bout a l'autre, contre 54 quand elles
+     se ressemblaient trop), tenues ensemble par une meme force de couleur et un
+     meme poids sous leur glyphe blanc. Le bleu est la marque de l'app (bandeau
+     du haut, volets, mise au point des champs, badge d'une piece pas encore
+     statuee, type "Detection"), le violet va au lieu d'intervention et au type
+     "Immeuble", le magenta aux photos et au type "Hotel".
 
      Le PDF, lui, garde sa propre repartition : voir src/pdf.js. */
-  --accent: #3a4d8f;      /* encre : la marque de l'app */
-  --accent-soft: #eaedf7;
-  --accent-ink: #2f4079;  /* pour du texte/une icone posee sur --accent-soft */
-  --accent-fill: #3a4d8f; /* pour une surface pleine qui porte du blanc */
+  --accent: #2d5bb9;      /* bleu : la marque de l'app */
+  --accent-soft: #e7eefb;
+  --accent-ink: #24499a;  /* pour du texte/une icone posee sur --accent-soft */
+  --accent-fill: #2d5bb9; /* pour une surface pleine qui porte du blanc */
   --red: #c02a2a;
   --red-soft: #fbeaea;
   --green: #1f7a4d;
   --green-soft: #e7f5ee;
   --amber: #a66a13;
   --amber-soft: #fbf0dd;
-  --blue: #3a6997;        /* ardoise : lieu d'intervention, type "Immeuble" */
-  --blue-soft: #e9f1f8;
-  --blue-fill: #3a6997;
-  --plum: #6a5aa8;        /* prune : photos, type "Hotel" */
-  --plum-soft: #eeecf8;
-  --plum-fill: #6a5aa8;
+  --violet: #7b3fc4;      /* lieu d'intervention, type "Immeuble" */
+  --violet-soft: #f0e9fb;
+  --violet-fill: #7b3fc4;
+  --magenta: #ad3392;     /* photos, type "Hotel" */
+  --magenta-soft: #fae8f5;
+  --magenta-fill: #ad3392;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -76,22 +78,22 @@
     --fill-text: #171513;
     --header-bg: rgba(23, 21, 19, 0.86);
     --bar-bg: rgba(33, 31, 28, 0.9);
-    --accent: #8fa6e8;
-    --accent-soft: #1a2039;
-    --accent-ink: #8fa6e8;
-    --accent-fill: #3d4f96;
+    --accent: #7fa3ee;
+    --accent-soft: #16224a;
+    --accent-ink: #7fa3ee;
+    --accent-fill: #2f57ab;
     --red: #e8615a;
     --red-soft: #3a1f1c;
     --green: #52b485;
     --green-soft: #1c3229;
     --amber: #d9a24a;
     --amber-soft: #3a2c15;
-    --blue: #74a8d6;
-    --blue-soft: #1c2c3a;
-    --blue-fill: #345f8c;
-    --plum: #ab9cdd;
-    --plum-soft: #2a2540;
-    --plum-fill: #574a9c;
+    --violet: #b48ef0;
+    --violet-soft: #251a42;
+    --violet-fill: #6a37ad;
+    --magenta: #e58acd;
+    --magenta-soft: #3a1533;
+    --magenta-fill: #9c2f83;
   }
 }
 :root[data-theme="dark"] {
@@ -110,22 +112,22 @@
   --fill-text: #171513;
   --header-bg: rgba(23, 21, 19, 0.86);
   --bar-bg: rgba(33, 31, 28, 0.9);
-  --accent: #8fa6e8;
-  --accent-soft: #1a2039;
-  --accent-ink: #8fa6e8;
-  --accent-fill: #3d4f96;
+  --accent: #7fa3ee;
+  --accent-soft: #16224a;
+  --accent-ink: #7fa3ee;
+  --accent-fill: #2f57ab;
   --red: #e8615a;
   --red-soft: #3a1f1c;
   --green: #52b485;
   --green-soft: #1c3229;
   --amber: #d9a24a;
   --amber-soft: #3a2c15;
-  --blue: #74a8d6;
-  --blue-soft: #1c2c3a;
-  --blue-fill: #345f8c;
-  --plum: #ab9cdd;
-  --plum-soft: #2a2540;
-  --plum-fill: #574a9c;
+  --violet: #b48ef0;
+  --violet-soft: #251a42;
+  --violet-fill: #6a37ad;
+  --magenta: #e58acd;
+  --magenta-soft: #3a1533;
+  --magenta-fill: #9c2f83;
 }
 /* Repasse les controles natifs (date/heure, defilement...) en rendu clair
    si le systeme est sombre mais que l'utilisateur a choisi le clair. */
@@ -443,8 +445,8 @@ body[data-screen="home"] .folder {
 .section-icon svg { width: 15px; height: 15px; }
 .section-icon.icon-accent { background: var(--accent-soft); color: var(--accent-ink); }
 .section-icon.icon-red { background: var(--red-soft); color: var(--red); }
-.section-icon.icon-blue { background: var(--blue-soft); color: var(--blue); }
-.section-icon.icon-plum { background: var(--plum-soft); color: var(--plum); }
+.section-icon.icon-violet { background: var(--violet-soft); color: var(--violet); }
+.section-icon.icon-magenta { background: var(--magenta-soft); color: var(--magenta); }
 .section-icon.icon-amber { background: var(--amber-soft); color: var(--amber); }
 .section-icon.icon-green { background: var(--green-soft); color: var(--green); }
 .section-icon.icon-neutral { background: var(--line); color: var(--muted); }
@@ -704,18 +706,18 @@ input:disabled { opacity: 0.55; }
 .type-chip-icon svg { width: 19px; height: 19px; }
 
 .type-icon.icon-immeuble, .type-chip-icon.icon-immeuble {
-  background: var(--blue-fill);
+  background: var(--violet-fill);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--blue-fill) 78%, white), var(--blue-fill) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--blue-fill) 65%, transparent);
+    linear-gradient(135deg, color-mix(in srgb, var(--violet-fill) 78%, white), var(--violet-fill) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--violet-fill) 65%, transparent);
 }
 .type-icon.icon-hotel, .type-chip-icon.icon-hotel {
-  background: var(--plum-fill);
+  background: var(--magenta-fill);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--plum-fill) 78%, white), var(--plum-fill) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum-fill) 65%, transparent);
+    linear-gradient(135deg, color-mix(in srgb, var(--magenta-fill) 78%, white), var(--magenta-fill) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--magenta-fill) 65%, transparent);
 }
 
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
@@ -737,8 +739,8 @@ input:disabled { opacity: 0.55; }
   cursor: pointer;
   transition: transform 0.1s ease;
 }
-.type-chip.card-immeuble { border-color: color-mix(in srgb, var(--blue) 22%, var(--line-strong)); }
-.type-chip.card-hotel { border-color: color-mix(in srgb, var(--plum) 22%, var(--line-strong)); }
+.type-chip.card-immeuble { border-color: color-mix(in srgb, var(--violet) 22%, var(--line-strong)); }
+.type-chip.card-hotel { border-color: color-mix(in srgb, var(--magenta) 22%, var(--line-strong)); }
 .type-chip:active { transform: scale(0.96); }
 .type-chip-name { font-weight: 700; font-size: 13px; letter-spacing: -0.1px; }
 .type-chip-hint { font-size: 10.5px; line-height: 1.25; color: var(--muted); }

@@ -4,7 +4,7 @@
 import { typeOf } from '../templates.js'
 import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
-import { sectionIcon, TYPE_TONE } from '../ui/icons.js'
+import { sectionIcon } from '../ui/icons.js'
 import { mandantPicker } from '../ui/chips.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
@@ -148,7 +148,7 @@ function countersHTML(r, unit) {
 
 function piecesSection(view, r, t) {
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', TYPE_TONE[t.id])}Pièces</span>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}Pièces</span>
       <span class="section-title-trailer">
         ${countersHTML(r, 'pièce')}
         <button class="link" data-act="add-row">+ Ajouter</button>
@@ -161,7 +161,7 @@ function piecesSection(view, r, t) {
 function lignesSection(view, r, t) {
   const etages = t.columns.find((c) => c.key === 'etage')?.suggestions ?? []
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', TYPE_TONE[t.id])}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
       <span class="section-title-trailer">
         ${countersHTML(r, 'ligne')}
         <button class="link" data-act="add-row">+ Ajouter</button>
@@ -262,7 +262,7 @@ function lieuSection(r, t) {
     .join('')
 
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pin', 'blue')}Lieu d'intervention</span></h2>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pin', 'violet')}Lieu d'intervention</span></h2>
     <div class="card grid2">${fields}</div>`
 }
 
@@ -286,7 +286,7 @@ export function editorView(view) {
 
       ${t.layout === 'pieces' ? piecesSection(view, r, t) : lignesSection(view, r, t)}
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('camera', 'plum')}Photos libres</span></h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('camera', 'magenta')}Photos libres</span></h2>
       <div class="card">
         <p class="muted small">Photos non rattachées à une ligne (façade, cave, hall…).</p>
         ${photoStrip(r.photos.filter((p) => !p.rowId))}

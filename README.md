@@ -136,13 +136,17 @@ pour « contaminée », vert pour « rien trouvé », ambre pour « indétermin�
 en attente de réseau. Ce sont des repères de la même taille — badge, liseret de carte,
 bouton, compteur — où une couleur décorative prêterait à confusion.
 
-Le décor de l'app est donc une famille à part, trois voisines sur la roue : **encre**
-(la marque : bandeau du haut, volets de l'accueil, mise au point des champs, badge d'une
-pièce pas encore statuée, type « Détection »), **ardoise** (lieu d'intervention, type
-« Immeuble ») et **prune** (photos, type « Hôtel »). Elles se lisent comme un ensemble sans
-jamais se prendre pour un signal.
+Le décor prend ce qu'il reste : l'arc **bleu → violet → magenta**, seule portion de la roue
+que les états ne revendiquent pas. Le bleu est la marque de l'app (bandeau du haut, volets
+de l'accueil, mise au point des champs, badge d'une pièce pas encore statuée, rubriques
+« Pièces » et « Le technicien », type « Détection ») ; le violet va au lieu d'intervention
+et au type « Immeuble » ; le magenta aux photos et au type « Hôtel ».
 
-Les teintes sont dans `--accent`, `--blue` et `--plum` (`src/style.css`), `ACCENT` et
+Les trois types portent leur couleur sur l'accueil, là où l'on choisit — donc là où elle
+sert à reconnaître. Dans un rapport ouvert, les rubriques suivent leur propre ordre de
+couleurs : y rappeler le type ne faisait qu'un doublon avec la rubrique voisine.
+
+Les teintes sont dans `--accent`, `--violet` et `--magenta` (`src/style.css`), `ACCENT` et
 `RED` (`src/pdf.js`), `MARK` (`src/photo.js`). Le cyan du PDF est volontairement assombri
 pour tenir la photocopie ; celui des annotations sur photo est franc, pour ressortir sur un
 matelas clair comme sur un sommier sombre — et il ne suit pas l'habillage de l'app, puisque

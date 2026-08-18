@@ -25,7 +25,8 @@ export function sectionIcon(key, tone) {
   return `<span class="section-icon icon-${tone}">${ICONS[key]}</span>`
 }
 
-// Meme code couleur que les cartes/dossiers de l'accueil (vert/bleu/violet
-// selon le type), pour que l'icone "Pieces/Appartements/Chambres" du
-// rapport ouvert reprenne la teinte de son type.
-export const TYPE_TONE = { detection: 'accent', immeuble: 'blue', hotel: 'plum' }
+// Les teintes des trois types vivent sur l'accueil, portees par les classes
+// card-<type> / icon-<type> de style.css : c'est la qu'on choisit, et donc la
+// que la couleur sert a reconnaitre. Dans un rapport ouvert, les rubriques
+// suivent leur propre ordre de couleurs (mandant, lieu, lignes, photos...) -
+// y rappeler le type ne creait qu'un doublon avec la rubrique voisine.
