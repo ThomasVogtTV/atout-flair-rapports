@@ -143,8 +143,8 @@ export function homeView(view) {
   // Le rapport le plus recemment touche, s'il est encore en brouillon. L'app
   // rouvre toujours sur l'accueil : sans ce raccourci, reprendre une saisie
   // interrompue demandait d'ouvrir le volet puis d'y retrouver la bonne ligne.
-  // Une icone de plus dans l'en-tete, qui n'apparait que s'il y a de quoi
-  // reprendre - pas une bande de plus en travers de l'ecran.
+  // Une pastille de plus sous celle des rapports, qui n'apparait que s'il y a
+  // de quoi reprendre - pas une bande de plus en travers de l'ecran.
   const enCours = view.reports.find((r) => r.status === 'draft')
   return `
     <header class="top">
@@ -153,7 +153,6 @@ export function homeView(view) {
         <h1>Atout Flair</h1>
       </div>
       <span class="top-actions">
-        ${enCours ? `<button class="icon-btn resume-toggle" data-open="${enCours.id}" title="Reprendre le rapport en cours">${ICONS.note}</button>` : ''}
         <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet de contacts">${ICONS.contacts}</button>
         <button class="icon-btn theme-toggle" data-act="toggle-theme" title="Changer de theme">${ICONS[currentTheme() === 'dark' ? 'sun' : 'moon']}</button>
       </span>
@@ -166,5 +165,13 @@ export function homeView(view) {
     <section class="content-sheet">
       ${newReportHTML(view)}
       <div class="my-reports">${myReportsHTML(view)}</div>
+      ${
+        enCours
+          ? `<button type="button" class="resume-shortcut" data-open="${enCours.id}" title="Reprendre le rapport en cours">
+              <span class="type-icon icon-resume">${ICONS.pen}</span>
+              <span class="resume-tag">Reprendre</span>
+            </button>`
+          : ''
+      }
     </section>`
 }

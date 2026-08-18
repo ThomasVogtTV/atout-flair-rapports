@@ -23,8 +23,8 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
   heure de **prise de vue** apposées en bas à droite — on photographie sur place et on
   termine le rapport le soir.
 - **Rien ne se perd** : le rapport en cours s'enregistre tout seul dans l'appareil, se
-  reprend d'un geste depuis l'icône de l'en-tête, qui n'apparaît que s'il y a de quoi
-  reprendre, et la base locale est déclarée persistante auprès du
+  reprend d'un geste depuis la pastille posée sous celle des rapports, qui n'apparaît que
+  s'il y a de quoi reprendre, et la base locale est déclarée persistante auprès du
   navigateur pour qu'il ne la vide pas en manquant de place. Un fichier de sauvegarde
   exportable (carnet de contacts → « Sauvegarde ») rassemble rapports, contacts et
   signature : c'est la seule façon de retrouver son travail sur un téléphone neuf.

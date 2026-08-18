@@ -612,7 +612,7 @@ input:disabled { opacity: 0.55; }
 /* Boutons d'action de l'en-tete : meme pastille en degrade que les icones de
    type, en plus petit. Chacun sa teinte, posee par --pastille. */
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.contacts-toggle, .resume-toggle {
+.contacts-toggle {
   --pastille: var(--amber);
   flex-shrink: 0;
   width: 36px;
@@ -628,11 +628,8 @@ input:disabled { opacity: 0.55; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--pastille) 65%, transparent);
   transition: transform 0.1s ease;
 }
-/* La reprise porte la couleur de la maison : elle n'apparait que lorsqu'un
-   rapport attend, et doit se voir sans crier. */
-.resume-toggle { --pastille: var(--accent-fill); }
-.contacts-toggle svg, .resume-toggle svg { width: 19px; height: 19px; }
-.contacts-toggle:active, .resume-toggle:active { transform: scale(0.92); }
+.contacts-toggle svg { width: 19px; height: 19px; }
+.contacts-toggle:active { transform: scale(0.92); }
 
 .link {
   border: none;
@@ -844,6 +841,47 @@ input:disabled { opacity: 0.55; }
 .pill.sent { background: var(--green-soft); color: var(--green); }
 .pill.queued { background: var(--amber-soft); color: var(--amber); }
 
+/* Raccourci de reprise : une pastille seule, posee sous celle des rapports et
+   alignee sur elle (14px, le retrait de l'en-tete d'un volet). Elle n'apparait
+   que lorsqu'un brouillon attend, et disparait des qu'il est envoye - d'ou une
+   simple pastille et non une rubrique de plus, qui laisserait un trou. */
+.resume-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 15px et non 14 : la carte des rapports a une bordure d'un pixel, et sa
+     pastille commence donc un pixel plus a droite. */
+  margin: 11px 0 0 15px;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.resume-tag {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--accent-ink);
+}
+.type-icon.icon-resume {
+  --c-haut: color-mix(in srgb, var(--accent) 78%, white);
+  --c-bas: var(--accent-fill);
+  --c-ombre: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+@media (hover: hover) {
+  .resume-shortcut:hover { transform: translateY(-1.5px); }
+}
+.resume-shortcut:active { transform: scale(0.97); }
+.resume-shortcut:active .type-icon {
+  transform: translateY(0.5px) scale(0.97);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px var(--c-liseret),
+    0 2px 6px -4px var(--c-ombre);
+}
+
 /* --- bloc "Mes rapports" : un seul volet, ouvert d'un clic --- */
 .my-reports { margin-top: 22px; }
 .folder { overflow: hidden; }
@@ -855,10 +893,9 @@ input:disabled { opacity: 0.55; }
   box-shadow: var(--shadow-sm);
 }
 .type-icon.icon-all {
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--muted) 78%, white), var(--muted) 88%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 10px -4px color-mix(in srgb, var(--muted) 65%, transparent);
+  --c-haut: #bab5ac;
+  --c-bas: #78726a;
+  --c-ombre: rgba(90, 85, 78, 0.45);
 }
 .folder-head {
   width: 100%;
@@ -874,24 +911,27 @@ input:disabled { opacity: 0.55; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.folder-head:active { background: var(--bg); }
+.folder-head:active { background: color-mix(in srgb, var(--bg) 70%, transparent); }
 .folder.open .folder-head { border-bottom: 1px solid var(--line); }
 .folder-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.folder-name { font-weight: 650; font-size: 14.5px; }
+.folder-name { font-weight: 700; font-size: 15px; letter-spacing: -0.15px; }
 .folder-summary { font-size: 12px; color: var(--muted); }
+/* Compteur : une pastille pleine et non un cercle vide. Elle porte le nombre
+   de rapports gardes, c'est le repere que l'oeil cherche en revenant. */
 .folder-count {
   font-size: 12.5px;
-  font-weight: 700;
-  color: var(--muted-soft);
-  background: var(--bg);
-  border: 1px solid var(--line);
+  font-weight: 750;
+  color: var(--ink-soft);
+  background: linear-gradient(180deg, var(--card), var(--bg));
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
-  min-width: 25px;
-  height: 25px;
+  min-width: 26px;
+  height: 26px;
   display: grid;
   place-items: center;
-  padding: 0 7px;
+  padding: 0 8px;
   flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(28, 28, 30, 0.06);
 }
 .folder-chevron { color: var(--muted-soft); flex-shrink: 0; transition: transform 0.2s ease; }
 .folder-chevron svg { width: 16px; height: 16px; }
