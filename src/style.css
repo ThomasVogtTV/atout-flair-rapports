@@ -687,61 +687,139 @@ input:disabled { opacity: 0.55; }
   box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent) 50%, transparent), var(--shadow-sm);
 }
 
-/* Pastille d'icone : meme peinture pour la grande (en-tete d'un volet) et la
-   petite (choix d'un type), seules les dimensions changent. */
+/* Pastille d'icone : un objet, pas un aplat. Meme peinture pour la grande
+   (en-tete d'un volet) et la petite (choix d'un type), seules les dimensions
+   changent.
+
+   Cinq couches, du fond vers l'oeil :
+     1. le corps      - degrade du haut lumineux vers le bas profond ;
+     2. le speculaire - la tache de lumiere, en haut a gauche, la ou tomberait
+                        une source unique : c'est elle qui donne le galbe ;
+     3. le biseau     - un trait clair d'un pixel sur l'arete haute ;
+     4. le rasant     - un trait clair en bas : la lumiere qui remonte du plan
+                        sur lequel l'objet est pose. Sans lui, la pastille est
+                        une vignette ; avec lui, elle a une epaisseur ;
+     5. le creux      - une ombre interieure au-dessus de ce rasant ;
+     6. l'ombre portee - teintee de la couleur de l'objet, jamais grise : une
+                        ombre grise sous un objet colore fait de la salissure.
+
+   Chaque type ne redefinit que ses quatre variables. */
 .type-icon, .type-chip-icon {
+  --c-haut: #4f8bee;
+  --c-bas: #1c3a86;
+  --c-ombre: rgba(28, 58, 134, 0.55);
+  --c-liseret: rgba(255, 255, 255, 0.16);
   flex-shrink: 0;
-  background: var(--accent-fill);
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent-fill) 78%, white), var(--accent-fill) 85%);
-  color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--accent) 65%, transparent);
+  color: #fff;
+  background:
+    radial-gradient(64% 54% at 31% 15%, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(163deg, var(--c-haut), var(--c-bas) 88%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -4px 6px -2px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px var(--c-liseret),
+    0 6px 14px -6px var(--c-ombre),
+    0 1px 2px rgba(20, 18, 16, 0.22);
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
 }
+/* Le trait de l'icone est grave dans la pastille : une ombre d'un pixel sous
+   lui suffit a le decoller du fond colore. */
+.type-icon svg, .type-chip-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42)); }
+
 .type-icon { width: 48px; height: 48px; border-radius: 15px; }
 .type-icon svg { width: 23px; height: 23px; }
 .type-chip-icon { width: 34px; height: 34px; border-radius: 11px; }
 .type-chip-icon svg { width: 19px; height: 19px; }
 
 .type-icon.icon-immeuble, .type-chip-icon.icon-immeuble {
-  background: var(--violet-fill);
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--violet-fill) 78%, white), var(--violet-fill) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--violet-fill) 65%, transparent);
+  --c-haut: #a877ea;
+  --c-bas: #4f2394;
+  --c-ombre: rgba(79, 35, 148, 0.55);
 }
+/* Hotel : rubis profond et liseret champagne. Le trait de l'icone passe a l'or
+   pale plutot qu'au blanc - c'est ce contraste chaud qui fait le luxe. */
 .type-icon.icon-hotel, .type-chip-icon.icon-hotel {
-  background: var(--magenta-fill);
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--magenta-fill) 78%, white), var(--magenta-fill) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--magenta-fill) 65%, transparent);
+  --c-haut: #b8465f;
+  --c-bas: #5d1028;
+  --c-ombre: rgba(93, 16, 40, 0.6);
+  --c-liseret: rgba(240, 214, 164, 0.45);
+  color: #f4dcac;
+}
+/* "Mes rapports" : le rangement ne merite pas une couleur, seulement de la
+   matiere. Gris chaud, meme relief que les autres. */
+.type-icon.icon-all {
+  --c-haut: #bab5ac;
+  --c-bas: #78726a;
+  --c-ombre: rgba(90, 85, 78, 0.45);
+}
+
+/* Elevation au survol, enfoncement a l'appui. Le survol est reserve aux
+   pointeurs : sur un ecran tactile, il resterait colle apres le tap. */
+@media (hover: hover) {
+  .type-chip:hover .type-chip-icon,
+  .folder-head:hover .type-icon {
+    transform: translateY(-1.5px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.66),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 -4px 6px -2px rgba(0, 0, 0, 0.32),
+      inset 0 0 0 1px var(--c-liseret),
+      0 11px 20px -7px var(--c-ombre),
+      0 2px 4px rgba(20, 18, 16, 0.2);
+  }
+}
+.type-chip:active .type-chip-icon,
+.folder-head:active .type-icon {
+  transform: translateY(0.5px) scale(0.97);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px var(--c-liseret),
+    0 2px 6px -4px var(--c-ombre);
 }
 
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
    entiere cliquable : la cible reste large malgre la taille reduite. */
 .type-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .type-chip {
+  --teinte: var(--accent);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
   padding: 11px 6px 10px;
   min-height: var(--tap);
-  background: var(--card);
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line-strong));
+  background: linear-gradient(180deg, var(--card), color-mix(in srgb, var(--teinte) 8%, var(--card)));
+  border: 1px solid color-mix(in srgb, var(--teinte) 24%, var(--line-strong));
   border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.05);
   font: inherit;
   color: inherit;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s, border-color 0.16s;
 }
-.type-chip.card-immeuble { border-color: color-mix(in srgb, var(--violet) 22%, var(--line-strong)); }
-.type-chip.card-hotel { border-color: color-mix(in srgb, var(--magenta) 22%, var(--line-strong)); }
-.type-chip:active { transform: scale(0.96); }
+.type-chip.card-immeuble { --teinte: var(--violet); }
+/* Le bordeaux de l'hotel ne vit que sur l'accueil, ou aucune couleur ne
+   signale d'etat. Dans un rapport, il se prendrait pour le rouge de la
+   contamination : la rubrique Photos y garde donc le magenta. */
+.type-chip.card-hotel { --teinte: #9c2b45; }
+@media (hover: hover) {
+  .type-chip:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--teinte) 46%, var(--line-strong));
+    box-shadow:
+      0 13px 22px -14px color-mix(in srgb, var(--teinte) 75%, transparent),
+      0 2px 4px rgba(28, 28, 30, 0.06);
+  }
+}
+.type-chip:active {
+  transform: scale(0.978);
+  border-color: color-mix(in srgb, var(--teinte) 55%, var(--line-strong));
+  box-shadow: inset 0 1px 4px rgba(28, 28, 30, 0.12);
+}
 .type-chip-name { font-weight: 700; font-size: 13px; letter-spacing: -0.1px; }
 .type-chip-hint { font-size: 10.5px; line-height: 1.25; color: var(--muted); }
 

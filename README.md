@@ -143,7 +143,11 @@ de l'accueil, mise au point des champs, badge d'une pièce pas encore statuée, 
 et au type « Immeuble » ; le magenta aux photos et au type « Hôtel ».
 
 Les trois types portent leur couleur sur l'accueil, là où l'on choisit — donc là où elle
-sert à reconnaître. Dans un rapport ouvert, les rubriques suivent leur propre ordre de
+sert à reconnaître. Leurs pastilles y sont traitées en relief : dégradé, tache spéculaire,
+biseau, lumière rasante du bas et ombre portée teintée, empilés en CSS (voir le bloc
+`.type-icon, .type-chip-icon` dans `src/style.css`). L'hôtel y prend un rubis à liseret
+champagne, qui ne sort pas de l'accueil : dans un rapport, ce bordeaux se prendrait pour le
+rouge de la contamination — la rubrique Photos garde donc le magenta. Dans un rapport ouvert, les rubriques suivent leur propre ordre de
 couleurs : y rappeler le type ne faisait qu'un doublon avec la rubrique voisine.
 
 Les teintes sont dans `--accent`, `--violet` et `--magenta` (`src/style.css`), `ACCENT` et
