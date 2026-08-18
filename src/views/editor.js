@@ -174,7 +174,7 @@ function lignesSection(view, r, t) {
 
 function signatureSection(r) {
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'green')}Signature du locataire</span></h2>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'neutral')}Signature du locataire</span></h2>
     <div class="card sig-card">
       ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
       <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>

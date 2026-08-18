@@ -17,27 +17,38 @@
   --fill-text: #fff;
   --header-bg: rgba(252, 251, 249, 0.86);
   --bar-bg: rgba(255, 255, 255, 0.9);
-  /* Trois couleurs, trois sens, dans l'app comme dans le PDF :
-       rouge  -> presence de punaises de lit (bouton "Contaminee", liseret et
-                 badge de la carte, compteur, bandeau de verdict) ;
-       vert   -> rien trouve (bouton "Non", bandeau de verdict d'un rapport sain) ;
-       cyan   -> le decor, et lui seul : liserets, filets, pastilles d'icones,
-                 mise au point des champs, annotations sur les photos.
-     Une couleur qui n'apparait que la ou elle compte se voit de loin. */
-  --accent: #0e7c93;
-  --accent-soft: #e4f2f6;
-  --accent-ink: #0b6477; /* pour du texte/une icone posee sur --accent-soft */
-  --accent-fill: #0c6d82; /* pour une surface pleine qui porte du blanc */
+  /* La couleur ne decore pas au hasard : trois teintes disent un etat, trois
+     autres forment la famille froide du decor.
+
+     Les etats, jamais utilises ailleurs :
+       rouge  -> contaminee (bouton, liseret et badge de carte, compteur) ;
+       vert   -> rien trouve (bouton "Non", badge plein) ;
+       ambre  -> indetermine, et envoi en attente de reseau.
+
+     Le decor, une harmonie de voisins : encre -> ardoise -> prune. Trois teintes
+     proches sur la roue, qui se lisent comme un ensemble sans jamais se prendre
+     pour un signal. L'encre est la marque de l'app (bandeau du haut, volets,
+     mise au point des champs, badges en attente, type "Detection"), l'ardoise
+     va au lieu d'intervention et au type "Immeuble", la prune aux photos et au
+     type "Hotel".
+
+     Le PDF, lui, garde sa propre repartition : voir src/pdf.js. */
+  --accent: #3a4d8f;      /* encre : la marque de l'app */
+  --accent-soft: #eaedf7;
+  --accent-ink: #2f4079;  /* pour du texte/une icone posee sur --accent-soft */
+  --accent-fill: #3a4d8f; /* pour une surface pleine qui porte du blanc */
   --red: #c02a2a;
   --red-soft: #fbeaea;
   --green: #1f7a4d;
   --green-soft: #e7f5ee;
   --amber: #a66a13;
   --amber-soft: #fbf0dd;
-  --blue: #3a6997;
+  --blue: #3a6997;        /* ardoise : lieu d'intervention, type "Immeuble" */
   --blue-soft: #e9f1f8;
-  --plum: #6a5aa8;
+  --blue-fill: #3a6997;
+  --plum: #6a5aa8;        /* prune : photos, type "Hotel" */
   --plum-soft: #eeecf8;
+  --plum-fill: #6a5aa8;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -65,10 +76,10 @@
     --fill-text: #171513;
     --header-bg: rgba(23, 21, 19, 0.86);
     --bar-bg: rgba(33, 31, 28, 0.9);
-    --accent: #4fc3dd;
-    --accent-soft: #10303a;
-    --accent-ink: #4fc3dd;
-    --accent-fill: #1d7f96;
+    --accent: #8fa6e8;
+    --accent-soft: #1a2039;
+    --accent-ink: #8fa6e8;
+    --accent-fill: #3d4f96;
     --red: #e8615a;
     --red-soft: #3a1f1c;
     --green: #52b485;
@@ -77,8 +88,10 @@
     --amber-soft: #3a2c15;
     --blue: #74a8d6;
     --blue-soft: #1c2c3a;
+    --blue-fill: #345f8c;
     --plum: #ab9cdd;
     --plum-soft: #2a2540;
+    --plum-fill: #574a9c;
   }
 }
 :root[data-theme="dark"] {
@@ -97,10 +110,10 @@
   --fill-text: #171513;
   --header-bg: rgba(23, 21, 19, 0.86);
   --bar-bg: rgba(33, 31, 28, 0.9);
-  --accent: #4fc3dd;
-  --accent-soft: #10303a;
-  --accent-ink: #4fc3dd;
-  --accent-fill: #1d7f96;
+  --accent: #8fa6e8;
+  --accent-soft: #1a2039;
+  --accent-ink: #8fa6e8;
+  --accent-fill: #3d4f96;
   --red: #e8615a;
   --red-soft: #3a1f1c;
   --green: #52b485;
@@ -109,8 +122,10 @@
   --amber-soft: #3a2c15;
   --blue: #74a8d6;
   --blue-soft: #1c2c3a;
+  --blue-fill: #345f8c;
   --plum: #ab9cdd;
   --plum-soft: #2a2540;
+  --plum-fill: #574a9c;
 }
 /* Repasse les controles natifs (date/heure, defilement...) en rendu clair
    si le systeme est sombre mais que l'utilisateur a choisi le clair. */
@@ -689,18 +704,18 @@ input:disabled { opacity: 0.55; }
 .type-chip-icon svg { width: 19px; height: 19px; }
 
 .type-icon.icon-immeuble, .type-chip-icon.icon-immeuble {
-  background: var(--blue);
+  background: var(--blue-fill);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--blue) 70%, white), var(--blue) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--blue) 65%, transparent);
+    linear-gradient(135deg, color-mix(in srgb, var(--blue-fill) 78%, white), var(--blue-fill) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--blue-fill) 65%, transparent);
 }
 .type-icon.icon-hotel, .type-chip-icon.icon-hotel {
-  background: var(--plum);
+  background: var(--plum-fill);
   background:
     radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--plum) 70%, white), var(--plum) 85%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum) 65%, transparent);
+    linear-gradient(135deg, color-mix(in srgb, var(--plum-fill) 78%, white), var(--plum-fill) 85%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--plum-fill) 65%, transparent);
 }
 
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
@@ -1087,8 +1102,9 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   cursor: pointer;
 }
 /* L'outil actif porte la couleur du trace (voir MARK dans photo.js) : ce qu'on
-   voit sur le bouton est ce qui va s'imprimer sur la photo. */
-.tool.active { background: var(--accent-fill); border-color: var(--accent-fill); }
+   voit sur le bouton est ce qui va s'imprimer sur la photo. Valeur en dur, et
+   non un jeton : ce trait-la suit le PDF, pas l'habillage de l'app. */
+.tool.active { background: #00a6c8; border-color: #00a6c8; }
 .annot-stage {
   flex: 1;
   display: grid;

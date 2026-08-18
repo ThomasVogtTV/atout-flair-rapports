@@ -131,13 +131,22 @@ intitulés de rubrique, liserets à gauche des bandeaux — et c'est aussi lui q
 contamination (bandeau de verdict, croix « OUI »). Le vert dit l'absence de punaises. Le
 cyan ne tient que les deux longs filets, sous le logo et au pied de page.
 
-Dans l'**app**, le rouge ne dit qu'une chose : contaminée. Badges, liserets de carte,
-bouton « Contaminée », compteur — tous des repères de la même taille, où un rouge
-décoratif prêterait à confusion. Tout le décor y est donc cyan.
+Dans l'**app**, trois teintes disent un état et ne servent jamais à autre chose : rouge
+pour « contaminée », vert pour « rien trouvé », ambre pour « indéterminé » et pour un envoi
+en attente de réseau. Ce sont des repères de la même taille — badge, liseret de carte,
+bouton, compteur — où une couleur décorative prêterait à confusion.
 
-Les teintes sont dans `--accent` (`src/style.css`), `ACCENT` et `RED` (`src/pdf.js`) et
-`MARK` (`src/photo.js`) ; le cyan du PDF est volontairement assombri pour tenir la
-photocopie, celui des annotations franc pour ressortir sur une photo.
+Le décor de l'app est donc une famille à part, trois voisines sur la roue : **encre**
+(la marque : bandeau du haut, volets de l'accueil, mise au point des champs, badge d'une
+pièce pas encore statuée, type « Détection »), **ardoise** (lieu d'intervention, type
+« Immeuble ») et **prune** (photos, type « Hôtel »). Elles se lisent comme un ensemble sans
+jamais se prendre pour un signal.
+
+Les teintes sont dans `--accent`, `--blue` et `--plum` (`src/style.css`), `ACCENT` et
+`RED` (`src/pdf.js`), `MARK` (`src/photo.js`). Le cyan du PDF est volontairement assombri
+pour tenir la photocopie ; celui des annotations sur photo est franc, pour ressortir sur un
+matelas clair comme sur un sommier sombre — et il ne suit pas l'habillage de l'app, puisque
+c'est dans le PDF qu'il finit.
 
 Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
 ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
