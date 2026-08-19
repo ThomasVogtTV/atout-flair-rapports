@@ -168,25 +168,28 @@ Atout Flair</textarea></label>
       }
 
       showLoading('Envoi en cours…')
-      const { queued, badCode, notConfigured } = await sendReport(report, payload, blob)
+      const { etat, motif } = await sendReport(report, payload, blob)
       hideLoading()
-      if (notConfigured) {
-        // Phase d'essai : la boite mail n'est pas encore branchee. Mettre le
-        // rapport en attente donnerait l'illusion d'un envoi a venir.
-        toast("Envoi automatique pas encore activé : je passe le PDF à votre messagerie.")
+      if (etat === 'non-configure') {
+        // La boite mail n'est pas branchee cote serveur. Mettre le rapport en
+        // attente donnerait l'illusion d'un envoi a venir.
+        toast('Envoi automatique pas encore activé : je passe le PDF à votre messagerie.')
         await shareOrDownload(blob, filename)
         return
       }
 
-      report.status = queued ? 'queued' : 'sent'
-      report.sentAt = queued ? null : Date.now()
+      // Un refus du serveur laisse le rapport en brouillon : le marquer
+      // "envoye" alors qu'il n'est jamais parti est exactement le piege qu'on
+      // veut eviter. Il reste modifiable, et l'ecran Envois porte le motif.
+      report.status = etat === 'envoye' ? 'sent' : etat === 'attente' ? 'queued' : 'draft'
+      report.sentAt = etat === 'envoye' ? Date.now() : null
       await S.saveReport(report)
       toast(
-        badCode
-          ? "Code d'accès refusé : le rapport est en attente, il repartira au prochain essai."
-          : queued
-            ? 'Pas de réseau : envoi mis en file, il partira automatiquement.'
-            : 'Rapport envoyé.'
+        etat === 'envoye'
+          ? 'Rapport envoyé.'
+          : etat === 'attente'
+            ? 'Pas de réseau : envoi mis en attente, il partira tout seul.'
+            : `Envoi refusé : ${motif}`
       )
       onSent()
     } catch (err) {

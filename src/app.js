@@ -7,13 +7,14 @@ import { typeOf, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
-import { pendingCount, flushQueue } from './mailer.js'
+import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
+import { envoisView } from './views/envois.js'
 import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
@@ -30,6 +31,9 @@ let view = {
   contacts: [],
   reportsOpen: false,
   filter: 'tous',
+  queue: [],
+  enAttente: 0,
+  enEchec: 0,
 }
 let saveTimer = null
 
@@ -52,7 +56,24 @@ function set(path, value) {
 async function goHome() {
   view = { ...view, screen: 'home', report: null, children: [] }
   view.reports = (await S.listReports()).filter((r) => !r.parentId)
+  await majCompteurs()
   render()
+}
+
+async function openEnvois() {
+  view = { ...view, screen: 'envois', report: null }
+  view.queue = await listQueue()
+  view.reports = (await S.listReports()).filter((r) => !r.parentId)
+  await majCompteurs()
+  render()
+}
+
+// Les deux nombres portes par l'icone de l'en-tete : ce qui attend, et ce qui
+// a echoue. Ils sont relus a chaque retour a l'accueil, pas seulement au
+// demarrage - un envoi peut avoir echoue entre-temps.
+async function majCompteurs() {
+  view.enAttente = await pendingCount()
+  view.enEchec = await failedCount()
 }
 
 async function openContacts() {
@@ -100,7 +121,14 @@ function render() {
   // La photo de fond n'apparait que sur l'accueil : derriere un formulaire,
   // elle nuirait a la lecture des champs (voir .app-bg dans style.css).
   document.body.dataset.screen = view.screen
-  root.innerHTML = view.screen === 'home' ? homeView(view) : view.screen === 'contacts' ? contactsView(view) : editorView(view)
+  root.innerHTML =
+    view.screen === 'home'
+      ? homeView(view)
+      : view.screen === 'contacts'
+        ? contactsView(view)
+        : view.screen === 'envois'
+          ? envoisView(view)
+          : editorView(view)
   if (navigated) {
     document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
@@ -458,9 +486,36 @@ root.addEventListener('click', async (ev) => {
   const openChild = el.closest('[data-open-child]')?.dataset.openChild
   if (openChild) return openReport(openChild)
 
+  // --- ecran des envois
+  const retryId = el.closest('[data-retry]')?.dataset.retry
+  if (retryId) {
+    showLoading('Nouvel essai…')
+    const { ok, motif } = await retryJob(retryId)
+    hideLoading()
+    toast(ok ? 'Rapport envoyé.' : motif)
+    return openEnvois()
+  }
+
+  if (el.closest('[data-retry-all]')) {
+    showLoading('Envoi en cours…')
+    // "Tout réessayer" relance aussi les echecs : c'est le geste qu'on fait
+    // apres avoir corrige un mot de passe ou une adresse.
+    for (const job of view.queue) await retryJob(job.id)
+    hideLoading()
+    return openEnvois()
+  }
+
+  const dropEnvoi = el.closest('[data-drop-envoi]')?.dataset.dropEnvoi
+  if (dropEnvoi) {
+    if (!confirm("Retirer cet envoi de la liste ? Le rapport, lui, reste dans « Mes rapports » et pourra être renvoyé.")) return
+    await deleteJob(dropEnvoi)
+    return openEnvois()
+  }
+
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
   if (act === 'open-contacts') return openContacts()
+  if (act === 'open-envois') return openEnvois()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
   if (act === 'home') {
     // Un rapport deja envoye/en file n'a plus rien a "annuler" : on ne
@@ -610,25 +665,25 @@ async function createChild(rowId) {
 
 // --- file d'attente et demarrage -------------------------------------------
 
+// L'etat des envois se lit sur l'icone de l'en-tete, pas sur une banniere
+// collee en bas de l'ecran : elle recouvrait la barre d'actions du rapport
+// ouvert, et ne disait ni ce qui attendait, ni pourquoi.
 async function updatePendingBadge() {
-  const n = await pendingCount()
-  let el = document.querySelector('.pending-banner')
-  if (!n) return el?.remove()
-  if (!el) {
-    el = document.createElement('div')
-    el.className = 'pending-banner'
-    document.body.appendChild(el)
-  }
-  el.textContent = `${n} envoi(s) en attente de réseau`
+  await majCompteurs()
+  const pastille = document.querySelector('.envois-toggle')
+  if (!pastille) return
+  pastille.dataset.compte = view.enEchec || view.enAttente || ''
+  pastille.classList.toggle('en-echec', view.enEchec > 0)
 }
 
 window.addEventListener('online', async () => {
-  const sent = await flushQueue()
-  if (sent) {
-    toast(`${sent} rapport(s) envoyé(s).`)
-    if (view.screen === 'home') goHome()
-    else updatePendingBadge()
-  }
+  const { envoyes, echecs } = await flushQueue()
+  if (!envoyes && !echecs) return
+  if (envoyes) toast(`${envoyes} rapport${envoyes > 1 ? "s" : ""} envoyé${envoyes > 1 ? "s" : ""}.`)
+  else toast("Un envoi a été refusé. Voyez « Envois » pour le motif.")
+  if (view.screen === 'home') goHome()
+  else if (view.screen === 'envois') openEnvois()
+  else updatePendingBadge()
 })
 
 export async function boot() {
@@ -636,5 +691,5 @@ export async function boot() {
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.
   loadPdfEngine().catch(() => {})
-  if (navigator.onLine) flushQueue().then((n) => n && updatePendingBadge())
+  if (navigator.onLine) flushQueue().then(() => updatePendingBadge())
 }

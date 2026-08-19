@@ -35,6 +35,12 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
 - **Pièces réordonnables au doigt** : on attrape une carte par son badge numéroté et on la
   fait glisser où l'on veut — la liste défile toute seule quand on approche d'un bord, un
   espace en pointillé montre la place visée. L'ordre à l'écran est celui du PDF.
+- **On sait toujours où en est un envoi** : une icône « Envois » dans l'en-tête, avec le
+  nombre en attente (ambre) ou en échec (rouge), et un écran à trois rubriques — À corriger,
+  En attente, Envoyés. Un refus du serveur de mail y est affiché **en toutes lettres**
+  (mot de passe, expéditeur, destinataire, quota), avec un bouton pour réessayer une fois
+  la cause corrigée.
+
 - **Un seul PDF** : rapport + photos annotées + rapports individuels des appartements
   contaminés (immeuble).
 - **Hors ligne** : l'app démarre et fonctionne sans réseau (cave, sous-sol, hôtel sans
@@ -112,14 +118,14 @@ rouvrir.
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
 | `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
-| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js` |
+| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js`, `envois.js` |
 | `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js`, `dragsort.js` (glissement des cartes) |
 | `src/send.js` | Aperçu PDF, dialogue d'envoi, partage vers la messagerie |
 | `src/contact-dialog.js` | Formulaire d'ajout/modification d'un contact |
 | `src/photo.js` | Capture, compression, éditeur d'annotations |
 | `src/signature.js` | Pad de signature |
 | `src/pdf.js` | Génération du PDF (mise en page Atout Flair) |
-| `src/mailer.js` | Envoi et file d'attente hors ligne |
+| `src/mailer.js` | Envoi, file d'attente, et motif de chaque refus |
 | `src/style.css` | Toute la mise en forme, jetons de couleur en tête de fichier |
 | `api/send.js` | Fonction serveur d'envoi du mail |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |

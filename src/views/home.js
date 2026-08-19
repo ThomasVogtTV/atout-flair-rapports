@@ -145,6 +145,8 @@ export function homeView(view) {
         <h1>Atout Flair</h1>
       </div>
       <span class="top-actions">
+        <button class="icon-btn envois-toggle${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
+                data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${ICONS.mail}</button>
         <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet et réglages">${ICONS.contacts}</button>
       </span>
     </header>

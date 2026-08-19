@@ -612,7 +612,7 @@ input:disabled { opacity: 0.55; }
 /* Boutons d'action de l'en-tete : meme pastille en degrade que les icones de
    type, en plus petit. Chacun sa teinte, posee par --pastille. */
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.contacts-toggle {
+.contacts-toggle, .envois-toggle {
   --pastille: var(--amber);
   flex-shrink: 0;
   width: 36px;
@@ -628,8 +628,8 @@ input:disabled { opacity: 0.55; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--pastille) 65%, transparent);
   transition: transform 0.1s ease;
 }
-.contacts-toggle svg { width: 19px; height: 19px; }
-.contacts-toggle:active { transform: scale(0.92); }
+.contacts-toggle svg, .envois-toggle svg { width: 19px; height: 19px; }
+.contacts-toggle:active, .envois-toggle:active { transform: scale(0.92); }
 
 .link {
   border: none;
@@ -894,6 +894,66 @@ input:disabled { opacity: 0.55; }
   padding: 1px 6px;
 }
 .chip.on .chip-count { background: color-mix(in srgb, var(--fill-text) 22%, transparent); color: var(--fill-text); }
+
+/* --- ecran des envois ---------------------------------------------------- */
+
+/* L'icone Envois, avec sa pastille de compte. Elle porte le vert quand tout
+   est parti, le rouge des qu'un envoi a ete refuse : c'est le seul endroit de
+   l'app ou l'on va chercher "est-ce que c'est parti ?", elle doit le dire de
+   loin sans qu'on l'ouvre. */
+.envois-toggle { --pastille: var(--green); position: relative; }
+.envois-toggle.en-echec { --pastille: var(--red); }
+.envois-toggle[data-compte='']::after { display: none; }
+.envois-toggle::after {
+  content: attr(data-compte);
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--red);
+  border: 2px solid var(--header-bg);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 13px;
+  text-align: center;
+}
+/* En attente, la pastille est ambre ; en echec, rouge - meme code que les
+   etats d'une piece, deja appris ailleurs dans l'app. */
+.envois-toggle:not(.en-echec)::after { background: var(--amber); }
+
+.envoi-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-md);
+  padding: 11px 12px;
+  transition: transform 0.1s ease;
+}
+.envoi-row.echec { border-left-color: var(--red); }
+.envoi-row:active { transform: scale(0.99); }
+.envoi-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.envoi-main strong { font-weight: 650; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.envoi-main .muted { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Le motif du refus, en toutes lettres et sur plusieurs lignes s'il le faut :
+   c'est la seule chose qui permet de corriger, il ne doit pas etre tronque. */
+.envoi-motif {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--red);
+  background: var(--red-soft);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.envoi-side { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-mini { min-height: 32px; padding: 0 11px; font-size: 12.5px; }
 
 /* --- lignes du rapport --- */
 /* position: relative -> repere de la carte en cours de glissement, qui passe en
@@ -1213,19 +1273,6 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-.pending-banner {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #a66a13;
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 600;
-  text-align: center;
-  padding: 9px calc(8px + env(safe-area-inset-bottom));
-  z-index: 40;
-}
 
 @media (min-width: 720px) {
   #app { max-width: 780px; margin: 0 auto; }
