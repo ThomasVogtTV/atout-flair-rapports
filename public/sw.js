@@ -2,8 +2,8 @@
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
 
-const CACHE = 'atout-flair-v8'
-const SHELL = ['/', '/index.html', '/logo.jpg', '/logo-complet.png', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
+const CACHE = 'atout-flair-v9'
+const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))
