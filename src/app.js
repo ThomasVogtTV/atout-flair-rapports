@@ -7,7 +7,7 @@ import { typeOf, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
-import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob } from './mailer.js'
+import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
@@ -156,6 +156,7 @@ function mirrorLieuFields(keys) {
 
 root.addEventListener('input', (ev) => {
   const el = ev.target
+  if (el.dataset.appCode !== undefined) return setCode(el.value)
   if (el.dataset.path) {
     set(el.dataset.path, el.value)
     // Cases "meme adresse / meme nom que le mandant" cochees : les champs du

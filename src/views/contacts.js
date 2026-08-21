@@ -5,6 +5,7 @@ import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
+import { currentCode } from '../mailer.js'
 import { mandantTypeLabel } from '../ui/chips.js'
 
 export function contactsView(view) {
@@ -49,6 +50,12 @@ export function contactsView(view) {
           ).join('')}
         </div>
         <p class="muted small reglage-note">« Système » suit le réglage du téléphone : sombre le soir s'il l'est.</p>
+
+        <span class="field-label reglage-titre">Code d'envoi</span>
+        <input data-app-code type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
+               value="${esc(currentCode())}" placeholder="Non renseigné sur cet appareil" />
+        <p class="muted small reglage-note">Il autorise l'envoi des rapports depuis la boîte de l'entreprise, et
+        s'écrit avec ses majuscules. Chaque téléphone a le sien à saisir une fois.</p>
       </div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>

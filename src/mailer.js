@@ -19,6 +19,7 @@
 
 import * as db from './db.js'
 import { uid } from './state.js'
+import { askAppCode } from './ui/dialogs.js'
 
 const ENDPOINT = '/api/send'
 const CODE_KEY = 'af-code'
@@ -30,14 +31,15 @@ function storedCode() {
   return localStorage.getItem(CODE_KEY) ?? ''
 }
 
-function askCode() {
-  const code = window.prompt("Code d'accès de l'application (une seule fois sur cet appareil)")?.trim()
-  if (code) localStorage.setItem(CODE_KEY, code)
-  return code ?? ''
-}
 
 export const hasCode = () => !!storedCode()
 export const forgetCode = () => localStorage.removeItem(CODE_KEY)
+export const currentCode = () => storedCode()
+export const setCode = (v) => {
+  const c = (v ?? '').trim()
+  if (c) localStorage.setItem(CODE_KEY, c)
+  else localStorage.removeItem(CODE_KEY)
+}
 
 export class BadCodeError extends Error {}
 /** La boite mail n'est pas encore configuree cote serveur : inutile de reessayer. */
@@ -82,12 +84,16 @@ async function post(job, { code = storedCode(), retried = false } = {}) {
   if (res.status === 503) throw new NotConfiguredError('Envoi automatique pas encore activé')
   if (res.status === 401) {
     forgetCode()
-    // Premier refus : on demande le code, puis on retente une seule fois.
+    // Premier refus : on demande le code dans un vrai dialogue, qui explique de
+    // quoi il s'agit, puis on retente une seule fois.
     if (!retried) {
-      const asked = askCode()
-      if (asked) return post(job, { code: asked, retried: true })
+      const asked = await askAppCode({ refuse: !!code })
+      if (asked) {
+        localStorage.setItem(CODE_KEY, asked)
+        return post(job, { code: asked, retried: true })
+      }
     }
-    throw new BadCodeError("Code d'accès refusé")
+    throw new BadCodeError("Code d'accès refusé. Vérifiez les majuscules, ou demandez-le à Thomas.")
   }
   if (!res.ok) {
     const texte = await res.text().catch(() => '')

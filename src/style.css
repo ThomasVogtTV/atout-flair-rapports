@@ -606,6 +606,9 @@ input:disabled { opacity: 0.55; }
   transition: background 0.15s;
 }
 .icon-btn:active { background: var(--bg); }
+/* Deuxieme reglage d'une meme carte : un peu d'air le detache du precedent. */
+.reglage-titre { margin-top: 14px; }
+
 /* Note sous un reglage : elle explique le choix, elle ne le repete pas. */
 .reglage-note { margin: 8px 0 0; }
 
