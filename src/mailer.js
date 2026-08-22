@@ -20,6 +20,7 @@
 import * as db from './db.js'
 import { uid } from './state.js'
 import { askAppCode } from './ui/dialogs.js'
+import { hideLoading } from './ui/dom.js'
 
 const ENDPOINT = '/api/send'
 const CODE_KEY = 'af-code'
@@ -87,6 +88,9 @@ async function post(job, { code = storedCode(), retried = false } = {}) {
     // Premier refus : on demande le code dans un vrai dialogue, qui explique de
     // quoi il s'agit, puis on retente une seule fois.
     if (!retried) {
+      // Le voile "Envoi en cours..." s'efface : on ne pose pas une question
+      // par-dessus un ecran qui dit que le travail est en cours.
+      hideLoading()
       const asked = await askAppCode({ refuse: !!code })
       if (asked) {
         localStorage.setItem(CODE_KEY, asked)
