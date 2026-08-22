@@ -35,7 +35,15 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: `Boîte mail non configurée (${missing.join(', ')})` })
   }
 
-  if (req.headers['x-app-code'] !== process.env.APP_CODE) {
+  // Comparaison sur les valeurs nettoyees des deux cotes. Un en-tete HTTP ne peut
+  // pas porter de retour a la ligne, mais la variable d'environnement, si : ajoutee
+  // en ligne de commande avec `echo`, APP_CODE garde un retour a la ligne final, et
+  // plus aucun appareil ne peut alors correspondre. L'envoi est refuse pour tout le
+  // monde, definitivement, et l'app ne sait dire que "code refuse". Meme chose pour
+  // l'espace que le clavier du telephone ajoute apres un mot.
+  const codeRecu = String(req.headers['x-app-code'] ?? '').trim()
+  const codeAttendu = String(process.env.APP_CODE).trim()
+  if (!codeRecu || codeRecu !== codeAttendu) {
     return res.status(401).json({ error: "Code d'accès invalide" })
   }
 
