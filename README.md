@@ -86,6 +86,14 @@ serveur, une seule fois par appareil, et il n'apparaît nulle part dans le code 
 navigateur. Pour le changer, modifier la variable dans Vercel : les appareils le
 redemanderont au premier envoi refusé.
 
+**Laisser `APP_CODE` en variable ordinaire, jamais en « Sensitive ».** Une variable
+sensible chez Vercel s'écrit mais ne se relit plus — ni dans le tableau de bord, ni en
+ligne de commande. `SMTP_PASS` peut se le permettre : il se regénère chez Infomaniak.
+`APP_CODE` n'existe nulle part ailleurs que dans cette case, et un code oublié est un
+code perdu : plus aucun téléphone ne peut envoyer, l'app annonce « Code d'accès refusé »
+à des techniciens qui n'ont rien fait de mal, et il ne reste qu'à en choisir un nouveau
+et à le ressaisir sur chaque appareil. C'est arrivé le 22 août 2026.
+
 ### Limite de taille
 
 Une fonction Vercel refuse une requête de plus de 4,5 Mo. L'app vise donc 3 Mo de PDF :
