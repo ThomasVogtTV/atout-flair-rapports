@@ -70,7 +70,7 @@ Le projet est un site statique + une fonction serveur (`api/send.js`).
    | `SMTP_USER` | `info@atout-flair.ch` |
    | `SMTP_PASS` | mot de passe de la boîte |
    | `APP_CODE` | code d'accès de votre choix, demandé une fois par appareil |
-   | `MAIL_FROM` | `Atout Flair <info@atout-flair.ch>` *(optionnel, valeur par défaut)* |
+   | `MAIL_FROM` | `Atout-Flair Sàrl <info@atout-flair.ch>` — nom d'expéditeur, aligné sur la signature du PDF |
    | `MAIL_REPLY_TO` | `info@atout-flair.ch` *(optionnel, valeur par défaut)* |
    | `MAIL_BCC` | copie d'archivage *(optionnel)* |
 
@@ -199,9 +199,8 @@ ne contient plus que l'enchaînement des écrans et les réactions aux gestes de
 
 ## À compléter
 
-- Identifiants SMTP de `info@atout-flair.ch`.
 - Le logo utilisé (`public/logo.jpg`) est extrait des PDF existants ; le remplacer par
   le fichier d'origine en haute définition dès qu'il est disponible.
-- Le nom d'expéditeur des mails est resté « Atout Flair » alors que le PDF signe
-  « Atout-Flair Sàrl ». Rien à changer dans le code : il suffit de définir `MAIL_FROM`
-  sur `Atout-Flair Sàrl <info@atout-flair.ch>` dans Vercel.
+- `MAIL_BCC` reste vide : aucune copie d'archivage n'est gardée côté boîte. La copie
+  proposée dans le dialogue d'envoi est autre chose — elle part du téléphone, et le
+  technicien peut la retirer.
