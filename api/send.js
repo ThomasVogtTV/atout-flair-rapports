@@ -30,6 +30,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' })
   }
 
+  // Interrupteur volontaire. Tant que le mot de passe de la boite n'est pas
+  // retrouve, chaque envoi finirait sur un refus 535 d'Infomaniak : un rapport
+  // en echec, un motif obscur, et le technicien qui recommence pour rien. Coupe
+  // franchement, l'app dit la verite et passe le PDF a la messagerie du
+  // telephone. Retirer MAIL_OFF dans Vercel remet l'envoi en service.
+  if (process.env.MAIL_OFF === '1') {
+    return res.status(503).json({ error: 'Envoi automatique désactivé' })
+  }
+
   const missing = required.filter((k) => !process.env[k])
   if (missing.length) {
     return res.status(503).json({ error: `Boîte mail non configurée (${missing.join(', ')})` })

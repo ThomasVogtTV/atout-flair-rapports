@@ -1,0 +1,5 @@
+# Outil interne d'Atout-Flair : il se transmet par lien, il n'a rien a faire
+# dans un moteur de recherche. La balise robots de index.html dit la meme chose
+# aux robots qui arriveraient par un autre chemin.
+User-agent: *
+Disallow: /

@@ -73,6 +73,7 @@ Le projet est un site statique + une fonction serveur (`api/send.js`).
    | `MAIL_FROM` | `Atout-Flair Sàrl <info@atout-flair.ch>` — nom d'expéditeur, aligné sur la signature du PDF |
    | `MAIL_REPLY_TO` | `info@atout-flair.ch` *(optionnel, valeur par défaut)* |
    | `MAIL_BCC` | copie d'archivage *(optionnel)* |
+   | `MAIL_OFF` | `1` coupe l'envoi automatique — voir ci-dessous |
 
 Tant que ces variables ne sont pas renseignées, `/api/send` répond 503 : l'app bascule
 alors toute seule sur la file d'attente, et le bouton « Partager / Enregistrer » reste
@@ -93,6 +94,33 @@ ligne de commande. `SMTP_PASS` peut se le permettre : il se regénère chez Info
 code perdu : plus aucun téléphone ne peut envoyer, l'app annonce « Code d'accès refusé »
 à des techniciens qui n'ont rien fait de mal, et il ne reste qu'à en choisir un nouveau
 et à le ressaisir sur chaque appareil. C'est arrivé le 22 août 2026.
+
+### Envoi coupé volontairement
+
+`MAIL_OFF=1` fait répondre 503 à `/api/send` avant même de regarder les identifiants.
+L'app annonce alors « Envoi automatique pas encore activé » et passe le PDF à la
+messagerie du téléphone — le comportement prévu quand la boîte n'est pas branchée.
+
+C'est ce qui est en place depuis le 22 août 2026 : Infomaniak refuse le mot de passe
+de `info@atout-flair.ch` (`535 5.7.0 Invalid login or password`), et le mot de passe de
+la boîte est introuvable. Sans cet interrupteur, chaque rapport partirait dans un refus,
+resterait en brouillon avec un motif obscur, et le technicien recommencerait pour rien.
+Retirer `MAIL_OFF` dans Vercel remet l'envoi en service, une fois `SMTP_PASS` corrigé.
+
+Attention : `SMTP_USER` attend l'adresse complète, et le mot de passe demandé est celui
+**de la boîte mail**, pas celui du compte Infomaniak. Les confondre donne exactement ce
+`535`.
+
+### Pas de moteur de recherche
+
+L'app est un outil interne : elle se transmet par lien, et n'a rien à faire dans les
+résultats de recherche. `public/robots.txt`, la balise `robots` de `index.html` et
+l'en-tête `X-Robots-Tag` de `vercel.json` le disent trois fois, pour les trois chemins
+par lesquels un robot peut arriver.
+
+Ce n'est pas un mot de passe : l'adresse reste ouverte à qui la connaît, et un lien se
+transfère. Le contenu, lui, ne quitte jamais l'appareil — rapports, carnet et signature
+vivent dans le téléphone de chacun, il n'y a pas de compte ni de base commune à voir.
 
 ### Limite de taille
 
