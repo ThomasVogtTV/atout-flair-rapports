@@ -109,7 +109,7 @@ export const TYPES = {
       { key: 'sousRapport', label: 'Rapport de détection', width: 0.1, type: 'sousRapport' },
     ],
     hasCounters: false,
-    hasSignature: false,
+    hasSignature: true,
     hasRemarques: true,
     minRows: 12,
   },
