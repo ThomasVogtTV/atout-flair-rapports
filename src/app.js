@@ -8,7 +8,7 @@ import * as S from './state.js'
 import { fileToPhoto, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
 import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode } from './mailer.js'
-import { root, toast, pulse, showLoading, hideLoading } from './ui/dom.js'
+import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
@@ -154,6 +154,24 @@ function mirrorLieuFields(keys) {
   })
 }
 
+// Redessine la seule bande des propositions du carnet, sans toucher au reste
+// de l'ecran : un render() complet pendant la frappe ferait perdre le curseur.
+function rafraichirSuggestions() {
+  const bande = root.querySelector('[data-mandant-type]')?.closest('.card')?.querySelector('.quick-rooms:not(.quick-constats)')
+  const props = S.matchContacts(view.report.mandant.nom, view.contacts ?? [])
+  const zone = root.querySelector('.suggestions-carnet')
+  if (!zone) return
+  zone.innerHTML = props
+    .map(
+      (c) =>
+        `<button type="button" class="chip chip-sm" data-fill-contact="${c.id}">${esc(S.fullName(c))}${
+          c.npaLieu ? `<span class="chip-count">${esc(c.npaLieu)}</span>` : ''
+        }</button>`
+    )
+    .join('')
+  zone.hidden = !props.length
+}
+
 root.addEventListener('input', (ev) => {
   const el = ev.target
   if (el.dataset.appCode !== undefined) return setCode(el.value)
@@ -170,6 +188,9 @@ root.addEventListener('input', (ev) => {
       applySameName(view.report)
       mirrorLieuFields(['locataire'])
     }
+    // Les propositions du carnet suivent la frappe, sans redessiner tout
+    // l'ecran : un re-rendu ferait perdre le curseur du champ en cours.
+    if (el.dataset.path === 'mandant.nom') rafraichirSuggestions()
     scheduleSave()
   } else if (el.dataset.rowField) {
     const row = rowOf(el)
@@ -392,6 +413,29 @@ root.addEventListener('click', async (ev) => {
     return
   }
 
+  // --- une proposition du carnet remplit tout le bloc mandant
+  const fillId = el.closest('[data-fill-contact]')?.dataset.fillContact
+  if (fillId) {
+    const c = view.contacts.find((x) => x.id === fillId)
+    if (c) {
+      view.report.mandant = {
+        type: c.type ?? '',
+        nom: c.nom ?? '',
+        prenom: c.prenom ?? '',
+        adresse: c.adresse ?? '',
+        npaLieu: c.npaLieu ?? '',
+        email: c.email ?? '',
+        tel: c.tel ?? '',
+      }
+      if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
+      if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
+      await S.saveReport(view.report)
+      toast('Mandant repris du carnet')
+      render()
+    }
+    return
+  }
+
   // --- puce de constat : s'ajoute a ce qui est deja ecrit, les puces restant
   // affichees. Un constat en appelle souvent un second ("marquage franc, puis
   // punaises visibles") ; la minuscule apres la virgule fait une phrase et non
@@ -515,6 +559,27 @@ root.addEventListener('click', async (ev) => {
 
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
+  if (act === 'copier-mandant') {
+    const texte = S.mandantEnTexte(view.report.mandant)
+    if (!texte) return toast('Aucune coordonnée à copier')
+    try {
+      await navigator.clipboard.writeText(texte)
+      toast('Coordonnées copiées')
+    } catch {
+      // Le presse-papiers est refuse hors contexte securise, ou sans geste
+      // reconnu : on retombe sur la vieille methode, qui marche partout.
+      const zone = document.createElement('textarea')
+      zone.value = texte
+      zone.style.position = 'fixed'
+      zone.style.opacity = '0'
+      document.body.appendChild(zone)
+      zone.select()
+      document.execCommand('copy')
+      zone.remove()
+      toast('Coordonnées copiées')
+    }
+    return
+  }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-envois') return openEnvois()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
@@ -537,7 +602,13 @@ root.addEventListener('click', async (ev) => {
     return
   }
   if (act === 'sign') {
-    const sig = await openSignaturePad(view.report.signature, { title: 'Signature du locataire' })
+    // Le nom propose est celui du locataire ou du mandant, mais il reste
+    // modifiable : c'est souvent quelqu'un d'autre qui ouvre la porte.
+    view.report.signataire ??= { nom: '' }
+    if (!view.report.signataire.nom) {
+      view.report.signataire.nom = view.report.lieu?.locataire || S.fullName(view.report.mandant) || ''
+    }
+    const sig = await openSignaturePad(view.report.signature, { title: 'Signature sur place' })
     if (sig !== undefined) {
       view.report.signature = sig
       await S.saveReport(view.report)
@@ -610,7 +681,15 @@ root.addEventListener('click', async (ev) => {
     return
   }
   if (act === 'preview') return previewPdf(view.report, view.children)
-  if (act === 'send') return openSendDialog(view.report, view.children, goHome)
+  if (act === 'send') {
+    // Le mandant rejoint le carnet au moment de l'envoi : c'est la qu'il est
+    // complet et verifie. L'enregistrer a la frappe creerait un contact par
+    // lettre tapee ; ne jamais l'enregistrer oblige a le ressaisir a chaque
+    // intervention pour la meme regie.
+    await S.rememberContact(view.report.mandant)
+    view.contacts = await S.listContacts()
+    return openSendDialog(view.report, view.children, goHome)
+  }
 })
 
 // --- photos ----------------------------------------------------------------

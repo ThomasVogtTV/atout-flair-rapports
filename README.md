@@ -11,7 +11,11 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
 
 - **Trois types de rapport** : détection (appartement / maison), immeuble, hôtel.
   La mise en page PDF reprend les modèles Excel existants, logo compris.
-- **Carnet de mandants** : régies et gérances enregistrées, saisies une seule fois.
+- **Carnet de mandants** : régies et gérances enregistrées, saisies une seule fois. Dès la
+  deuxième lettre du nom, le carnet propose les fiches qui correspondent — un tap remplit
+  adresse, NPA, courriel et téléphone. Le mandant y entre tout seul au moment de l'envoi,
+  quand ses coordonnées sont complètes. Un bouton « Copier » les met dans le presse-papiers
+  au format postal, prêtes pour une facture.
 - **Le moins de saisie possible sur place** : date et heure du jour déjà posées, deux cases
   pour reprendre du mandant son adresse et son nom quand il est aussi l'occupant, le
   constat le plus fréquent déjà écrit dans les remarques, et des puces de texte à une
@@ -28,7 +32,10 @@ qui prenait une douzaine d'heures entre l'intervention et l'envoi.
   navigateur pour qu'il ne la vide pas en manquant de place. Un fichier de sauvegarde
   exportable (carnet de contacts → « Sauvegarde ») rassemble rapports, contacts et
   signature : c'est la seule façon de retrouver son travail sur un téléphone neuf.
-- **Signature tactile** du locataire, et signature du technicien reprise d'office :
+- **Signature tactile** sur les trois types de rapport, avec le **nom du signataire** en
+  champ libre — sur place, c'est souvent la concierge, un voisin ou un employé qui ouvre la
+  porte, et le rapport doit porter le nom de celui qui a réellement signé. Signature du
+  technicien reprise d'office :
   enregistrée une fois sur l'appareil, elle remplit la case « Le technicien » de chaque
   nouveau rapport. Le nom et la signature restent modifiables dans le rapport, sans
   toucher au réglage — le cas du collègue envoyé faire une détection.

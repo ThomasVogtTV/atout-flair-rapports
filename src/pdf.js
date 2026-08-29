@@ -338,7 +338,9 @@ async function signatureBlock(sh, report, y) {
   await drawCol(
     M + colW + 16,
     'Le locataire / le mandant',
-    report.lieu?.locataire || fullName(report.mandant) || '',
+    // Le nom saisi au moment de la signature prime : sur place, ce n'est pas
+    // toujours le locataire ni le mandant qui ouvre la porte.
+    report.signataire?.nom || report.lieu?.locataire || fullName(report.mandant) || '',
     report.signature
   )
   return y - h

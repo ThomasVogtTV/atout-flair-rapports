@@ -77,6 +77,11 @@ export function newReport(type) {
     // qu'un rapport garde la signature de celui qui etait sur place, meme si
     // le technicien par defaut change ensuite.
     technicien: { nom: '', signature: null },
+    // Qui signe sur place. Le nom est repris du locataire ou du mandant a
+    // l'ouverture du pad, mais reste modifiable : c'est souvent la concierge,
+    // le fils, ou un voisin qui ouvre la porte - et le rapport doit porter le
+    // nom de celui qui a reellement signe.
+    signataire: { nom: '' },
     signature: null,
     photos: [],
     sentAt: null,
@@ -142,6 +147,49 @@ export async function rememberContact(mandant) {
   const key = fullName(mandant).toLowerCase()
   const existing = (await listContacts()).find((c) => fullName(c).toLowerCase() === key)
   await db.put('contacts', { id: existing?.id ?? uid(), ...mandant, nom })
+}
+
+/**
+ * Contacts du carnet qui correspondent a ce qui est en train d'etre tape.
+ * La recherche porte sur le nom, le prenom et le lieu : on cherche parfois une
+ * regie par sa ville quand son nom exact echappe.
+ *
+ * @param {string} saisi ce qui est dans le champ
+ * @param {object[]} contacts le carnet
+ * @param {number} max nombre de propositions
+ */
+export function matchContacts(saisi, contacts, max = 4) {
+  const q = (saisi ?? '').trim().toLowerCase()
+  if (q.length < 2) return []
+  const exact = q
+  return contacts
+    .filter((c) => {
+      const champs = [c.nom, c.prenom, c.npaLieu, c.adresse].filter(Boolean).join(' ').toLowerCase()
+      return champs.includes(q)
+    })
+    // Un contact dont le nom est deja tape en entier n'a plus rien a proposer :
+    // la suggestion doit disparaitre une fois la saisie faite, pas rester
+    // affichee sous le champ qu'elle a servi a remplir.
+    .filter((c) => fullName(c).toLowerCase() !== exact)
+    .slice(0, max)
+}
+
+/**
+ * Coordonnees du mandant en un bloc, pretes a etre collees dans une facture.
+ * Format postal suisse : raison sociale, rue, NPA + localite, puis les moyens
+ * de contact - c'est ainsi qu'on les recopie sur un document comptable.
+ */
+export function mandantEnTexte(mandant) {
+  return [
+    fullName(mandant),
+    mandant.adresse,
+    mandant.npaLieu,
+    mandant.email,
+    mandant.tel,
+  ]
+    .map((s) => (s ?? '').trim())
+    .filter(Boolean)
+    .join('\n')
 }
 
 export const deleteContact = (id) => db.del('contacts', id)

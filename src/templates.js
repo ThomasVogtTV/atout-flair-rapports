@@ -141,7 +141,7 @@ export const TYPES = {
       { key: 'photo', label: 'Photo', width: 0.1, type: 'photoFlag' },
     ],
     hasCounters: false,
-    hasSignature: false,
+    hasSignature: true,
     hasRemarques: true,
     minRows: 12,
   },

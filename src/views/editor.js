@@ -183,12 +183,23 @@ function lignesSection(view, r, t) {
     <button class="btn ghost wide" data-act="add-row">+ Ajouter une ligne</button>`
 }
 
+// Signature de la personne presente. Son nom est un champ a part entiere : sur
+// place, ce n'est pas toujours le locataire ni le mandant qui ouvre la porte -
+// concierge, voisin, fils, employe d'hotel. Le rapport doit porter le nom de
+// celui qui a reellement signe.
 function signatureSection(r) {
+  const propose = r.signataire?.nom ?? ''
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'neutral')}Signature du locataire</span></h2>
-    <div class="card sig-card">
-      ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
-      <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'neutral')}Signature sur place</span></h2>
+    <div class="card grid2">
+      <label class="full">Nom du signataire
+        <input data-path="signataire.nom" value="${esc(propose)}"
+               placeholder="${esc(S.fullName(r.mandant) || 'Personne présente')}" autocomplete="off" />
+      </label>
+      <div class="full tech-sig">
+        ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
+        <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
+      </div>
     </div>`
 }
 
@@ -217,16 +228,28 @@ function technicienSection(r) {
     </div>`
 }
 
-// Les champs vont deux par deux : nom/prenom, adresse/NPA, email/telephone.
-// Chaque paire est une seule information du dossier, coupee en deux champs -
-// les separer sur deux lignes allongeait le formulaire sans rien clarifier.
+// Suggestions du carnet pendant la frappe : le carnet ne sert a rien s'il faut
+// se souvenir du nom exact pour en profiter. Un tap remplit tout le bloc.
+function contactSuggestions(view, r) {
+  const props = S.matchContacts(r.mandant.nom, view.contacts ?? [])
+  return `<div class="quick-rooms full suggestions-carnet"${props.length ? '' : ' hidden'}>${props
+    .map(
+      (c) => `<button type="button" class="chip chip-sm" data-fill-contact="${c.id}">
+        ${esc(S.fullName(c))}${c.npaLieu ? `<span class="chip-count">${esc(c.npaLieu)}</span>` : ''}
+      </button>`
+    )
+    .join('')}</div>`
+}
+
 function mandantSection(view, r, contacts) {
   const contactOptions = contacts.map((c) => `<option value="${esc(S.fullName(c))}"></option>`).join('')
   // Une gerance est une societe : pas de prenom, et le nom prend la ligne.
   const societe = r.mandant.type === 'gerance'
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Mandant</span>
-      <button class="link" data-act="save-contact">Ajouter au carnet</button>
+      <span class="section-title-trailer">
+        <button class="link" data-act="copier-mandant">Copier</button>
+      </span>
     </h2>
     <div class="card grid2">
       <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
@@ -235,6 +258,7 @@ function mandantSection(view, r, contacts) {
         <datalist id="contacts">${contactOptions}</datalist>
       </label>
       ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
+      ${contactSuggestions(view, r)}
       <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
       <label>NPA/Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
       <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
