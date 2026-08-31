@@ -1027,12 +1027,56 @@ input:disabled { opacity: 0.55; }
 .row-card.repliee[data-status="inconnu"] .resume-etat { color: var(--amber); }
 .resume-detail { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Le chevron pointe vers le bas quand la carte est fermee, vers le haut quand
-   elle est ouverte : il montre ou va le contenu, pas ou il est. */
-.fold-chevron { display: grid; place-items: center; width: 20px; flex-shrink: 0; color: var(--muted-soft); }
-.fold-chevron svg { width: 17px; height: 17px; transform: rotate(90deg); }
-.fold-btn { color: var(--muted-soft); }
-.fold-btn svg { width: 17px; height: 17px; transform: rotate(-90deg); }
+/* Bouton de repliage : un vrai bouton, cercle visible et fond propre. Un
+   chevron gris pose a meme le fond passait inapercu sur un telephone tenu a
+   bout de bras - et une rubrique repliee qu'on ne sait pas rouvrir est une
+   rubrique perdue. Le chevron pointe vers le bas quand c'est ferme, vers le
+   haut quand c'est ouvert : il montre ou va le contenu, pas ou il est. */
+.fold-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink-soft);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fold-btn svg { width: 17px; height: 17px; transform: rotate(-90deg); transition: transform 0.18s ease; }
+.fold-btn.replie { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+.fold-btn.replie svg { transform: rotate(90deg); }
+.fold-btn:active { transform: scale(0.94); }
+
+/* Ligne de resume d'une rubrique repliee : elle occupe la place de la carte,
+   et se touche partout pour rouvrir. */
+.rubrique-repliee {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  padding: 13px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.rubrique-repliee:active { background: var(--card); }
+.rubrique-resume {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .piece-badge {
   width: 26px;
   height: 26px;

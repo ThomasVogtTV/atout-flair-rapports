@@ -89,15 +89,37 @@ async function openReport(id) {
   // technicien par defaut a l'ouverture, comme un rapport neuf.
   if (!report.technicien) report.technicien = await S.loadTechnicien()
   view.report = report
-  // Un rapport qu'on rouvre a deja ses pieces statuees : elles s'affichent
-  // repliees, une ligne chacune, pour qu'on voie la tournee entiere d'un coup
-  // d'oeil au lieu de faire defiler trois ecrans de champs deja remplis.
-  view.repliees = new Set(report.rows.filter((r) => r.contamine).map((r) => r.id))
+  // Toutes les pieces s'ouvrent repliees : la liste se lit alors comme la
+  // feuille de route de l'intervention - une ligne par piece, son etat en
+  // regard - et l'on ouvre celle qu'on traite. Une piece ajoutee en cours de
+  // route, elle, s'ouvre deja depliee (voir insertNewRow) : on vient de la
+  // creer pour la remplir.
+  view.repliees = new Set(report.rows.map((r) => r.id))
+  view.sectionsRepliees = sectionsParDefaut(report)
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
   view.partenaires = await S.listPartenaires()
   view.screen = 'editor'
   render()
+}
+
+/**
+ * Rubriques repliees a l'ouverture d'un rapport.
+ *
+ * Deux familles :
+ *   - celles qu'on ne visite qu'au besoin (photos libres, technicien deja
+ *     rempli, partenaire souvent absent) : repliees d'office ;
+ *   - celles qu'on vient remplir (mandant, lieu, remarques) : repliees
+ *     seulement si elles portent deja quelque chose. Un rapport neuf s'ouvre
+ *     donc sur ce qu'il faut saisir, un rapport repris sur son sommaire.
+ */
+function sectionsParDefaut(report) {
+  const repliees = new Set(['photos', 'technicien', 'partenaire'])
+  const rempli = (v) => !!(v ?? '').trim()
+  if (rempli(report.mandant?.nom)) repliees.add('mandant')
+  if (rempli(report.lieu?.adresseIntervention) || rempli(report.lieu?.adresse)) repliees.add('lieu')
+  if (rempli(report.remarques)) repliees.add('remarques')
+  return repliees
 }
 
 async function createReport(type) {
@@ -315,6 +337,9 @@ function clearDefaultRemarques() {
   view.report.remarques = ''
   const ta = root.querySelector('[data-path="remarques"]')
   if (ta) ta.value = ''
+  // On demande de completer les remarques : la rubrique s'ouvre, sinon le
+  // message renvoie vers une porte fermee.
+  view.sectionsRepliees.delete('remarques')
   // Le mot suit le type de rapport : un immeuble n'a pas de pieces contaminees,
   // il a des appartements.
   const t = typeOf(view.report)
@@ -536,6 +561,12 @@ root.addEventListener('click', async (ev) => {
   const foldId = el.closest('[data-grip]') ? null : el.closest('[data-fold]')?.dataset.fold
   if (foldId) {
     if (!view.repliees.delete(foldId)) view.repliees.add(foldId)
+    return render()
+  }
+
+  const foldSection = el.closest('[data-fold-section]')?.dataset.foldSection
+  if (foldSection) {
+    if (!view.sectionsRepliees.delete(foldSection)) view.sectionsRepliees.add(foldSection)
     return render()
   }
 

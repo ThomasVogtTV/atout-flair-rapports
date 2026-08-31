@@ -66,11 +66,51 @@ function photoStrip(photos) {
 // Etat d'une ligne, en toutes lettres. Sert au resume d'une carte repliee :
 // "Non" tout seul, sorti de ses trois boutons, ne veut plus rien dire.
 function etatEnMots(row, t) {
-  const e = accordE(t)
-  if (row.contamine === 'oui') return `Contaminé${e}`
-  if (row.contamine === 'non') return `Non contaminé${e}`
+  if (row.contamine === 'oui') return `Contaminé${accordE(t)}`
+  // "Rien trouvé" plutot que "Non contaminée" : deux mots de moins sur une
+  // ligne ou le nom de la piece se faisait rogner, et le mot que le technicien
+  // emploie deja dans ses recommandations.
+  if (row.contamine === 'non') return 'Rien trouvé'
   if (row.contamine) return 'À revoir'
-  return ''
+  return 'À faire'
+}
+
+/**
+ * Bouton de repliage. Volontairement dessine comme un bouton - rond, cercle
+ * visible, pas un chevron gris perdu dans un coin : une rubrique repliee qu'on
+ * ne sait pas rouvrir est une rubrique perdue.
+ *
+ * @param {string} attr  l'attribut qui porte l'identifiant (piece ou rubrique)
+ * @param {string} cle   ce qu'on replie
+ * @param {boolean} replie
+ */
+function foldBtn(attr, cle, replie) {
+  return `<button type="button" class="fold-btn${replie ? ' replie' : ''}" ${attr}="${cle}"
+    aria-expanded="${!replie}" title="${replie ? 'Déplier' : 'Replier'}">${ICONS.chevron}</button>`
+}
+
+/**
+ * Rubrique repliable : intitule, bouton de repliage, et soit son contenu, soit
+ * une ligne de resume qu'un tap rouvre.
+ *
+ * Toutes les rubriques d'un rapport ne meritent pas d'etre ouvertes en
+ * permanence : le technicien est deja rempli, le partenaire sert une fois sur
+ * trois, les photos libres sont souvent vides. Ce qui reste ouvert, c'est ce
+ * qu'on vient remplir.
+ */
+function rubrique({ cle, icone, ton, titre, action = '', resume, contenu, replie }) {
+  return `
+    <h2 class="section-title">
+      <span class="section-title-main">${sectionIcon(icone, ton)}${esc(titre)}</span>
+      <span class="section-title-trailer">${action}${foldBtn('data-fold-section', cle, replie)}</span>
+    </h2>
+    ${
+      replie
+        ? `<button type="button" class="rubrique-repliee" data-fold-section="${cle}">
+             <span class="rubrique-resume">${esc(resume || 'À remplir')}</span>
+           </button>`
+        : contenu
+    }`
 }
 
 /**
@@ -95,7 +135,7 @@ function carteReplieeHTML(row, t, index, titre, infos, nPhotos) {
         </span>
         ${detail ? `<span class="resume-detail">${esc(detail)}</span>` : ''}
       </span>
-      <span class="fold-chevron">${ICONS.chevron}</span>
+      ${foldBtn('data-fold', row.id, true)}
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
   </div>`
@@ -116,7 +156,7 @@ function pieceCardHTML(r, t, row, index, repliee) {
         <span class="field-label">Nom de la pièce</span>
         <input class="row-name piece-name" data-row-field="nom" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
       </label>
-      ${status ? `<button class="icon-btn fold-btn" data-fold="${row.id}" title="Replier">${ICONS.chevron}</button>` : ''}
+      ${foldBtn('data-fold', row.id, false)}
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
     ${
@@ -159,7 +199,7 @@ function lineCardHTML(r, t, row, index, children, repliee) {
         <span class="field-label">${isHotel ? 'N° de chambre' : "N° d'appartement"}</span>
         <input class="row-name piece-name" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'ex. 101' : 'ex. 12'}" />
       </label>
-      ${status ? `<button class="icon-btn fold-btn" data-fold="${row.id}" title="Replier">${ICONS.chevron}</button>` : ''}
+      ${foldBtn('data-fold', row.id, false)}
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
     <!-- L'etage et la date tenaient sur la ligne du numero, avec la poignee et
@@ -271,13 +311,19 @@ function signatureSection(r) {
 // se font seules, et un logo tiers pose par defaut ferait cosigner un rapport a
 // quelqu'un qui n'etait pas la. Les partenaires deja utilises restent en
 // revanche a portee de tap, sous la case.
-function partenaireSection(view, r) {
+function partenaireSection(view, r, replie) {
   const p = r.partenaire ?? {}
   const connus = (view.partenaires ?? []).filter((x) => x.logo !== p.logo)
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'green')}En collaboration avec</span>
-      ${p.logo || (p.nom || '').trim() ? `<button class="link" data-act="drop-partenaire">Retirer</button>` : ''}
-    </h2>
+  const pose = !!(p.logo || (p.nom || '').trim())
+  return rubrique({
+    cle: 'partenaire',
+    icone: 'collab',
+    ton: 'green',
+    titre: 'En collaboration avec',
+    action: pose ? `<button class="link" data-act="drop-partenaire">Retirer</button>` : '',
+    resume: pose ? (p.nom || '').trim() || 'Logo enregistré' : 'Aucun partenaire',
+    replie,
+    contenu: `
     <div class="card">
       <div class="depose${p.logo ? ' rempli' : ''}" data-depose-logo
            title="${p.logo ? 'Toucher pour remplacer le logo' : 'Glisser ou toucher pour choisir un logo'}">
@@ -303,19 +349,25 @@ function partenaireSection(view, r) {
                .join('')}</div>`
           : ''
       }
-    </div>`
+    </div>`,
+  })
 }
 
 // Nom et signature deja remplis a l'ouverture du rapport (technicien par
 // defaut de l'appareil). Les modifier ici ne vaut que pour ce rapport - le cas
 // du collegue envoye faire la detection ; "Enregistrer par defaut" change le
 // reglage de l'appareil pour les rapports suivants.
-function technicienSection(r) {
+function technicienSection(r, replie) {
   const tech = r.technicien ?? {}
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'accent')}Le technicien</span>
-      <button class="link" data-act="tech-default">Enregistrer par défaut</button>
-    </h2>
+  return rubrique({
+    cle: 'technicien',
+    icone: 'person',
+    ton: 'accent',
+    titre: 'Le technicien',
+    action: `<button class="link" data-act="tech-default">Enregistrer par défaut</button>`,
+    resume: [tech.nom, tech.signature ? 'signature enregistrée' : 'sans signature'].filter(Boolean).join(' · '),
+    replie,
+    contenu: `
     <div class="card grid2">
       <label class="full">Nom
         <input data-path="technicien.nom" value="${esc(tech.nom ?? '')}" autocomplete="off" />
@@ -328,7 +380,8 @@ function technicienSection(r) {
         }
         <button class="btn ghost wide" data-act="sign-tech">${tech.signature ? 'Refaire ma signature' : 'Ajouter ma signature'}</button>
       </div>
-    </div>`
+    </div>`,
+  })
 }
 
 // Suggestions du carnet pendant la frappe : le carnet ne sert a rien s'il faut
@@ -344,16 +397,19 @@ function contactSuggestions(view, r) {
     .join('')}</div>`
 }
 
-function mandantSection(view, r, contacts) {
+function mandantSection(view, r, contacts, replie) {
   const contactOptions = contacts.map((c) => `<option value="${esc(S.fullName(c))}"></option>`).join('')
   // Une gerance est une societe : pas de prenom, et le nom prend la ligne.
   const societe = r.mandant.type === 'gerance'
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'amber')}Mandant</span>
-      <span class="section-title-trailer">
-        <button class="link" data-act="copier-mandant">Copier</button>
-      </span>
-    </h2>
+  return rubrique({
+    cle: 'mandant',
+    icone: 'person',
+    ton: 'amber',
+    titre: 'Mandant',
+    action: `<button class="link" data-act="copier-mandant">Copier</button>`,
+    resume: [S.fullName(r.mandant), r.mandant.npaLieu].filter(Boolean).join(' · '),
+    replie,
+    contenu: `
     <div class="card grid2">
       <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
       <label class="${societe ? 'full' : ''}">Nom
@@ -370,10 +426,11 @@ function mandantSection(view, r, contacts) {
       <label>NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
       <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
       <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
-    </div>`
+    </div>`,
+  })
 }
 
-function lieuSection(r, t) {
+function lieuSection(r, t, replie) {
   const fields = t.lieuFields
     .flat()
     .filter((f) => !f.derived)
@@ -407,14 +464,22 @@ function lieuSection(r, t) {
     })
     .join('')
 
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pin', 'violet')}Lieu d'intervention</span></h2>
-    <div class="card grid2">${fields}</div>`
+  return rubrique({
+    cle: 'lieu',
+    icone: 'pin',
+    ton: 'violet',
+    titre: "Lieu d'intervention",
+    resume: [r.lieu.adresseIntervention || r.lieu.adresse, r.lieu.locataire].filter(Boolean).join(' · '),
+    replie,
+    contenu: `<div class="card grid2">${fields}</div>`,
+  })
 }
 
 export function editorView(view) {
   const r = view.report
   const t = typeOf(r)
+  const replie = (cle) => view.sectionsRepliees?.has(cle) ?? false
+  const libres = r.photos.filter((p) => !p.rowId)
 
   return `
     <header class="top editor-top">
@@ -426,30 +491,44 @@ export function editorView(view) {
     </header>
 
     <section class="pad">
-      ${mandantSection(view, r, view.contacts)}
+      ${mandantSection(view, r, view.contacts, replie('mandant'))}
 
-      ${lieuSection(r, t)}
+      ${lieuSection(r, t, replie('lieu'))}
 
       ${t.layout === 'pieces' ? piecesSection(view, r, t) : lignesSection(view, r, t)}
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('camera', 'magenta')}Photos libres</span></h2>
-      <div class="card">
-        <p class="muted small">Photos non rattachées à une ligne (façade, cave, hall…).</p>
-        ${photoStrip(r.photos.filter((p) => !p.rowId))}
-        <button class="btn ghost wide" data-photo="">+ Ajouter une photo</button>
-      </div>
+      ${rubrique({
+        cle: 'photos',
+        icone: 'camera',
+        ton: 'magenta',
+        titre: 'Photos libres',
+        resume: libres.length ? `${libres.length} photo${libres.length > 1 ? 's' : ''}` : 'Aucune photo',
+        replie: replie('photos'),
+        contenu: `<div class="card">
+          <p class="muted small">Photos non rattachées à une ligne (façade, cave, hall…).</p>
+          ${photoStrip(libres)}
+          <button class="btn ghost wide" data-photo="">+ Ajouter une photo</button>
+        </div>`,
+      })}
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'neutral')}Remarques et recommandations</span></h2>
-      <div class="card">
-        <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
-        <div class="quick-rooms quick-notes">${RECOMMANDATIONS.map(
-          (n) => `<button type="button" class="chip chip-sm" data-quick-note="${esc(n.texte)}">+ ${esc(n.label)}</button>`
-        ).join('')}</div>
-      </div>
+      ${rubrique({
+        cle: 'remarques',
+        icone: 'note',
+        ton: 'neutral',
+        titre: 'Remarques et recommandations',
+        resume: (r.remarques || '').trim() || 'Aucune remarque',
+        replie: replie('remarques'),
+        contenu: `<div class="card">
+          <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
+          <div class="quick-rooms quick-notes">${RECOMMANDATIONS.map(
+            (n) => `<button type="button" class="chip chip-sm" data-quick-note="${esc(n.texte)}">+ ${esc(n.label)}</button>`
+          ).join('')}</div>
+        </div>`,
+      })}
 
-      ${technicienSection(r)}
+      ${technicienSection(r, replie('technicien'))}
 
-      ${partenaireSection(view, r)}
+      ${partenaireSection(view, r, replie('partenaire'))}
 
       ${t.hasSignature ? signatureSection(r) : ''}
     </section>
