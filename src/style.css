@@ -303,11 +303,21 @@ body[data-screen="home"] .content-sheet {
 
 /* Le titre de l'accueil se joue en grand sur la photo, plutot qu'en petit a
    cote du logo dans la barre fixe. */
+/* Il tenait un tiers du premier ecran pour un nom deja ecrit dans la barre et
+   un slogan lu une fois. Resserre, il laisse le travail commencer plus haut. */
 .hero-caption {
   position: relative;
   z-index: 1;
-  padding: 26px 20px 30px;
-  max-width: 62%;
+  /* Le texte se pose au bas d'une bande, et non en haut : les chiens restent
+     visibles au-dessus de lui. Sans cette hauteur minimale, la feuille de
+     contenu remontait jusqu'a les recouvrir, et la photo n'etait plus qu'une
+     texture. */
+  min-height: 152px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px 20px 18px;
+  max-width: 72%;
   color: #fff;
 }
 .hero-kicker {
@@ -323,8 +333,8 @@ body[data-screen="home"] .content-sheet {
 }
 .hero-kicker::before { content: ''; width: 13px; height: 2px; flex-shrink: 0; background: var(--accent); border-radius: 1px; }
 .hero-caption h2 {
-  margin: 9px 0 5px;
-  font-size: clamp(20px, 6.2vw, 25px);
+  margin: 7px 0 4px;
+  font-size: clamp(19px, 5.6vw, 23px);
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 1.12;
@@ -338,6 +348,11 @@ body[data-screen="home"] .content-sheet {
   opacity: 0.92;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
+/* Un envoi refuse est la seule chose du bandeau qui reclame un geste. */
+.hero-caption p.hero-alerte { color: #ffb4ae; opacity: 1; font-weight: 650; }
+
+/* Les brouillons en tete : une liste, plus une ligne unique. */
+.lead-list { display: grid; gap: 8px; }
 
 .content-sheet {
   position: relative;

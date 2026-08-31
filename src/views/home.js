@@ -1,5 +1,9 @@
 // Ecran d'accueil. Il repond, dans cet ordre, aux trois questions qu'on se pose
-// en rouvrant l'app sur le terrain : je continue ? je commence ? je cherche ?
+// en rouvrant l'app sur le terrain : je commence ? je continue ? je cherche ?
+//
+// "Nouveau rapport" passe devant "En cours" : neuf fois sur dix on ouvre l'app
+// devant une porte, pour commencer une detection - reprendre un brouillon est
+// l'exception, et elle reste a portee juste dessous.
 //
 // Il parle la meme langue que l'ecran de saisie : des rubriques (petite icone,
 // intitule en capitales, filet qui file jusqu'au bord) plutot que des volets
@@ -97,24 +101,35 @@ function reportRowHTML(r) {
 
 // --- je continue ? ---------------------------------------------------------
 
-// Le rapport le plus recemment touche, s'il est encore en brouillon. Il porte
-// son nom et son adresse : on reprend en sachant ce qu'on reprend, la ou une
-// pastille seule obligeait a l'ouvrir pour le decouvrir.
+// Nombre de brouillons montres en tete. Trois : de quoi couvrir une tournee en
+// cours sans transformer la rubrique en seconde liste.
+const EN_COURS = 3
+
+// Les rapports encore ouverts. Il n'en montrait qu'un - le plus recent - alors
+// qu'une tournee en laisse volontiers trois derriere elle : les deux autres se
+// retrouvaient noyes dans "Mes rapports", au milieu de ce qui est deja parti.
 function enCoursHTML(reports) {
-  const r = reports.find((x) => x.status === 'draft')
-  if (!r) return ''
-  const qui = r.lieu?.locataire || fullName(r.mandant) || 'Sans nom'
-  const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'accent')}En cours</span></h2>
+  const tous = reports.filter((r) => r.status === 'draft')
+  const brouillons = tous.slice(0, EN_COURS)
+  if (!brouillons.length) return ''
+  const ligne = (r) => {
+    const qui = r.lieu?.locataire || fullName(r.mandant) || `Rapport ${r.ref}`
+    const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+    return `
     <button type="button" class="lead-row" data-open="${r.id}">
       <span class="type-chip-icon icon-resume">${ICONS.pen}</span>
       <span class="lead-body">
         <span class="lead-name">${esc(qui)}</span>
-        <span class="lead-where">${esc([r.ref, ou].filter(Boolean).join(' · '))}</span>
+        <span class="lead-where">${esc([ou, quand(r.updatedAt)].filter(Boolean).join(' · '))}</span>
       </span>
       <span class="lead-go">${ICONS.chevron}</span>
     </button>`
+  }
+  return `
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'accent')}En cours</span>
+      ${tous.length > 1 ? `<span class="count-pill"><b>${tous.length}</b></span>` : ''}
+    </h2>
+    <div class="lead-list">${brouillons.map(ligne).join('')}</div>`
 }
 
 // --- je commence ? ---------------------------------------------------------
@@ -156,8 +171,13 @@ function mesRapportsHTML(view) {
   // Le filtre actif peut avoir perdu son dernier rapport (suppression, envoi) :
   // on retombe alors sur "Tous" plutot que d'afficher une liste vide inexplicable.
   const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
-  const listed = tout ? reports.filter(filter.match) : reports.slice(0, APERCU)
-  const reste = reports.length - listed.length
+  // L'apercu ne repete pas les brouillons deja poses en tete d'ecran : le meme
+  // rapport apparaissait deux fois, a deux centimetres d'intervalle. La liste
+  // deroulee, elle, reste complete - c'est la liste, elle doit tout contenir.
+  const enTete = new Set(reports.filter((r) => r.status === 'draft').slice(0, EN_COURS).map((r) => r.id))
+  const apercu = reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
+  const listed = tout ? reports.filter(filter.match) : apercu
+  const reste = reports.length - listed.length - (tout ? 0 : enTete.size)
 
   const items = listed.length
     ? listed.map(reportRowHTML).join('')
@@ -175,6 +195,34 @@ function mesRapportsHTML(view) {
     ${!tout && reste > 0 ? `<button class="btn ghost wide" data-toggle-reports>Voir les ${reste} autres</button>` : ''}`
 }
 
+/**
+ * Le haut de l'accueil.
+ *
+ * Il portait une affiche : le nom de l'app en gros, deja ecrit dans la barre
+ * juste au-dessus, et un slogan - "Saisie, photos, signature et envoi sur
+ * place" - qu'on lit une fois et plus jamais. Cela coutait un tiers du premier
+ * ecran avant le moindre travail.
+ *
+ * Il porte maintenant ce qu'on vient y chercher en ouvrant l'app le matin : le
+ * jour, et ce qui reste sur les bras. La photo et la signature de la maison
+ * restent - c'est l'identite - mais elles tiennent en moins de place.
+ */
+function heroHTML(view) {
+  const jour = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
+  const brouillons = view.reports.filter((r) => r.status === 'draft').length
+  const bilan = [
+    brouillons ? `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` : '',
+    view.enEchec ? `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger` : '',
+    !view.enEchec && view.enAttente ? `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` : '',
+  ].filter(Boolean)
+  return `
+    <div class="hero-caption">
+      <span class="hero-kicker">Détection canine professionnelle</span>
+      <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
+      <p${view.enEchec ? ' class="hero-alerte"' : ''}>${esc(bilan.join(' · ') || 'Tout est à jour')}</p>
+    </div>`
+}
+
 export function homeView(view) {
   return `
     <header class="top">
@@ -189,14 +237,10 @@ export function homeView(view) {
         <button class="icon-btn contacts-toggle" data-act="open-reglages" title="Réglages">${ICONS.reglages}</button>
       </span>
     </header>
-    <div class="hero-caption">
-      <span class="hero-kicker">Détection canine professionnelle</span>
-      <h2>Rapports de détection</h2>
-      <p>Saisie, photos, signature et envoi sur place</p>
-    </div>
+    ${heroHTML(view)}
     <section class="content-sheet">
-      ${enCoursHTML(view.reports)}
       ${nouveauHTML()}
+      ${enCoursHTML(view.reports)}
       ${mesRapportsHTML(view)}
     </section>`
 }
