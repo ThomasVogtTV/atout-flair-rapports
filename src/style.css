@@ -653,24 +653,27 @@ input:disabled { opacity: 0.55; }
 /* Note sous un reglage : elle explique le choix, elle ne le repete pas. */
 .reglage-note { margin: 8px 0 0; }
 
-/* Boutons d'action de l'en-tete : meme pastille en degrade que les icones de
-   type, en plus petit. Chacun sa teinte, posee par --pastille. */
+/* Boutons d'action de l'en-tete.
+   Ils portaient la meme pastille en degre que les icones de type, l'un en vert
+   vif, l'autre en ambre : les deux objets les plus criards de l'ecran, et deux
+   couleurs prises a l'inventaire des etats - le vert dit "rien trouve",
+   l'ambre "en attente". Ni les envois ni le carnet ne sont des etats : ce sont
+   deux portes. Elles se posent donc en verre teinte, du meme neutre que le
+   reste, et ce sont leurs icones qui les distinguent.
+   La couleur revient ou elle a un sens : sur la pastille de compte, qui dit
+   combien d'envois attendent ou ont echoue. */
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .contacts-toggle, .envois-toggle {
-  --pastille: var(--amber);
   flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: 11px;
-  background: var(--pastille);
-  background:
-    radial-gradient(120% 130% at 26% 18%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, color-mix(in srgb, var(--pastille) 70%, white), var(--pastille) 85%);
-  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink-soft);
   display: grid;
   place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px -4px color-mix(in srgb, var(--pastille) 65%, transparent);
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, background 0.15s;
 }
 .contacts-toggle svg, .envois-toggle svg { width: 19px; height: 19px; }
 .contacts-toggle:active, .envois-toggle:active { transform: scale(0.92); }
@@ -935,8 +938,14 @@ input:disabled { opacity: 0.55; }
    est parti, le rouge des qu'un envoi a ete refuse : c'est le seul endroit de
    l'app ou l'on va chercher "est-ce que c'est parti ?", elle doit le dire de
    loin sans qu'on l'ouvre. */
-.envois-toggle { --pastille: var(--green); position: relative; }
-.envois-toggle.en-echec { --pastille: var(--red); }
+.envois-toggle { position: relative; }
+/* Un envoi en echec teinte le bouton lui-meme : c'est la seule chose de
+   l'en-tete qui demande qu'on s'en occupe. */
+.envois-toggle.en-echec {
+  border-color: color-mix(in srgb, var(--red) var(--liseret), transparent);
+  background: color-mix(in srgb, var(--red) var(--voile), transparent);
+  color: var(--red);
+}
 .envois-toggle[data-compte='']::after { display: none; }
 .envois-toggle::after {
   content: attr(data-compte);
