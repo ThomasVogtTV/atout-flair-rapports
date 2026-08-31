@@ -38,13 +38,19 @@ const FILL_ZEBRA = rgb(0.976, 0.972, 0.964) // trame tres legere, une ligne sur 
 //
 // Tout ce qui n'est que decor - tirets, liserets, filets, numero - passe au
 // cyan de la maison, qui pose la couleur sans rien affirmer.
-const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : contamination, et rien d'autre
-const RED_SOFT = rgb(0.984, 0.918, 0.918)   // = --red-soft #fbeaea
-const GREEN = rgb(0.122, 0.478, 0.302)      // = --green #1f7a4d : rapport sans contamination
-const GREEN_SOFT = rgb(0.906, 0.961, 0.933) // = --green-soft #e7f5ee
-// Cyan assombri plutot que franc : un filet de 2 pt en cyan clair devient pale
-// a la photocopie ou en impression economique.
-const ACCENT = rgb(0.055, 0.486, 0.576)     // = --accent #0e7c93 : tout le decor du document
+//
+// Le papier ne se regle pas comme un ecran : ces rouges et ces verts sont plus
+// francs que ceux de l'app, qui les a assourdis pour l'oeil. Une impression
+// economique, une photocopie ou un fax delavent une couleur sourde jusqu'a la
+// rendre illisible - la ou l'ecran, lui, la rend avec exactitude. Les deux
+// palettes disent donc la meme chose, chacune au dosage de son support.
+const RED = rgb(0.753, 0.165, 0.165)        // #c02a2a : contamination, et rien d'autre
+const RED_SOFT = rgb(0.984, 0.918, 0.918)   // #fbeaea
+const GREEN = rgb(0.122, 0.478, 0.302)      // #1f7a4d : rapport sans contamination
+const GREEN_SOFT = rgb(0.906, 0.961, 0.933) // #e7f5ee
+// Le petrole de la maison. L'app le partage desormais (--accent) : l'ecran et
+// le document que l'on remet au client portent enfin la meme couleur.
+const ACCENT = rgb(0.055, 0.486, 0.576)     // #0e7c93 : tout le decor du document
 
 // Coordonnees de l'entreprise, imprimees en pied de chaque page.
 const SOCIETE = 'Atout-Flair Sàrl'

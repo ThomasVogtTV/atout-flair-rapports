@@ -1,56 +1,62 @@
 :root {
   color-scheme: light;
-  --ink: #1c1c1e;
-  --ink-soft: #48484c;
-  --muted: #86868b;
-  --muted-soft: #aeaeb3;
-  --line: #ebe9e4;
-  --line-strong: #ddd9d1;
-  --bg: #f7f6f3;
+  --ink: #1b1c1e;
+  --ink-soft: #4a4b50;
+  --muted: #84868c;
+  --muted-soft: #adafb5;
+  --line: #e9e8e4;
+  --line-strong: #dbd9d3;
+  --bg: #f6f5f2;
   --card: #fff;
   /* Versions opaques, conservees a part : sur l'accueil, --bg et --card
      deviennent translucides pour laisser voir la photo de fond, et le voile
      comme les degrades ont besoin de la couleur pleine. */
-  --bg-solid: #f7f6f3;
+  --bg-solid: #f6f5f2;
   --card-solid: #fff;
-  --fill: #1c1c1e;
+  --fill: #1b1c1e;
   --fill-text: #fff;
-  --header-bg: rgba(252, 251, 249, 0.86);
+  --header-bg: rgba(251, 250, 248, 0.86);
   --bar-bg: rgba(255, 255, 255, 0.9);
   /* La couleur ne decore pas au hasard : trois teintes disent un etat, trois
-     autres forment la famille froide du decor.
+     autres forment la famille du decor. Toutes sont sourdes - chroma basse,
+     valeurs proches - parce qu'un rapport d'expertise n'est pas une application
+     grand public : la couleur y designe, elle ne s'y amuse pas.
 
      Les etats, jamais utilises ailleurs :
-       rouge  -> contaminee (bouton, liseret et badge de carte, compteur) ;
-       vert   -> rien trouve (bouton "Non", badge plein) ;
-       ambre  -> indetermine, et envoi en attente de reseau.
+       brique  -> contaminee (bouton, liseret et badge de carte, compteur) ;
+       sapin   -> rien trouve (bouton "Non", badge) ;
+       ocre    -> indetermine, et envoi en attente de reseau.
+     Ils sont assourdis a dessein : trois feux de signalisation dans une carte
+     faisaient tableau de bord de voiture, pas document d'expertise.
 
-     Le decor prend ce qu'il reste : l'arc bleu -> violet -> magenta, seule
-     portion de la roue que les etats ne revendiquent pas. Trois teintes
-     franchement ecartees (110 degres d'un bout a l'autre, contre 54 quand elles
-     se ressemblaient trop), tenues ensemble par une meme force de couleur et un
-     meme poids sous leur glyphe blanc. Le bleu est la marque de l'app (bandeau
-     du haut, volets, mise au point des champs, badge d'une piece pas encore
-     statuee, type "Detection"), le violet va au lieu d'intervention et au type
-     "Immeuble", le magenta aux photos et au type "Hotel".
+     Le decor prend trois tons froids et profonds :
+       petrole -> la marque de la maison, et le type "Maison ou appartement" ;
+       ardoise -> le lieu d'intervention, et le type "Immeuble" ;
+       prune   -> les photos, et le type "Hôtel".
+
+     Le petrole n'est pas choisi au hasard : c'est exactement la couleur que le
+     PDF imprime depuis toujours sous le logo et au pied de page. L'app portait
+     jusqu'ici un bleu roi qui n'existait nulle part sur le papier - l'ecran et
+     le document que l'on remet au client avaient deux identites. Ils n'en ont
+     plus qu'une.
 
      Le PDF, lui, garde sa propre repartition : voir src/pdf.js. */
-  --accent: #2d5bb9;      /* bleu : la marque de l'app */
-  --accent-soft: #e7eefb;
-  --accent-ink: #24499a;  /* pour du texte/une icone posee sur --accent-soft */
-  --accent-fill: #2d5bb9; /* pour une surface pleine qui porte du blanc */
-  --red: #c02a2a;
-  --red-soft: #fbeaea;
-  --green: #1f7a4d;
-  --green-soft: #e7f5ee;
-  --amber: #a66a13;
-  --amber-soft: #fbf0dd;
-  --violet: #7b3fc4;      /* lieu d'intervention, type "Immeuble" */
-  --violet-soft: #f0e9fb;
-  --violet-fill: #7b3fc4; /* pour une surface pleine qui porte du blanc */
-  --magenta: #ad3392;     /* photos, type "Hotel" */
-  --magenta-soft: #fae8f5;
-  --magenta-fill: #ad3392;
+  --accent: #14626f;      /* bleu : la marque de l'app */
+  --accent-soft: #e4eef0;
+  --accent-ink: #0f5460;  /* pour du texte/une icone posee sur --accent-soft */
+  --accent-fill: #14626f; /* pour une surface pleine qui porte du blanc */
+  --red: #a63a33;
+  --red-soft: #f7ebea;
+  --green: #2a6b4f;
+  --green-soft: #e8f1ec;
+  --amber: #8a6526;
+  --amber-soft: #f6efe2;
+  --ardoise: #3f4c73;      /* lieu d'intervention, type "Immeuble" */
+  --ardoise-soft: #e9ebf2;
+  --ardoise-fill: #3f4c73; /* pour une surface pleine qui porte du blanc */
+  --prune: #6b4468;       /* photos, type "Hôtel" */
+  --prune-soft: #f0e9ef;
+  --prune-fill: #6b4468;
   /* --- teintes ------------------------------------------------------------
      Un etat ne se peint pas en aplat : il se pose en voile. La couleur est
      melangee a du transparent, si bien que la matiere de la carte, la trame
@@ -75,78 +81,78 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --ink: #f1efe9;
-    --ink-soft: #c8c4bc;
-    --muted: #8f8b83;
-    --muted-soft: #6b6862;
-    --line: #333029;
-    --line-strong: #46423a;
-    --bg: #171513;
-    --card: #211f1c;
-    --bg-solid: #171513;
-    --card-solid: #211f1c;
-    --fill: #f1efe9;
-    --fill-text: #171513;
-    --header-bg: rgba(23, 21, 19, 0.86);
-    --bar-bg: rgba(33, 31, 28, 0.9);
-    --accent: #7fa3ee;
-    --accent-soft: #16224a;
-    --accent-ink: #7fa3ee;
-    --accent-fill: #2f57ab;
-    --red: #e8615a;
-    --red-soft: #3a1f1c;
-    --green: #52b485;
-    --green-soft: #1c3229;
-    --amber: #d9a24a;
-    --amber-soft: #3a2c15;
-    --violet: #b48ef0;
-    --violet-soft: #251a42;
-    --violet-fill: #6a37ad;
-    --magenta: #e58acd;
-    --magenta-fill: #9c2f83;
+    --ink: #eceded;
+    --ink-soft: #c2c4c8;
+    --muted: #8a8c92;
+    --muted-soft: #65676d;
+    --line: #2a2c30;
+    --line-strong: #3c3f45;
+    --bg: #141518;
+    --card: #1d1f23;
+    --bg-solid: #141518;
+    --card-solid: #1d1f23;
+    --fill: #eceded;
+    --fill-text: #141518;
+    --header-bg: rgba(20, 21, 24, 0.86);
+    --bar-bg: rgba(29, 31, 35, 0.9);
+    --accent: #68b3c2;
+    --accent-soft: #12303a;
+    --accent-ink: #7cc3d1;
+    --accent-fill: #17697a;
+    --red: #d97e74;
+    --red-soft: #33201d;
+    --green: #63b28c;
+    --green-soft: #1a2e26;
+    --amber: #c9a463;
+    --amber-soft: #302716;
+    --ardoise: #93a1cb;
+    --ardoise-soft: #1e2333;
+    --ardoise-fill: #3a4870;
+    --prune: #bb90b6;
+    --prune-fill: #5e3d5c;
     /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
     --voile: 20%;
     --voile-fort: 30%;
     --liseret: 58%;
-    --magenta-soft: #3a1533;
+    --prune-soft: #2a1f29;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ink: #f1efe9;
-  --ink-soft: #c8c4bc;
-  --muted: #8f8b83;
-  --muted-soft: #6b6862;
-  --line: #333029;
-  --line-strong: #46423a;
-  --bg: #171513;
-  --card: #211f1c;
-  --bg-solid: #171513;
-  --card-solid: #211f1c;
-  --fill: #f1efe9;
-  --fill-text: #171513;
-  --header-bg: rgba(23, 21, 19, 0.86);
-  --bar-bg: rgba(33, 31, 28, 0.9);
-  --accent: #7fa3ee;
-  --accent-soft: #16224a;
-  --accent-ink: #7fa3ee;
-  --accent-fill: #2f57ab;
-  --red: #e8615a;
-  --red-soft: #3a1f1c;
-  --green: #52b485;
-  --green-soft: #1c3229;
-  --amber: #d9a24a;
-  --amber-soft: #3a2c15;
-  --violet: #b48ef0;
-  --violet-soft: #251a42;
-  --violet-fill: #6a37ad;
-  --magenta: #e58acd;
-  --magenta-fill: #9c2f83;
+  --ink: #eceded;
+  --ink-soft: #c2c4c8;
+  --muted: #8a8c92;
+  --muted-soft: #65676d;
+  --line: #2a2c30;
+  --line-strong: #3c3f45;
+  --bg: #141518;
+  --card: #1d1f23;
+  --bg-solid: #141518;
+  --card-solid: #1d1f23;
+  --fill: #eceded;
+  --fill-text: #141518;
+  --header-bg: rgba(20, 21, 24, 0.86);
+  --bar-bg: rgba(29, 31, 35, 0.9);
+  --accent: #68b3c2;
+  --accent-soft: #12303a;
+  --accent-ink: #7cc3d1;
+  --accent-fill: #17697a;
+  --red: #d97e74;
+  --red-soft: #33201d;
+  --green: #63b28c;
+  --green-soft: #1a2e26;
+  --amber: #c9a463;
+  --amber-soft: #302716;
+  --ardoise: #93a1cb;
+  --ardoise-soft: #1e2333;
+  --ardoise-fill: #3a4870;
+  --prune: #bb90b6;
+  --prune-fill: #5e3d5c;
   /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
   --voile: 20%;
   --voile-fort: 30%;
   --liseret: 58%;
-  --magenta-soft: #3a1533;
+  --prune-soft: #2a1f29;
 }
 /* Repasse les controles natifs (date/heure, defilement...) en rendu clair
    si le systeme est sombre mais que l'utilisateur a choisi le clair. */
@@ -487,8 +493,8 @@ body[data-screen="home"] .content-sheet {
 .section-icon svg { width: 15px; height: 15px; }
 .section-icon.icon-accent { background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent); color: var(--accent-ink); }
 .section-icon.icon-red { background: color-mix(in srgb, var(--red) var(--voile-fort), transparent); color: var(--red); }
-.section-icon.icon-violet { background: color-mix(in srgb, var(--violet) var(--voile-fort), transparent); color: var(--violet); }
-.section-icon.icon-magenta { background: color-mix(in srgb, var(--magenta) var(--voile-fort), transparent); color: var(--magenta); }
+.section-icon.icon-ardoise { background: color-mix(in srgb, var(--ardoise) var(--voile-fort), transparent); color: var(--ardoise); }
+.section-icon.icon-prune { background: color-mix(in srgb, var(--prune) var(--voile-fort), transparent); color: var(--prune); }
 .section-icon.icon-amber { background: color-mix(in srgb, var(--amber) var(--voile-fort), transparent); color: var(--amber); }
 .section-icon.icon-green { background: color-mix(in srgb, var(--green) var(--voile-fort), transparent); color: var(--green); }
 .section-icon.icon-neutral { background: var(--line); color: var(--muted); }
@@ -759,22 +765,22 @@ input:disabled { opacity: 0.55; }
   height: 38px;
   border-radius: 12px;
   color: #fff;
-  background:
-    radial-gradient(66% 56% at 30% 14%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 68%),
-    linear-gradient(160deg, color-mix(in srgb, var(--ton) 72%, white), var(--ton) 90%);
+  /* Mat, et non verni. La tache speculaire et le fort biseau blanc donnaient un
+     bouton de sucrerie ; une surface mate, profonde, dont le relief ne tient
+     qu'a une ombre portee teintee, donne un objet. */
+  background: linear-gradient(165deg, color-mix(in srgb, var(--ton) 88%, white), var(--ton) 88%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 5px 13px -6px color-mix(in srgb, var(--ton) 70%, transparent),
-    0 1px 2px rgba(20, 18, 16, 0.16);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 12px -5px color-mix(in srgb, var(--ton) 55%, transparent),
+    0 1px 2px rgba(20, 18, 16, 0.14);
   transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
 }
 /* Le trait de l'icone est grave dans la pastille : une ombre d'un pixel sous
    lui suffit a le decoller du fond colore. */
-.type-chip-icon svg { width: 21px; height: 21px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)); }
+.type-chip-icon svg { width: 21px; height: 21px; }
 
-.type-chip-icon.icon-immeuble { --ton: var(--violet-fill); }
-.type-chip-icon.icon-hotel { --ton: var(--magenta-fill); }
+.type-chip-icon.icon-immeuble { --ton: var(--ardoise-fill); }
+.type-chip-icon.icon-hotel { --ton: var(--prune-fill); }
 
 /* Elevation au survol, enfoncement a l'appui. Le survol est reserve aux
    pointeurs : sur un ecran tactile, il resterait colle apres le tap. */
@@ -782,18 +788,15 @@ input:disabled { opacity: 0.55; }
   .type-chip:hover .type-chip-icon {
     transform: translateY(-2px);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.6),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-      0 11px 20px -7px color-mix(in srgb, var(--ton) 75%, transparent),
-      0 2px 4px rgba(20, 18, 16, 0.16);
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 10px 18px -7px color-mix(in srgb, var(--ton) 60%, transparent),
+      0 2px 4px rgba(20, 18, 16, 0.14);
   }
 }
 .type-chip:active .type-chip-icon,
 .lead-row:active .type-chip-icon {
   transform: translateY(0.5px) scale(0.97);
-  box-shadow:
-    inset 0 2px 5px rgba(0, 0, 0, 0.32),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.26), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
@@ -817,8 +820,8 @@ input:disabled { opacity: 0.55; }
   cursor: pointer;
   transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s, border-color 0.16s;
 }
-.type-chip.card-immeuble { --teinte: var(--violet); }
-.type-chip.card-hotel { --teinte: var(--magenta); }
+.type-chip.card-immeuble { --teinte: var(--ardoise); }
+.type-chip.card-hotel { --teinte: var(--prune); }
 @media (hover: hover) {
   .type-chip:hover {
     transform: translateY(-2px);
@@ -956,8 +959,8 @@ input:disabled { opacity: 0.55; }
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ton) var(--liseret), transparent);
 }
 .rapport-type svg { width: 18px; height: 18px; }
-.rapport-type.icon-immeuble { --ton: var(--violet); }
-.rapport-type.icon-hotel { --ton: var(--magenta); }
+.rapport-type.icon-immeuble { --ton: var(--ardoise); }
+.rapport-type.icon-hotel { --ton: var(--prune); }
 
 .rapport-corps { flex: 1 1 0; min-width: 0; display: grid; gap: 1px; }
 .rapport-nom {

@@ -467,7 +467,7 @@ function lieuSection(r, t, replie) {
   return rubrique({
     cle: 'lieu',
     icone: 'pin',
-    ton: 'violet',
+    ton: 'ardoise',
     titre: "Lieu d'intervention",
     resume: [r.lieu.adresseIntervention || r.lieu.adresse, r.lieu.locataire].filter(Boolean).join(' · '),
     replie,
@@ -500,7 +500,7 @@ export function editorView(view) {
       ${rubrique({
         cle: 'photos',
         icone: 'camera',
-        ton: 'magenta',
+        ton: 'prune',
         titre: 'Photos libres',
         resume: libres.length ? `${libres.length} photo${libres.length > 1 ? 's' : ''}` : 'Aucune photo',
         replie: replie('photos'),
