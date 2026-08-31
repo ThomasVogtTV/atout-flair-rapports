@@ -32,30 +32,66 @@ const FILTERS = [
   { key: 'envoyes', label: 'Envoyés', match: (r) => r.status === 'sent' },
 ]
 
+/**
+ * Quand le rapport a ete touche pour la derniere fois.
+ *
+ * La liste n'en disait rien : dix-sept lignes sans une date, ou l'on cherchait
+ * "celui de mardi" en ouvrant les rapports un par un. Une date absolue plutot
+ * qu'un "il y a trois jours" : on retrouve un rapport par le jour ou l'on y
+ * etait, pas par le temps ecoule depuis.
+ */
+const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+
+function quand(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const jour = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const ecart = Math.round((jour(new Date()) - jour(d)) / 86400000)
+  if (ecart <= 0) return "aujourd'hui"
+  if (ecart === 1) return 'hier'
+  if (ecart < 7) return JOURS[d.getDay()]
+  const deux = (n) => String(n).padStart(2, '0')
+  const court = `${deux(d.getDate())}.${deux(d.getMonth() + 1)}`
+  return d.getFullYear() === new Date().getFullYear() ? court : `${court}.${d.getFullYear()}`
+}
+
+// L'etat ne s'affiche que lorsqu'il apprend quelque chose. "Brouillon" est
+// l'etat de presque tous les rapports : repete a chaque ligne, il occupait la
+// meilleure place de la liste pour ne rien dire. Ce qui compte, c'est de voir
+// d'un coup ce qui est deja parti.
 const etatPill = (r) =>
   r.status === 'sent'
     ? `<span class="pill sent">Envoyé</span>`
     : r.status === 'queued'
       ? `<span class="pill queued">En attente</span>`
-      : `<span class="pill draft">Brouillon</span>`
+      : ''
 
-function reportRowHTML(r, { showType = false } = {}) {
-  const who = r.lieu?.locataire || fullName(r.mandant) || 'Sans nom'
-  const where = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
-  // Sur la largeur d'un telephone, la deuxieme ligne ne tient qu'un repere en
-  // plus de l'adresse : le type quand la liste les melange, le numero quand
-  // elle est deja filtree sur un type. L'adresse, elle, reste toujours - c'est
-  // par elle qu'on reconnait un rapport.
-  const tag = showType ? shortLabel(typeOf(r)) : r.ref
+/**
+ * Une ligne de la liste des rapports.
+ *
+ * Elle affichait "Sans nom" en gros sur presque chaque ligne - le nom du
+ * locataire manque tant que la saisie n'est pas faite - et reléguait le type en
+ * gris dessous. La colonne la plus lisible ne portait donc rien, et la seule
+ * chose qui distinguait deux rapports etait la plus pale.
+ *
+ * Le type passe en pastille a gauche, reconnaissable a son icone sans qu'on
+ * lise ; le titre prend la premiere chose reellement identifiante - le
+ * locataire, le mandant, l'adresse, et le numero de rapport en dernier recours.
+ */
+function reportRowHTML(r) {
+  const t = typeOf(r)
+  const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+  const qui = r.lieu?.locataire || fullName(r.mandant) || ou || `Rapport ${r.ref}`
+  const detail = [ou === qui ? '' : ou, quand(r.updatedAt)].filter(Boolean).join(' · ')
   return `
-    <li class="report-row" data-open="${r.id}">
-      <div class="report-main">
-        <strong>${esc(who)}</strong>
-        <span class="muted">${esc([tag, where].filter(Boolean).join(' · '))}</span>
-      </div>
-      <div class="report-side">${etatPill(r)}
-        <button class="icon-btn" data-del="${r.id}" title="Supprimer">✕</button>
-      </div>
+    <li class="rapport-ligne${r.status === 'sent' ? ' fini' : ''}" data-open="${r.id}">
+      <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
+      <span class="rapport-corps">
+        <span class="rapport-nom">${esc(qui)}</span>
+        <span class="rapport-detail">${esc(detail)}</span>
+      </span>
+      ${etatPill(r)}
+      <button class="icon-btn rapport-suppr" data-del="${r.id}" title="Supprimer">✕</button>
     </li>`
 }
 
@@ -124,7 +160,7 @@ function mesRapportsHTML(view) {
   const reste = reports.length - listed.length
 
   const items = listed.length
-    ? listed.map((r) => reportRowHTML(r, { showType: !tout || filter.key === 'tous' || filter.key === 'envoyes' })).join('')
+    ? listed.map(reportRowHTML).join('')
     : `<li class="empty">${reports.length ? 'Aucun rapport dans cette sélection.' : 'Créez un rapport ci-dessus, il apparaîtra ici.'}</li>`
 
   return `
