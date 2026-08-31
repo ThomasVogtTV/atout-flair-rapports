@@ -60,8 +60,8 @@ export const TYPES = {
         // Dans les trois rapports de reference, ce champ est toujours identique
         // au nom du mandant : pas de saisie separee, valeur reprise automatiquement.
         { key: 'regie', label: 'Régie', derived: 'mandant.nom' },
-        { key: 'adresseIntervention', label: "Adresse d'intervention", large: true },
-        { key: 'locataire', label: 'Locataire', large: true },
+        { key: 'adresseIntervention', label: "Adresse d'intervention" },
+        { key: 'locataire', label: 'Locataire' },
         // "Date" et "Heure" suffisent sous un titre qui dit deja
         // "Lieu d'intervention" : ecrits en entier, le second libelle passait a
         // la ligne et les deux champs ne s'alignaient plus.
@@ -69,8 +69,8 @@ export const TYPES = {
       ],
       [
         { key: 'heureIntervention', label: 'Heure', type: 'time' },
-        { key: 'etagePorte', label: 'Étage / n° de porte', large: true },
-        { key: 'bon', label: 'Bon de commande', large: true },
+        { key: 'etagePorte', label: 'Étage / porte' },
+        { key: 'bon', label: 'Bon de commande' },
         { key: 'presenceLocataire', label: 'Présence du locataire', type: 'ouinon', large: true },
       ],
     ],
@@ -94,9 +94,9 @@ export const TYPES = {
     lieuFields: [
       [
         { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
-        { key: 'adresse', label: 'Adresse', large: true },
-        { key: 'npaLieu', label: 'NPA / Lieu', large: true },
-        { key: 'bon', label: 'Bon de commande', large: true },
+        { key: 'adresse', label: 'Adresse' },
+        { key: 'npaLieu', label: 'NPA / Lieu' },
+        { key: 'bon', label: 'Bon de commande' },
       ],
     ],
     rowLabel: 'appartement',
@@ -123,9 +123,9 @@ export const TYPES = {
     lieuFields: [
       [
         { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
-        { key: 'adresse', label: 'Adresse', large: true },
-        { key: 'npaLieu', label: 'NPA / Lieu', large: true },
-        { key: 'bon', label: 'Bon de commande', large: true },
+        { key: 'adresse', label: 'Adresse' },
+        { key: 'npaLieu', label: 'NPA / Lieu' },
+        { key: 'bon', label: 'Bon de commande' },
       ],
     ],
     rowLabel: 'chambre',

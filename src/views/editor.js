@@ -314,14 +314,14 @@ function mandantSection(view, r, contacts) {
       </label>
       ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
       ${contactSuggestions(view, r)}
-      <!-- Adresse, localite et email prennent la ligne entiere : sur un ecran de
-           telephone, une demi-colonne fait 153 px, et "1400 Yverdon-les-Bains"
-           comme "contact@regiedulac.ch" n'y tiennent pas - on ne voyait jamais
-           la valeur en entier. Le nom et le prenom, eux, restent apparies. -->
-      <label class="full">Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
-      <label class="full">NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
-      <label class="full">Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
-      <label class="full">Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
+      <!-- Deux colonnes : le bloc tient en quatre lignes au lieu de six. Une
+           adresse ou une longue localite depasse alors de son champ - elle
+           defile a la saisie, et le PDF l'imprime en entier. C'est le prix du
+           deroulement plus court, assume. -->
+      <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
+      <label>NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
+      <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
+      <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
     </div>`
 }
 
@@ -334,23 +334,23 @@ function lieuSection(r, t) {
       const isLocataire = f.key === 'locataire'
       const disabled =
         (LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant) || (isLocataire && r.lieu.sameNameAsMandant)
-      // Regle unique dans tout le formulaire : la ligne entiere, sauf pour les
-      // valeurs courtes qui vont naturellement par deux (date et heure, nom et
-      // prenom). Une demi-colonne fait 153 px sur un telephone - "2e etage,
-      // porte gauche" y etait coupe en plein milieu.
+      // Deux colonnes par defaut, pour que le formulaire se deroule court.
+      // Seuls les controles qui ne sont pas des champs de texte gardent la ligne
+      // entiere (segment Oui/Non, cases "meme adresse") : a 149 px de large,
+      // leur libelle passerait a la ligne pour rien.
       const field = `<label class="${f.large ? 'full' : ''}">
         ${esc(f.label)}${fieldInput(f, r.lieu[f.key], disabled)}
       </label>`
       if (isAddrField) {
         return `${field}
-        <label class="full same-addr">
+        <label class="same-addr">
           <input type="checkbox" data-same-addr${r.lieu.sameAsMandant ? ' checked' : ''} />
           Même adresse que le mandant
         </label>`
       }
       if (isLocataire) {
         return `${field}
-        <label class="full same-addr">
+        <label class="same-addr">
           <input type="checkbox" data-same-name${r.lieu.sameNameAsMandant ? ' checked' : ''} />
           Même nom que le mandant
         </label>`

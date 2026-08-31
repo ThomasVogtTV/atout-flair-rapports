@@ -561,13 +561,19 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 input:disabled { opacity: 0.55; }
 
 /* --- petite case "meme adresse que le mandant" --- */
+/* Elle occupe la colonne voisine de son champ, et non une ligne a elle : posee
+   sur la ligne entiere, elle renvoyait le champ suivant a la ligne d'apres et
+   laissait une demi-case vide a chaque fois. Alignee sur le bas, elle se pose
+   au niveau du champ qu'elle commande plutot que de flotter au milieu. */
 .same-addr {
   flex-direction: row;
   align-items: center;
+  align-self: end;
+  padding-bottom: 11px;
   gap: 9px;
-  margin-top: -4px;
   text-transform: none;
-  font-size: 13px;
+  font-size: 12.5px;
+  line-height: 1.3;
   font-weight: 600;
   letter-spacing: 0;
   color: var(--ink-soft);
