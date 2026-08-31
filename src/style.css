@@ -47,8 +47,10 @@
   --amber-soft: #fbf0dd;
   --violet: #7b3fc4;      /* lieu d'intervention, type "Immeuble" */
   --violet-soft: #f0e9fb;
+  --violet-fill: #7b3fc4; /* pour une surface pleine qui porte du blanc */
   --magenta: #ad3392;     /* photos, type "Hotel" */
   --magenta-soft: #fae8f5;
+  --magenta-fill: #ad3392;
   /* --- teintes ------------------------------------------------------------
      Un etat ne se peint pas en aplat : il se pose en voile. La couleur est
      melangee a du transparent, si bien que la matiere de la carte, la trame
@@ -99,7 +101,9 @@
     --amber-soft: #3a2c15;
     --violet: #b48ef0;
     --violet-soft: #251a42;
+    --violet-fill: #6a37ad;
     --magenta: #e58acd;
+    --magenta-fill: #9c2f83;
     /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
     --voile: 20%;
     --voile-fort: 30%;
@@ -135,7 +139,9 @@
   --amber-soft: #3a2c15;
   --violet: #b48ef0;
   --violet-soft: #251a42;
+  --violet-fill: #6a37ad;
   --magenta: #e58acd;
+  --magenta-fill: #9c2f83;
   /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
   --voile: 20%;
   --voile-fort: 30%;
@@ -711,47 +717,68 @@ input:disabled { opacity: 0.55; }
                         ombre grise sous un objet colore fait de la salissure.
 
    Chaque type ne redefinit que ses quatre variables. */
+/* Pastille d'un type de rapport : le seul objet plein de l'ecran de choix, et
+   c'est voulu. La regle de l'app veut que le plein soit reserve a l'action -
+   choisir le type d'un rapport en est une, au meme titre qu'appuyer sur
+   Envoyer. C'est aussi le geste par lequel tout commence : il doit sortir du
+   lot, et une pastille teintee comme le reste ne le faisait plus.
+
+   Quatre couches, du fond vers l'oeil :
+     1. le corps      - degrade de la teinte eclaircie vers la teinte profonde ;
+     2. le speculaire - la tache de lumiere en haut a gauche, la ou tomberait
+                        une source unique : c'est elle qui donne le galbe ;
+     3. le biseau     - un trait clair d'un pixel sur l'arete haute ;
+     4. l'ombre portee - teintee de la couleur de l'objet, jamais grise : une
+                        ombre grise sous un objet colore fait de la salissure.
+
+   Les six couches d'avant en faisaient trop ; celles qui restent sont celles
+   qui portent vraiment le relief. La teinte vient des jetons -fill, ceux qui
+   peuvent porter du blanc dans les deux themes : la couleur d'accent du theme
+   sombre est trop claire pour cela. */
 .type-chip-icon {
-  --ton: var(--accent);
+  --ton: var(--accent-fill);
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  color: var(--ton);
-  background: color-mix(in srgb, var(--ton) var(--voile-fort), transparent);
-  /* Ce qui reste du relief : le cercle teinte qui donne son arete, et un seul
-     trait clair sur l'arete haute - assez pour que la pastille ait une
-     epaisseur, plus assez pour qu'elle crie. */
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  background:
+    radial-gradient(66% 56% at 30% 14%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 68%),
+    linear-gradient(160deg, color-mix(in srgb, var(--ton) 72%, white), var(--ton) 90%);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--ton) var(--liseret), transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.16s, box-shadow 0.16s;
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 5px 13px -6px color-mix(in srgb, var(--ton) 70%, transparent),
+    0 1px 2px rgba(20, 18, 16, 0.16);
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
 }
-.type-chip-icon svg { width: 19px; height: 19px; }
+/* Le trait de l'icone est grave dans la pastille : une ombre d'un pixel sous
+   lui suffit a le decoller du fond colore. */
+.type-chip-icon svg { width: 21px; height: 21px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)); }
 
-/* Chaque type prend la teinte que les jetons lui donnent deja : le bleu de
-   l'app pour la detection, le violet pour l'immeuble, le magenta pour l'hotel.
-   Les trois anciennes pastilles peignaient leurs propres bleus, violets et
-   rubis en dur - trois couleurs de plus a tenir, qui ne suivaient pas le
-   theme et, pour l'hotel, frolaient le rouge de la contamination. */
-.type-chip-icon.icon-immeuble { --ton: var(--violet); }
-.type-chip-icon.icon-hotel { --ton: var(--magenta); }
+.type-chip-icon.icon-immeuble { --ton: var(--violet-fill); }
+.type-chip-icon.icon-hotel { --ton: var(--magenta-fill); }
 
 /* Elevation au survol, enfoncement a l'appui. Le survol est reserve aux
    pointeurs : sur un ecran tactile, il resterait colle apres le tap. */
 @media (hover: hover) {
   .type-chip:hover .type-chip-icon {
-    transform: translateY(-1.5px);
-    background: color-mix(in srgb, var(--ton) calc(var(--voile-fort) + 10%), transparent);
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 11px 20px -7px color-mix(in srgb, var(--ton) 75%, transparent),
+      0 2px 4px rgba(20, 18, 16, 0.16);
   }
 }
-.type-chip:active .type-chip-icon {
+.type-chip:active .type-chip-icon,
+.lead-row:active .type-chip-icon {
   transform: translateY(0.5px) scale(0.97);
   box-shadow:
-    inset 0 1px 3px color-mix(in srgb, var(--ton) 40%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--ton) var(--liseret), transparent);
+    inset 0 2px 5px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
@@ -865,7 +892,7 @@ input:disabled { opacity: 0.55; }
 .lead-where { font-size: 12px; color: var(--muted); }
 .lead-go { display: flex; flex-shrink: 0; color: var(--accent); }
 .lead-go svg { width: 17px; height: 17px; }
-.type-chip-icon.icon-resume { --ton: var(--accent); }
+.type-chip-icon.icon-resume { --ton: var(--accent-fill); }
 @media (hover: hover) {
   .lead-row:hover {
     transform: translateY(-1.5px);
@@ -873,12 +900,6 @@ input:disabled { opacity: 0.55; }
   }
 }
 .lead-row:active { transform: scale(0.985); box-shadow: inset 0 1px 4px rgba(28, 28, 30, 0.1); }
-.lead-row:active .type-chip-icon {
-  transform: translateY(0.5px) scale(0.97);
-  box-shadow:
-    inset 0 1px 3px color-mix(in srgb, var(--ton) 40%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--ton) var(--liseret), transparent);
-}
 
 /* La premiere rubrique de l'accueil colle au haut de la feuille : c'est le
    bord arrondi qui fait la respiration, pas une marge en plus. */

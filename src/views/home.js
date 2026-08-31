@@ -15,7 +15,9 @@ import { ICONS, sectionIcon } from '../ui/icons.js'
 const APERCU = 3
 
 // "Rapport de détection" -> "Détection" : le mot "rapport" est deja dans le
-// titre de la rubrique, seule la nature du rapport distingue les filtres.
+// titre de la rubrique, seule la nature du rapport distingue les filtres. Les
+// grandes cartes du choix, elles, portent un nom plus parlant (voir `choix`
+// dans templates.js) - trop long pour une puce de filtre ou une ligne de liste.
 const shortLabel = (t) => {
   const s = t.label.replace(/^Rapport (de |d'|d’)/i, '')
   return s[0].toUpperCase() + s.slice(1)
@@ -86,7 +88,7 @@ function nouveauHTML() {
     (t) => `
     <button type="button" class="type-chip card-${t.id}" data-new="${t.id}">
       <span class="type-chip-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
-      <span class="type-chip-name">${esc(shortLabel(t))}</span>
+      <span class="type-chip-name">${esc(t.choix)}</span>
       <span class="type-chip-hint">${esc(t.hint)}</span>
     </button>`
   ).join('')

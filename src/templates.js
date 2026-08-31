@@ -45,8 +45,16 @@ export const RECOMMANDATIONS = [
 export const TYPES = {
   detection: {
     id: 'detection',
+    // `label` nomme le document (il s'imprime, il nomme le fichier) ; `choix`
+    // nomme ce qu'on selectionne sur l'accueil. "Détection" disait la methode,
+    // pas l'objet : a cote d'"Immeuble" et d'"Hôtel", qui disent tous deux un
+    // lieu, il fallait un lieu.
+    //
+    // "ou" plutot que "/" : sur une carte large d'un tiers d'ecran, le nom
+    // passe a la ligne, et la barre oblique restait suspendue en fin de ligne.
     label: 'Rapport de détection',
-    hint: 'Appartement / maison',
+    choix: 'Maison ou appartement',
+    hint: 'Pièce par pièce',
     badge: 'Rapport de détection',
     layout: 'pieces',
     // Bloc "Lieu d'intervention et informations".
@@ -88,6 +96,7 @@ export const TYPES = {
   immeuble: {
     id: 'immeuble',
     label: "Rapport d'immeuble",
+    choix: 'Immeuble',
     hint: 'Plusieurs appartements',
     badge: "Rapport d'immeuble",
     layout: 'lignes',
@@ -117,7 +126,8 @@ export const TYPES = {
   hotel: {
     id: 'hotel',
     label: "Rapport d'hôtel",
-    hint: 'Chambres, photos uniquement',
+    choix: 'Hôtel',
+    hint: 'Chambres, photos',
     badge: "Rapport d'hôtel",
     layout: 'lignes',
     lieuFields: [
