@@ -82,6 +82,11 @@ export function newReport(type) {
     // le fils, ou un voisin qui ouvre la porte - et le rapport doit porter le
     // nom de celui qui a reellement signe.
     signataire: { nom: '' },
+    // Desinsectiseur avec qui l'intervention est menee, le cas echeant. Son
+    // logo est copie dans le rapport et non seulement reference : le rapport
+    // doit rester imprimable a l'identique meme si le partenaire est retire
+    // de la liste de l'appareil des mois plus tard.
+    partenaire: { nom: '', logo: null },
     signature: null,
     photos: [],
     sentAt: null,
@@ -216,6 +221,41 @@ export async function loadTechnicien() {
 export const saveTechnicien = ({ nom, signature }) =>
   db.put('settings', { id: 'technicien', nom: (nom || '').trim() || TECHNICIEN_NOM_DEFAUT, signature: signature ?? null })
 
+// --- partenaires (desinsectiseurs) -----------------------------------------
+
+// Les logos deja utilises, gardes sur l'appareil pour qu'un partenaire habituel
+// se rattache d'un tap plutot que d'etre reglisse a chaque rapport.
+//
+// Jamais repris d'office sur un nouveau rapport, et c'est volontaire : toutes
+// les detections ne se font pas en collaboration, et un logo tiers pose par
+// defaut ferait cosigner un rapport a une entreprise qui n'etait pas la.
+const PARTENAIRES_MAX = 6
+
+export async function listPartenaires() {
+  const saved = await db.get('settings', 'partenaires')
+  return saved?.liste ?? []
+}
+
+export async function rememberPartenaire(partenaire) {
+  if (!partenaire?.logo) return
+  const nom = (partenaire.nom || '').trim()
+  const liste = await listPartenaires()
+  // Un partenaire deja connu remonte en tete au lieu de se dupliquer. Meme
+  // logo OU meme nom : le logo arrive souvent avant que le nom soit tape, et
+  // ne regarder que le nom laissait derriere une entree anonyme portant le
+  // meme logo.
+  const autres = liste.filter(
+    (p) => p.logo !== partenaire.logo && !(nom && (p.nom || '').trim().toLowerCase() === nom.toLowerCase())
+  )
+  const liste2 = [{ id: uid(), nom, logo: partenaire.logo }, ...autres].slice(0, PARTENAIRES_MAX)
+  await db.put('settings', { id: 'partenaires', liste: liste2 })
+}
+
+export async function deletePartenaire(id) {
+  const liste = (await listPartenaires()).filter((p) => p.id !== id)
+  await db.put('settings', { id: 'partenaires', liste })
+}
+
 // Enregistrement direct (carnet de contacts) : contrairement a
 // rememberContact, met a jour l'id fourni sans re-chercher par nom -
 // necessaire pour pouvoir renommer un contact existant sans en dupliquer un.
@@ -233,10 +273,13 @@ export async function saveContact(contact) {
 const BACKUP_FORMAT = 'atout-flair-sauvegarde-1'
 
 export async function exportBackup() {
-  const [reports, contacts, technicien] = await Promise.all([
+  // Tous les reglages, et non le seul technicien : la liste des partenaires y
+  // vit aussi, et une sauvegarde qui l'oublierait obligerait a reglisser les
+  // logos un a un sur le telephone neuf.
+  const [reports, contacts, settings] = await Promise.all([
     db.all('reports'),
     db.all('contacts'),
-    db.get('settings', 'technicien'),
+    db.all('settings'),
   ])
   return {
     format: BACKUP_FORMAT,
@@ -244,7 +287,7 @@ export async function exportBackup() {
     refSeq: localStorage.getItem('af-ref-seq') ?? '0',
     reports,
     contacts,
-    settings: technicien ? [technicien] : [],
+    settings,
   }
 }
 

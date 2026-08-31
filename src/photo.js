@@ -52,6 +52,49 @@ export async function fileToPhoto(file) {
   return { dataUrl: canvas.toDataURL('image/jpeg', QUALITY), width: w, height: h }
 }
 
+// Logo d'un partenaire. Plus petit qu'une photo : il n'occupe que quelques
+// centimetres en tete du rapport, et 720 px suffisent largement a l'impression.
+const LOGO_MAX = 720
+
+/**
+ * Prepare un logo depose ou choisi : reduit, et re-encode dans son format
+ * d'origine. Un PNG reste un PNG, car un logo est presque toujours detoure sur
+ * fond transparent - le passer en JPEG lui collerait un rectangle blanc autour,
+ * qui se verrait sur le papier comme a l'ecran.
+ *
+ * @returns {Promise<string>} data URL prete a etre stockee et imprimee
+ */
+export async function fileToLogo(file) {
+  const src = await imageDepuis(file)
+  const w0 = src.width || src.naturalWidth || 0
+  const h0 = src.height || src.naturalHeight || 0
+  if (!w0 || !h0) throw new Error('Image illisible')
+  const scale = Math.min(1, LOGO_MAX / Math.max(w0, h0))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(w0 * scale))
+  canvas.height = Math.max(1, Math.round(h0 * scale))
+  canvas.getContext('2d').drawImage(src, 0, 0, canvas.width, canvas.height)
+  src.close?.()
+  const jpeg = file.type === 'image/jpeg' || file.type === 'image/jpg'
+  return canvas.toDataURL(jpeg ? 'image/jpeg' : 'image/png', 0.92)
+}
+
+// createImageBitmap ne sait pas lire tous les formats sur tous les telephones
+// (le SVG, notamment, lui echappe encore) : on retombe alors sur une balise
+// <img>, qui sait afficher tout ce que le navigateur sait afficher.
+async function imageDepuis(file) {
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    const url = URL.createObjectURL(file)
+    try {
+      return await loadImage(url)
+    } finally {
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    }
+  }
+}
+
 /**
  * Re-encode une photo deja annotee plus petite / plus compressee.
  * Sert au garde-fou de taille avant l'envoi par mail.

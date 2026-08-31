@@ -1129,6 +1129,44 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   box-shadow: var(--shadow-sm);
 }
 
+/* --- case du logo partenaire --- */
+
+/* Un cadre en pointille dit qu'il attend quelque chose ; une fois le logo pose,
+   le trait devient plein et le fond passe au blanc. Comme pour la signature :
+   un logo est presque toujours detoure en noir sur fond transparent, et il
+   disparaissait dans une carte sombre. */
+.depose {
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-height: 104px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, background 0.15s;
+}
+.depose.survol {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.depose.rempli {
+  border-style: solid;
+  border-color: var(--line);
+  background: #fff;
+}
+.depose-mot { font-weight: 600; font-size: 14px; }
+.depose-sous { color: var(--muted); font-size: 12px; }
+.depose-nom { display: block; margin-top: 12px; }
+.depose-titre { display: block; margin-top: 14px; }
+.logo-partenaire { max-height: 76px; max-width: 100%; }
+
+/* Puce d'un partenaire deja utilise : son logo sur son papier, et son nom a
+   cote quand il en porte un. */
+.chip-logo { display: inline-flex; align-items: center; gap: 8px; padding-left: 6px; }
+.chip-logo img { height: 22px; max-width: 64px; object-fit: contain; background: #fff; border-radius: 5px; padding: 2px 4px; }
+
 /* La signature est un trace noir sur fond transparent - c'est ce qui part dans
    le PDF. Posee telle quelle dans une carte sombre, elle devenait invisible :
    on lui rend son papier, et on la montre donc comme elle sera imprimee. */

@@ -18,6 +18,8 @@ export const ICONS = {
   sun: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.2M12 18.8V21M4.4 12H2.6M21.4 12h-1.8M5.8 5.8l1.3 1.3M16.9 16.9l1.3 1.3M18.2 5.8l-1.3 1.3M7.1 16.9l-1.3 1.3"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/><path d="M4 7a1.2 1.2 0 0 1 1.2-1.2h4.3l1.8 2H18.8A1.2 1.2 0 0 1 20 9v8.2a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 17.2Z"/></svg>`,
   mail: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="3" y="5.5" width="18" height="13" rx="2"/><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.6 7 8.4 6 8.4-6"/></svg>`,
+  // Deux anneaux enlaces : deux entreprises cote a cote sur un meme rapport.
+  collab: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="9.2" cy="12" r="5"/><circle cx="9.2" cy="12" r="5"/><circle cx="14.8" cy="12" r="5"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
 }
 

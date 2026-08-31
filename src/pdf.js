@@ -76,6 +76,13 @@ function san(s) {
     )
 }
 
+// Un logo depose garde son format d'origine (PNG detoure, ou JPEG) : pdf-lib
+// veut savoir lequel, il n'a pas de fonction qui devine.
+function embedImage(doc, dataUrl) {
+  const bytes = dataUrlToBytes(dataUrl)
+  return dataUrl.startsWith('data:image/png') ? doc.embedPng(bytes) : doc.embedJpg(bytes)
+}
+
 function dataUrlToBytes(dataUrl) {
   const b64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
   const bin = atob(b64)
@@ -227,16 +234,19 @@ class Sheet {
  * Le titre est en capitales espacees, donc mesure avant d'etre dessine pour
  * pouvoir etre aligne a droite.
  */
-function drawMasthead(sh, report, t, logo) {
+async function drawMasthead(sh, report, t, logo) {
   const top = PAGE.H - 44
   const logoH = 74
-  sh.page.drawImage(logo, { x: M, y: top - logoH, width: logoH * (logo.width / logo.height), height: logoH })
+  const logoW = logoH * (logo.width / logo.height)
+  sh.page.drawImage(logo, { x: M, y: top - logoH, width: logoW, height: logoH })
 
   const title = san(t.badge).toUpperCase()
   const size = 13.5
   const gap = 1.1
   const titleW = [...title].reduce((w, c) => w + sh.width(c, true, size) + gap, -gap)
   sh.spacedText(title, RIGHT - titleW, top - 22, { size, bold: true, gap })
+
+  await drawPartenaire(sh, report, { top, logoH, logoW, libreJusqua: RIGHT - titleW })
 
   sh.text(`N° ${report.ref}`, RIGHT, top - 40, { size: 10, bold: true, align: 'right', color: ACCENT })
 
@@ -247,6 +257,45 @@ function drawMasthead(sh, report, t, logo) {
   const y = top - logoH - 12
   sh.page.drawLine({ start: { x: M, y }, end: { x: RIGHT, y }, thickness: 1.6, color: ACCENT })
   return y - 22
+}
+
+/**
+ * Logo du desinsectiseur, a droite du notre et separe par un filet vertical :
+ * deux entreprises cote a cote, et non un logo compose. La mention est ecrite
+ * en toutes lettres pour qu'aucun lecteur n'attribue le rapport a l'autre.
+ *
+ * Le bloc s'efface si la place manque entre les deux logos et le titre du
+ * document : un logo qui chevaucherait "RAPPORT DE DETECTION" ferait plus de
+ * mal que son absence.
+ */
+async function drawPartenaire(sh, report, { top, logoH, logoW, libreJusqua }) {
+  const p = report.partenaire
+  const nom = san(p?.nom ?? '').trim()
+  if (!p?.logo && !nom) return
+
+  const sepX = M + logoW + 16
+  const x = sepX + 13
+  const w = libreJusqua - 22 - x
+  if (w < 70) return
+
+  sh.vline(sepX, top - logoH + 6, top - 8, 0.7, LINE_HAIR)
+  sh.spacedText('EN COLLABORATION AVEC', x, top - 14, { size: 5.6, bold: true, gap: 0.6, color: MUTED, maxW: w })
+
+  if (!p?.logo) return void sh.text(nom, x, top - 34, { size: 9.5, bold: true, color: INK_SOFT, maxW: w })
+
+  const img = await embedImage(sh.doc, p.logo)
+  const boiteY = top - 62
+  const boiteH = 36
+  const echelle = Math.min(w / img.width, boiteH / img.height)
+  sh.page.drawImage(img, {
+    x,
+    y: boiteY + (boiteH - img.height * echelle) / 2,
+    width: img.width * echelle,
+    height: img.height * echelle,
+  })
+  // Le nom sous le logo : beaucoup de logos ne sont qu'un symbole, et une
+  // regie qui recoit le rapport doit pouvoir nommer l'entreprise.
+  if (nom) sh.text(nom, x, top - 72, { size: 6.6, color: MUTED, maxW: w })
 }
 
 /** Bloc encadre a libelles : le format "fiche de donnees" des deux entetes. */
@@ -371,7 +420,7 @@ async function signatureBlock(sh, report, y) {
 async function drawDetection(sh, report, logo) {
   const t = TYPES.detection
   sh.newPage()
-  let y = drawMasthead(sh, report, t, logo)
+  let y = await drawMasthead(sh, report, t, logo)
 
   // Mandant et lieu d'intervention, cote a cote : les deux jeux de
   // coordonnees du dossier, lisibles d'un seul regard.
@@ -578,7 +627,7 @@ async function drawLignes(sh, report, logo) {
   }
 
   sh.newPage()
-  let y = drawMasthead(sh, report, t, logo)
+  let y = await drawMasthead(sh, report, t, logo)
 
   const gap = 14
   const leftW = (CW - gap) * 0.42
@@ -807,7 +856,11 @@ async function buildDoc(report) {
 export async function buildCombinedPdf(report, children = []) {
   const { doc: main, fonts } = await buildDoc(report)
   for (const child of children) {
-    const { doc: sub } = await buildDoc(child)
+    // On saisit les appartements d'abord, et le partenaire souvent a la fin :
+    // un sous-rapport cree avant lui n'en sait rien. Les pages du fichier
+    // fusionne doivent pourtant porter les memes deux logos d'un bout a l'autre.
+    const sien = child.partenaire?.logo || (child.partenaire?.nom || '').trim()
+    const { doc: sub } = await buildDoc(sien ? child : { ...child, partenaire: report.partenaire })
     const bytes = await sub.save()
     const loaded = await PDFDocument.load(bytes)
     const pages = await main.copyPages(loaded, loaded.getPageIndices())

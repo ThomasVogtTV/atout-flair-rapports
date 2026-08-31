@@ -206,6 +206,50 @@ function signatureSection(r) {
     </div>`
 }
 
+// Logo du desinsectiseur avec qui l'intervention est menee. Il s'imprime en
+// tete du rapport, a cote de celui d'Atout-Flair, sous la mention "en
+// collaboration avec" - les deux entreprises cote a cote, et aucun doute sur
+// qui a fait quoi.
+//
+// Rien n'est repris d'office d'un rapport a l'autre : la plupart des detections
+// se font seules, et un logo tiers pose par defaut ferait cosigner un rapport a
+// quelqu'un qui n'etait pas la. Les partenaires deja utilises restent en
+// revanche a portee de tap, sous la case.
+function partenaireSection(view, r) {
+  const p = r.partenaire ?? {}
+  const connus = (view.partenaires ?? []).filter((x) => x.logo !== p.logo)
+  return `
+    <h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'green')}En collaboration avec</span>
+      ${p.logo || (p.nom || '').trim() ? `<button class="link" data-act="drop-partenaire">Retirer</button>` : ''}
+    </h2>
+    <div class="card">
+      <div class="depose${p.logo ? ' rempli' : ''}" data-depose-logo
+           title="${p.logo ? 'Toucher pour remplacer le logo' : 'Glisser ou toucher pour choisir un logo'}">
+        ${
+          p.logo
+            ? `<img class="logo-partenaire" src="${p.logo}" alt="${esc(p.nom || 'Logo du partenaire')}" />`
+            : `<span class="depose-mot">Glissez le logo ici</span>
+               <span class="depose-sous">ou touchez pour le choisir</span>`
+        }
+      </div>
+      <label class="depose-nom">Nom de l'entreprise
+        <input data-path="partenaire.nom" value="${esc(p.nom ?? '')}" placeholder="ex. Desinfecta Sàrl" autocomplete="off" />
+      </label>
+      ${
+        connus.length
+          ? `<span class="field-label depose-titre">Déjà utilisés</span>
+             <div class="quick-rooms partenaires-connus">${connus
+               .map(
+                 (c) => `<button type="button" class="chip chip-logo" data-partenaire="${c.id}" title="${esc(c.nom || 'Partenaire')}">
+                   <img src="${c.logo}" alt="" />${c.nom ? `<span>${esc(c.nom)}</span>` : ''}
+                 </button>`
+               )
+               .join('')}</div>`
+          : ''
+      }
+    </div>`
+}
+
 // Nom et signature deja remplis a l'ouverture du rapport (technicien par
 // defaut de l'appareil). Les modifier ici ne vaut que pour ce rapport - le cas
 // du collegue envoye faire la detection ; "Enregistrer par defaut" change le
@@ -340,6 +384,8 @@ export function editorView(view) {
       </div>
 
       ${technicienSection(r)}
+
+      ${partenaireSection(view, r)}
 
       ${t.hasSignature ? signatureSection(r) : ''}
     </section>

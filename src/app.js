@@ -5,7 +5,7 @@
 
 import { typeOf, rowLabelFor } from './templates.js'
 import * as S from './state.js'
-import { fileToPhoto, openAnnotator } from './photo.js'
+import { fileToPhoto, fileToLogo, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
 import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
@@ -91,6 +91,7 @@ async function openReport(id) {
   view.report = report
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
+  view.partenaires = await S.listPartenaires()
   view.screen = 'editor'
   render()
 }
@@ -222,6 +223,15 @@ root.addEventListener('change', async (ev) => {
     if (el.checked) applySameName(view.report)
     await S.saveReport(view.report)
     render()
+    return
+  }
+
+  // Le nom du partenaire est presque toujours tape apres avoir depose son logo :
+  // sans cette reprise, la puce gardee sur l'appareil restait anonyme, et il
+  // fallait retaper le nom a chaque rapport.
+  if (el.dataset.path === 'partenaire.nom') {
+    await S.rememberPartenaire(view.report.partenaire)
+    view.partenaires = await S.listPartenaires()
     return
   }
 
@@ -526,6 +536,21 @@ root.addEventListener('click', async (ev) => {
   const photoBtn = el.closest('[data-photo]')
   if (photoBtn) return capture(photoBtn.dataset.photo)
 
+  // --- logo du partenaire : la case s'ouvre au tap, une puce reprend un
+  // partenaire deja utilise sans avoir a rechercher son fichier.
+  if (el.closest('[data-depose-logo]')) return poserLogoPartenaire(await pickFile())
+
+  const partId = el.closest('[data-partenaire]')?.dataset.partenaire
+  if (partId) {
+    const p = (view.partenaires ?? []).find((x) => x.id === partId)
+    if (!p) return
+    view.report.partenaire = { nom: p.nom ?? '', logo: p.logo }
+    await S.saveReport(view.report)
+    await S.rememberPartenaire(view.report.partenaire)
+    view.partenaires = await S.listPartenaires()
+    return render()
+  }
+
   const addChild = el.closest('[data-add-child]')?.dataset.addChild
   if (addChild) return createChild(addChild)
 
@@ -580,6 +605,13 @@ root.addEventListener('click', async (ev) => {
       toast('Coordonnées copiées')
     }
     return
+  }
+  if (act === 'drop-partenaire') {
+    // Le partenaire quitte ce rapport, mais reste dans la liste de l'appareil :
+    // on le retire d'une intervention, on ne le renie pas.
+    view.report.partenaire = { nom: '', logo: null }
+    await S.saveReport(view.report)
+    return render()
   }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-envois') return openEnvois()
@@ -695,19 +727,22 @@ root.addEventListener('click', async (ev) => {
 
 // --- photos ----------------------------------------------------------------
 
-function pickFile() {
+// `capture` n'est pose que pour une prise de vue : sur un telephone, il ouvre
+// l'appareil photo au lieu de la galerie. Un logo, lui, se choisit dans les
+// fichiers - il n'a jamais ete photographie.
+function pickFile({ capture = null } = {}) {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.capture = 'environment'
+    if (capture) input.capture = capture
     input.onchange = () => resolve(input.files?.[0] ?? null)
     input.click()
   })
 }
 
 async function capture(rowId) {
-  const file = await pickFile()
+  const file = await pickFile({ capture: 'environment' })
   if (!file) return
   toast('Traitement de la photo…')
   const photo = await fileToPhoto(file)
@@ -726,6 +761,50 @@ async function capture(rowId) {
   render()
 }
 
+// --- logo du partenaire ----------------------------------------------------
+
+// Pose le logo depose ou choisi sur le rapport ouvert, et le retient pour les
+// suivants. Le fichier est reduit et re-encode avant d'etre stocke : un logo
+// tire d'un site web pese souvent plus que toutes les photos du rapport.
+async function poserLogoPartenaire(file) {
+  if (!file?.type?.startsWith('image/')) return toast('Ce fichier n’est pas une image.')
+  showLoading('Préparation du logo…')
+  try {
+    const logo = await fileToLogo(file)
+    view.report.partenaire = { ...(view.report.partenaire ?? {}), logo }
+    await S.saveReport(view.report)
+    await S.rememberPartenaire(view.report.partenaire)
+    view.partenaires = await S.listPartenaires()
+    hideLoading()
+    render()
+  } catch (err) {
+    hideLoading()
+    console.error('Logo illisible', err)
+    toast('Impossible de lire ce logo. Essayez un PNG ou un JPEG.')
+  }
+}
+
+// Glisser-deposer sur la case, pour l'ordinateur. Le tap, lui, passe par le
+// selecteur de fichiers (voir le gestionnaire de clic).
+root.addEventListener('dragover', (ev) => {
+  const zone = ev.target.closest?.('[data-depose-logo]')
+  if (!zone) return
+  ev.preventDefault()
+  zone.classList.add('survol')
+})
+
+root.addEventListener('dragleave', (ev) => {
+  ev.target.closest?.('[data-depose-logo]')?.classList.remove('survol')
+})
+
+root.addEventListener('drop', (ev) => {
+  const zone = ev.target.closest?.('[data-depose-logo]')
+  if (!zone) return
+  ev.preventDefault()
+  zone.classList.remove('survol')
+  poserLogoPartenaire(ev.dataTransfer?.files?.[0])
+})
+
 async function createChild(rowId) {
   const parent = view.report
   const row = parent.rows.find((r) => r.id === rowId)
@@ -733,6 +812,9 @@ async function createChild(rowId) {
   child.parentId = parent.id
   // mandant copie tel quel : la Regie du sous-rapport en derive automatiquement (voir templates.js)
   child.mandant = { ...parent.mandant }
+  // Meme intervention, meme partenaire : les pages du rapport fusionne doivent
+  // toutes porter les memes deux logos, pas seulement la premiere.
+  child.partenaire = { ...(parent.partenaire ?? { nom: '', logo: null }) }
   child.lieu.adresseIntervention = [parent.lieu.adresse, parent.lieu.npaLieu].filter(Boolean).join(', ')
   child.lieu.etagePorte = [row.etage, row.numero].filter(Boolean).join(' - ')
   child.lieu.locataire = row.resident ?? ''
