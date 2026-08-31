@@ -223,9 +223,9 @@ root.addEventListener('input', (ev) => {
     if (!row) return
     const champ = el.dataset.rowField
     row[champ] = el.value
-    // Le compteur suit tout champ qui fait qu'une ligne compte : le nom d'une
-    // piece, mais aussi le numero d'appartement ou de chambre.
-    if (S.champsQuiComptent(view.report).includes(champ)) refreshCounters()
+    // Plus besoin de rafraichir le compteur a la frappe : toutes les lignes du
+    // rapport comptent, remplies ou non, et leur nombre ne change qu'a l'ajout
+    // ou a la suppression d'une ligne.
     // Les puces de noms de piece ont fait leur travail des que le champ porte
     // quelque chose : elles laissent la place au reste de la carte.
     if (champ === 'nom' && el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()

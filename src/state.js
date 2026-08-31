@@ -122,18 +122,21 @@ export function contaminatedCount(report) {
   return report.rows.filter((r) => r.contamine === 'oui').length
 }
 
-// Les champs qui font qu'une ligne existe vraiment : sans eux, c'est une ligne
-// vide qu'on ne compte pas. Une seule liste, lue a la fois pour compter et pour
-// savoir quelle frappe doit rafraichir le compteur (voir app.js) - separees,
-// les deux avaient derive : le compteur d'un immeuble ne bougeait plus.
-const CHAMPS_LIGNE = { pieces: ['nom'], lignes: ['numero', 'resident', 'etage'] }
-
-export const champsQuiComptent = (report) => CHAMPS_LIGNE[TYPES[report.type].layout]
-
-export function filledRows(report) {
-  const champs = champsQuiComptent(report)
-  return report.rows.filter((r) => champs.some((c) => (r[c] || '').trim()))
-}
+/**
+ * Les lignes du rapport - toutes.
+ *
+ * Le PDF n'en imprimait qu'une partie : une piece sans nom, un appartement
+ * sans numero ni resident etaient tenus pour vides et disparaissaient du
+ * document. Or une piece qui figure encore dans le rapport y figure parce que
+ * le technicien l'y a laissee : elle a ete inspectee, et le fait qu'elle ne
+ * porte ni marquage ni commentaire est precisement ce que le rapport doit
+ * attester. Une piece qui ne concerne pas l'intervention se supprime a la
+ * saisie ; ce qui reste s'imprime.
+ *
+ * La fonction est gardee malgre sa simplicite : elle nomme la regle, et elle
+ * est le seul endroit ou la changer si elle devait un jour revenir.
+ */
+export const filledRows = (report) => report.rows
 
 // --- persistance -----------------------------------------------------------
 
