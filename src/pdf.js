@@ -480,7 +480,13 @@ async function drawDetection(sh, report, logo) {
   ]
   const xs = [M]
   cols.forEach((c) => xs.push(xs[xs.length - 1] + c.w))
-  const headH = 24
+  // L'entete porte deux etages dans la colonne du milieu : "CONTAMINÉE", puis
+  // "OUI / NON" sous un filet. A 24 pt de haut, les hampes de OUI/NON
+  // traversaient ce filet et venaient mordre sur CONTAMINÉE. Trois points de
+  // plus, et chacun a son etage : l'intitule centre dans la moitie haute, les
+  // deux reponses centrees dans la moitie basse.
+  const headH = 27
+  const filet = 15
 
   const drawHead = (ty) => {
     sh.band(M, ty - headH, CW, headH, FILL_HEAD)
@@ -490,12 +496,16 @@ async function drawDetection(sh, report, logo) {
       if (i) sh.vline(xs[i], ty - headH, ty, 0.7, LINE_FRAME)
       const label = c.label.toUpperCase()
       const lw = sh.spacedWidth(label, { size: 7.6, gap: 0.6 })
-      sh.spacedText(label, xs[i] + c.w / 2 - lw / 2, ty - 10, { size: 7.6, bold: true, gap: 0.6, maxW: c.w - 10 })
+      // Les intitules d'une seule ligne se centrent sur toute la hauteur ; celui
+      // de la colonne coupee en deux se centre dans son etage.
+      const base = i === 1 ? ty - filet / 2 - 2.7 : ty - headH / 2 - 2.7
+      sh.spacedText(label, xs[i] + c.w / 2 - lw / 2, base, { size: 7.6, bold: true, gap: 0.6, maxW: c.w - 10 })
     })
-    sh.line(xs[1], ty - 14, xs[1] + cols[1].w, 0.5)
-    sh.vline(xs[1] + cols[1].w / 2, ty - headH, ty - 14, 0.5)
-    sh.text('OUI', xs[1] + cols[1].w * 0.25, ty - headH + 6, { size: 6.6, bold: true, color: MUTED, align: 'center' })
-    sh.text('NON', xs[1] + cols[1].w * 0.75, ty - headH + 6, { size: 6.6, bold: true, color: MUTED, align: 'center' })
+    sh.line(xs[1], ty - filet, xs[1] + cols[1].w, 0.5)
+    sh.vline(xs[1] + cols[1].w / 2, ty - headH, ty - filet, 0.5)
+    const sousBase = ty - headH + (headH - filet) / 2 - 2.3
+    sh.text('OUI', xs[1] + cols[1].w * 0.25, sousBase, { size: 6.6, bold: true, color: MUTED, align: 'center' })
+    sh.text('NON', xs[1] + cols[1].w * 0.75, sousBase, { size: 6.6, bold: true, color: MUTED, align: 'center' })
     return ty - headH
   }
 
@@ -521,10 +531,18 @@ async function drawDetection(sh, report, logo) {
     y -= h
   }
 
+  // La largeur qui sert a compter les lignes doit etre exactement celle qui
+  // sert a les ecrire. Elle ne l'etait pas (16 d'un cote, 20 de l'autre) : une
+  // constatation un peu longue produisait une ligne de plus que la hauteur
+  // reservee, et cette ligne passait sous la ligne suivante - ou la trame de la
+  // rangee d'apres, dessinee ensuite, la recouvrait purement et simplement.
+  // Ce n'etait donc pas un texte coupe, c'etait un texte repeint.
+  const infoW = cols[2].w - 20
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
-    const lines = Math.max(1, sh.countLines(row.info, { size: 8.2, maxW: cols[2].w - 16 }))
-    const rowH = Math.max(21, 11 + lines * 10.5)
+    const lines = Math.max(1, sh.countLines(row.info, { size: 8.2, maxW: infoW }))
+    const rowH = Math.max(21, 12 + lines * 10.5)
 
     if (y - rowH < BOTTOM) {
       closeTable(blockStart, y)
@@ -551,7 +569,11 @@ async function drawDetection(sh, report, logo) {
     }
 
     if (row.info) {
-      sh.wrap(row.info, xs[2] + 10, y - 14, { size: 8.2, maxW: cols[2].w - 20, lh: 10.5 })
+      // Le bloc de texte se centre dans sa rangee, comme le nom de la piece et
+      // la croix : sur une rangee haute de trois lignes, un texte cale en haut
+      // laissait un trou sous lui.
+      const premiere = y - (rowH - lines * 10.5) / 2 - 8
+      sh.wrap(row.info, xs[2] + 10, premiere, { size: 8.2, maxW: infoW, lh: 10.5 })
     } else {
       sh.text('—', xs[2] + 10, midY, { size: 8.2, color: MUTED })
     }
@@ -589,7 +611,17 @@ async function drawLignes(sh, report, logo) {
   const xs = [M]
   widths.forEach((w) => xs.push(xs[xs.length - 1] + w))
 
-  const rowH = 20
+  // Les colonnes de texte libre - le resident et les constatations - peuvent
+  // porter une phrase. Ecrite sur une seule ligne, elle etait reduite jusqu'a
+  // 5 pt pour tenir dans 135 pt de large : illisible sur le papier. Elle passe
+  // maintenant a la ligne, et la rangee grandit avec elle.
+  const TEXTE_LIBRE = ['resident', 'infos']
+  const LH = 9.5
+  const lignesDeLaRangee = (row) =>
+    cols.reduce((n, c, ci) => {
+      if (!TEXTE_LIBRE.includes(c.key) || !row[c.key]) return n
+      return Math.max(n, sh.countLines(row[c.key], { size: 7.6, maxW: widths[ci] - 8 }))
+    }, 1)
   // Assez haut pour trois lignes d'intitule : "RAPPORT DE DETECTION" tenait
   // sur deux lignes en perdant son dernier mot, et l'entete mentait.
   const headH = 30
@@ -676,13 +708,14 @@ async function drawLignes(sh, report, logo) {
   }
 
   for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowH = Math.max(20, 9 + lignesDeLaRangee(row) * LH)
     if (y - rowH < BOTTOM) {
       closeBlock(blockTop, y)
       sh.newPage()
       y = drawTableHead(PAGE.H - 60)
       blockTop = y
     }
-    const row = rows[i]
     if (i % 2 === 1) sh.band(M, y - rowH, CW, rowH, FILL_ZEBRA)
     if (i > 0) sh.line(M, y, RIGHT, 0.4)
 
@@ -701,6 +734,11 @@ async function drawLignes(sh, report, logo) {
       } else if (c.type === 'photoFlag') {
         const n = report.photos.filter((p) => p.rowId === row.id).length
         if (n) sh.text(String(n), xs[ci] + widths[ci] / 2, markY, { size: 9, bold: true, align: 'center' })
+      } else if (TEXTE_LIBRE.includes(c.key) && row[c.key]) {
+        const w = widths[ci] - 8
+        const n = sh.countLines(row[c.key], { size: 7.6, maxW: w })
+        const premiere = y - (rowH - n * LH) / 2 - LH + 2.6
+        sh.wrap(row[c.key], xs[ci] + widths[ci] / 2, premiere, { size: 7.6, maxW: w, lh: LH, align: 'center' })
       } else {
         const value = c.type === 'date' ? frDate(row[c.key]) : row[c.key]
         const bold = c.key === 'numero'
