@@ -70,11 +70,10 @@ export const TYPES = {
     rowLabelPlural: 'pièces',
     defaultRows: DETECTION_DEFAULT_ROOMS,
     suggestions: DETECTION_ROOM_SUGGESTIONS,
-    columns: [
-      { key: 'nom', label: 'Pièces', width: 0.26, align: 'center' },
-      { key: 'contamine', label: 'Contaminée', width: 0.24, type: 'contamine' },
-      { key: 'info', label: 'Informations', width: 0.5, align: 'left' },
-    ],
+    // Pas de `columns` ici : le tableau du rapport de detection est dessine a
+    // part dans pdf.js (drawDetection), avec ses trois colonnes larges. Une
+    // copie ici ne servait a rien qu'a mentir - elle annoncait encore
+    // "Informations" quand le PDF imprimait deja "Constatations".
     hasSignature: true,
   },
 
@@ -101,7 +100,7 @@ export const TYPES = {
       { key: 'numero', label: 'N° appart.', width: 0.08, align: 'center' },
       { key: 'resident', label: 'Résident', width: 0.24, align: 'center' },
       { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine' },
-      { key: 'infos', label: 'Infos', width: 0.28, align: 'center' },
+      { key: 'infos', label: 'Constatations', width: 0.28, align: 'center' },
       { key: 'sousRapport', label: 'Rapport de détection', width: 0.1, type: 'sousRapport' },
     ],
     hasSignature: true,
@@ -128,9 +127,12 @@ export const TYPES = {
       { key: 'date', label: 'Date', width: 0.11, type: 'date', align: 'center' },
       { key: 'etage', label: 'Étage', width: 0.08, align: 'center', suggestions: ['Rez', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'] },
       { key: 'numero', label: 'N° chambre', width: 0.09, align: 'center' },
-      { key: 'resident', label: 'Informations', width: 0.24, align: 'center' },
+      // Une chambre n'a pas de resident : la colonne dit son etat (occupee,
+      // libre, en travaux), et celle de droite ce que la detection a donne -
+      // le meme mot que dans le rapport de detection.
+      { key: 'resident', label: 'Occupation', width: 0.24, align: 'center' },
       { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine' },
-      { key: 'infos', label: 'Comp. Informations', width: 0.27, align: 'center' },
+      { key: 'infos', label: 'Constatations', width: 0.27, align: 'center' },
       { key: 'photo', label: 'Photo', width: 0.1, type: 'photoFlag' },
     ],
     hasSignature: true,

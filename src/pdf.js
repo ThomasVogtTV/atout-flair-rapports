@@ -30,18 +30,21 @@ const LINE_HAIR = rgb(0.72, 0.70, 0.67)     // filet fin (doit rester lisible ap
 const LINE_FRAME = rgb(0.55, 0.54, 0.52)    // cadre des tableaux et blocs
 const FILL_HEAD = rgb(0.945, 0.938, 0.925)  // trame des bandeaux et entetes de tableau
 const FILL_ZEBRA = rgb(0.976, 0.972, 0.964) // trame tres legere, une ligne sur deux
-// Le rouge est la marque de la maison sur le papier : numero de rapport, tirets
-// des intitules de rubrique, liserets a gauche des bandeaux - et c'est aussi lui
-// qui signale la contamination (bandeau de verdict, croix "OUI"). Le vert dit
-// l'absence de punaises. Le cyan ne tient plus que les longs filets, sous le
-// logo et au pied de page, ou il pose la couleur sans crier.
-const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a
+// Le rouge ne dit plus qu'une seule chose : la contamination. Le bandeau de
+// verdict et la croix "OUI" du tableau, rien d'autre. Il decorait aussi le
+// numero de rapport, les tirets des rubriques et les liserets des bandeaux :
+// une regie qui ouvre le fichier voyait du rouge partout et devait lire pour
+// savoir s'il y avait des punaises. Le vert dit l'absence.
+//
+// Tout ce qui n'est que decor - tirets, liserets, filets, numero - passe au
+// cyan de la maison, qui pose la couleur sans rien affirmer.
+const RED = rgb(0.753, 0.165, 0.165)        // = --red #c02a2a : contamination, et rien d'autre
 const RED_SOFT = rgb(0.984, 0.918, 0.918)   // = --red-soft #fbeaea
 const GREEN = rgb(0.122, 0.478, 0.302)      // = --green #1f7a4d : rapport sans contamination
 const GREEN_SOFT = rgb(0.906, 0.961, 0.933) // = --green-soft #e7f5ee
 // Cyan assombri plutot que franc : un filet de 2 pt en cyan clair devient pale
 // a la photocopie ou en impression economique.
-const ACCENT = rgb(0.055, 0.486, 0.576)     // = --accent #0e7c93 : les longs filets
+const ACCENT = rgb(0.055, 0.486, 0.576)     // = --accent #0e7c93 : tout le decor du document
 
 // Coordonnees de l'entreprise, imprimees en pied de chaque page.
 const SOCIETE = 'Atout-Flair Sàrl'
@@ -171,9 +174,10 @@ class Sheet {
     this.page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness, color })
   }
 
-  // Liseret sur le bord gauche d'un bandeau. Le bandeau de verdict, lui, passe
-  // sa propre couleur : rouge s'il y a contamination, vert sinon.
-  stripe(x, y, h, color = RED) {
+  // Liseret sur le bord gauche d'un bandeau. Cyan par defaut : c'est du decor.
+  // Seul le bandeau de verdict passe sa propre couleur, rouge s'il y a
+  // contamination et vert sinon - la, elle veut dire quelque chose.
+  stripe(x, y, h, color = ACCENT) {
     this.page.drawRectangle({ x, y, width: 2.6, height: h, color })
   }
 
@@ -234,7 +238,7 @@ function drawMasthead(sh, report, t, logo) {
   const titleW = [...title].reduce((w, c) => w + sh.width(c, true, size) + gap, -gap)
   sh.spacedText(title, RIGHT - titleW, top - 22, { size, bold: true, gap })
 
-  sh.text(`N° ${report.ref}`, RIGHT, top - 40, { size: 10, bold: true, align: 'right', color: RED })
+  sh.text(`N° ${report.ref}`, RIGHT, top - 40, { size: 10, bold: true, align: 'right', color: ACCENT })
 
   const lieu = report.lieu?.dateIntervention || report.rows?.[0]?.date
   const date = frDate(lieu) || frDate(new Date().toISOString().slice(0, 10))
@@ -303,7 +307,7 @@ function verdictBanner(sh, y, { count, total, unit, unitPlural }) {
 
 /** Intitule de rubrique : tiret court + capitales espacees. */
 function sectionTitle(sh, label, y, w = CW) {
-  sh.page.drawRectangle({ x: M, y: y + 1.5, width: 18, height: 2, color: RED })
+  sh.page.drawRectangle({ x: M, y: y + 1.5, width: 18, height: 2, color: ACCENT })
   sh.spacedText(san(label).toUpperCase(), M + 24, y, { size: 8, bold: true, gap: 0.8, maxW: w - 30 })
   return y - 12
 }

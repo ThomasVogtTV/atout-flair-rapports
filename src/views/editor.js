@@ -114,15 +114,15 @@ function lineCardHTML(r, t, row, index, children) {
       <input type="date" class="small-input" data-row-field="date" value="${esc(row.date)}" />
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
-    <label class="field-info"><span class="field-label">${isHotel ? 'Informations' : 'Résident'}</span>
-      <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'ex. appartement, occupé…' : 'Nom du résident'}" />
+    <label class="field-info"><span class="field-label">${isHotel ? 'Occupation' : 'Résident'}</span>
+      <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'ex. occupée, libre, en travaux…' : 'Nom du résident'}" />
     </label>
     <div class="seg" data-seg-row="${row.id}">
       <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminé</button>
       <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Non</button>
     </div>
-    <label class="field-info"><span class="field-label">Infos</span>
-      <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Téléphone, chien sur place, conseil…" />
+    <label class="field-info"><span class="field-label">Constatations</span>
+      <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Marquage, punaises visibles…" />
     </label>
     ${constatChips()}
     ${photoStrip(photos)}
