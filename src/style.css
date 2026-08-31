@@ -49,6 +49,17 @@
   --violet-soft: #f0e9fb;
   --magenta: #ad3392;     /* photos, type "Hotel" */
   --magenta-soft: #fae8f5;
+  /* --- teintes ------------------------------------------------------------
+     Un etat ne se peint pas en aplat : il se pose en voile. La couleur est
+     melangee a du transparent, si bien que la matiere de la carte, la trame
+     zebree ou la photo de fond continuent de se voir a travers - et qu'une
+     meme regle vaut dans les deux themes, sans seconde serie de valeurs.
+
+     Le plein reste reserve a l'action (le bouton Envoyer, la pastille d'alerte
+     des envois) ; la teinte, elle, dit un etat. */
+  --voile: 14%;        /* fond d'un etat pose */
+  --voile-fort: 22%;   /* fond d'un choix actif, celui sur lequel on a appuye */
+  --liseret: 45%;      /* bordure teintee, qui donne son arete au voile */
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -89,6 +100,10 @@
     --violet: #b48ef0;
     --violet-soft: #251a42;
     --magenta: #e58acd;
+    /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
+    --voile: 20%;
+    --voile-fort: 30%;
+    --liseret: 58%;
     --magenta-soft: #3a1533;
   }
 }
@@ -121,6 +136,10 @@
   --violet: #b48ef0;
   --violet-soft: #251a42;
   --magenta: #e58acd;
+  /* Un voile clair sur fond sombre porte moins : il monte d'un cran. */
+  --voile: 20%;
+  --voile-fort: 30%;
+  --liseret: 58%;
   --magenta-soft: #3a1533;
 }
 /* Repasse les controles natifs (date/heure, defilement...) en rendu clair
@@ -440,17 +459,17 @@ body[data-screen="home"] .content-sheet {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent);
   color: var(--accent-ink);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 38%, transparent);
 }
 .section-icon svg { width: 15px; height: 15px; }
-.section-icon.icon-accent { background: var(--accent-soft); color: var(--accent-ink); }
-.section-icon.icon-red { background: var(--red-soft); color: var(--red); }
-.section-icon.icon-violet { background: var(--violet-soft); color: var(--violet); }
-.section-icon.icon-magenta { background: var(--magenta-soft); color: var(--magenta); }
-.section-icon.icon-amber { background: var(--amber-soft); color: var(--amber); }
-.section-icon.icon-green { background: var(--green-soft); color: var(--green); }
+.section-icon.icon-accent { background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent); color: var(--accent-ink); }
+.section-icon.icon-red { background: color-mix(in srgb, var(--red) var(--voile-fort), transparent); color: var(--red); }
+.section-icon.icon-violet { background: color-mix(in srgb, var(--violet) var(--voile-fort), transparent); color: var(--violet); }
+.section-icon.icon-magenta { background: color-mix(in srgb, var(--magenta) var(--voile-fort), transparent); color: var(--magenta); }
+.section-icon.icon-amber { background: color-mix(in srgb, var(--amber) var(--voile-fort), transparent); color: var(--amber); }
+.section-icon.icon-green { background: color-mix(in srgb, var(--green) var(--voile-fort), transparent); color: var(--green); }
 .section-icon.icon-neutral { background: var(--line); color: var(--muted); }
 .counter { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; color: var(--muted-soft); }
 .counter b { color: var(--ink-soft); font-weight: 650; }
@@ -472,7 +491,7 @@ body[data-screen="home"] .content-sheet {
   color: var(--muted);
 }
 .count-pill b { color: var(--ink-soft); font-weight: 700; }
-.count-pill.cont { background: var(--red-soft); border-color: transparent; color: var(--red); }
+.count-pill.cont { background: color-mix(in srgb, var(--red) var(--voile), transparent); border-color: color-mix(in srgb, var(--red) var(--liseret), transparent); color: var(--red); }
 .count-pill.cont b { color: var(--red); }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -515,7 +534,7 @@ body[data-screen="home"] .content-sheet {
   transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .chip:active { transform: scale(0.96); }
-.chip.on { background: var(--fill); color: var(--fill-text); border-color: var(--fill); box-shadow: var(--shadow-sm); }
+.chip.on { background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent); color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) var(--liseret), transparent); font-weight: 700; }
 
 /* Le libelle annonce, la valeur compte. Les deux s'ecrivaient a la meme taille
    (le champ heritait le 11 px de son label), si bien que rien ne distinguait
@@ -555,7 +574,7 @@ textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035), 0 0 0 3px var(--accent-soft);
+  box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035), 0 0 0 3px color-mix(in srgb, var(--accent) var(--voile), transparent);
 }
 input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 input:disabled { opacity: 0.55; }
@@ -836,9 +855,9 @@ input:disabled { opacity: 0.55; }
   gap: 5px;
 }
 .pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-.pill.draft { background: var(--line); color: var(--muted); }
-.pill.sent { background: var(--green-soft); color: var(--green); }
-.pill.queued { background: var(--amber-soft); color: var(--amber); }
+.pill.draft { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--muted); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent); }
+.pill.sent { background: color-mix(in srgb, var(--green) var(--voile), transparent); color: var(--green); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) var(--liseret), transparent); }
+.pill.queued { background: color-mix(in srgb, var(--amber) var(--voile), transparent); color: var(--amber); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) var(--liseret), transparent); }
 
 /* --- "En cours" : la ligne de reprise ------------------------------------
    Meme silhouette qu'une ligne de la liste, avec une pastille en tete et le
@@ -963,7 +982,8 @@ input:disabled { opacity: 0.55; }
   font-size: 12px;
   line-height: 1.35;
   color: var(--red);
-  background: var(--red-soft);
+  background: color-mix(in srgb, var(--red) var(--voile), transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) var(--liseret), transparent);
   border-radius: 8px;
   padding: 6px 8px;
 }
@@ -989,13 +1009,13 @@ input:disabled { opacity: 0.55; }
    + badge numerote) au lieu de rester enfoui dans un bouton parmi d'autres :
    la donnee la plus importante d'un rapport doit se scanner sans lire un mot. */
 .row-card[data-status="oui"] { border-left-color: var(--red); }
-.row-card[data-status="oui"] .piece-badge { background: var(--red-soft); color: var(--red); border-color: transparent; }
+.row-card[data-status="oui"] .piece-badge { background: color-mix(in srgb, var(--red) var(--voile-fort), transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) var(--liseret), transparent); }
 /* "Non" est plein, la ou le badge en attente n'est que teinte : sinon les deux
    verts (pas encore statuee / verifiee sans trace) se confondaient. */
 .row-card[data-status="non"] { border-left-color: var(--green); }
-.row-card[data-status="non"] .piece-badge { background: var(--green); color: #fff; border-color: transparent; }
+.row-card[data-status="non"] .piece-badge { background: color-mix(in srgb, var(--green) var(--voile-fort), transparent); color: var(--green); border-color: color-mix(in srgb, var(--green) var(--liseret), transparent); }
 .row-card[data-status="inconnu"] { border-left-color: var(--amber); }
-.row-card[data-status="inconnu"] .piece-badge { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+.row-card[data-status="inconnu"] .piece-badge { background: color-mix(in srgb, var(--amber) var(--voile-fort), transparent); color: var(--amber); border-color: color-mix(in srgb, var(--amber) var(--liseret), transparent); }
 
 .row-head { display: flex; gap: 8px; align-items: center; }
 
@@ -1042,14 +1062,13 @@ input:disabled { opacity: 0.55; }
   place-items: center;
   border: 1px solid var(--line-strong);
   border-radius: 50%;
-  background: var(--card);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
   color: var(--ink-soft);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .fold-btn svg { width: 17px; height: 17px; transform: rotate(-90deg); transition: transform 0.18s ease; }
-.fold-btn.replie { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+.fold-btn.replie { border-color: color-mix(in srgb, var(--accent) var(--liseret), transparent); color: var(--accent-ink); background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent); }
 .fold-btn.replie svg { transform: rotate(90deg); }
 .fold-btn:active { transform: scale(0.94); }
 
@@ -1086,9 +1105,9 @@ input:disabled { opacity: 0.55; }
   place-items: center;
   font-weight: 700;
   font-size: 12px;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent);
   color: var(--accent-ink);
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--accent) var(--liseret), transparent);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 /* Poignee de deplacement : la colonne de points annonce que le badge se
@@ -1146,8 +1165,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 
 /* La place qu'elle prendra si on lache maintenant. */
 .row-placeholder {
-  border: 1.5px dashed color-mix(in srgb, var(--accent) 55%, var(--line-strong));
-  background: var(--accent-soft);
+  border: 1.5px dashed color-mix(in srgb, var(--accent) var(--liseret), transparent);
+  background: color-mix(in srgb, var(--accent) var(--voile), transparent);
   border-radius: var(--radius-lg);
 }
 
@@ -1220,10 +1239,17 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   transition: transform 0.08s ease, background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .seg-btn:active { transform: scale(0.96); }
-.seg-btn.on { background: var(--fill); color: var(--fill-text); border-color: var(--fill); }
-.seg-btn.oui.on { background: var(--red); border-color: var(--red); }
-.seg-btn.non.on { background: var(--green); border-color: var(--green); }
-.seg-btn.inconnu.on { background: var(--amber); border-color: var(--amber); }
+/* Le choix retenu se lit a son voile, a son liseret et a son encre - non a un
+   aplat de couleur qui ecrasait le reste de la carte. */
+.seg-btn.on {
+  background: color-mix(in srgb, var(--accent) var(--voile-fort), transparent);
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) var(--liseret), transparent);
+  font-weight: 700;
+}
+.seg-btn.oui.on { background: color-mix(in srgb, var(--red) var(--voile-fort), transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) var(--liseret), transparent); }
+.seg-btn.non.on { background: color-mix(in srgb, var(--green) var(--voile-fort), transparent); color: var(--green); border-color: color-mix(in srgb, var(--green) var(--liseret), transparent); }
+.seg-btn.inconnu.on { background: color-mix(in srgb, var(--amber) var(--voile-fort), transparent); color: var(--amber); border-color: color-mix(in srgb, var(--amber) var(--liseret), transparent); }
 .seg.tri .seg-btn:last-child { flex: 0 0 52px; }
 
 /* --- photos --- */
