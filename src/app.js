@@ -3,7 +3,7 @@
 // Le HTML des ecrans est dans src/views/, les briques d'affichage dans
 // src/ui/, la sortie du rapport (PDF, envoi) dans src/send.js.
 
-import { typeOf, rowLabelFor } from './templates.js'
+import { typeOf, accordE, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, fileToLogo, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
@@ -89,6 +89,10 @@ async function openReport(id) {
   // technicien par defaut a l'ouverture, comme un rapport neuf.
   if (!report.technicien) report.technicien = await S.loadTechnicien()
   view.report = report
+  // Un rapport qu'on rouvre a deja ses pieces statuees : elles s'affichent
+  // repliees, une ligne chacune, pour qu'on voie la tournee entiere d'un coup
+  // d'oeil au lieu de faire defiler trois ecrans de champs deja remplis.
+  view.repliees = new Set(report.rows.filter((r) => r.contamine).map((r) => r.id))
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
   view.contacts = await S.listContacts()
   view.partenaires = await S.listPartenaires()
@@ -311,7 +315,10 @@ function clearDefaultRemarques() {
   view.report.remarques = ''
   const ta = root.querySelector('[data-path="remarques"]')
   if (ta) ta.value = ''
-  toast('Remarques à compléter : une pièce est contaminée.')
+  // Le mot suit le type de rapport : un immeuble n'a pas de pieces contaminees,
+  // il a des appartements.
+  const t = typeOf(view.report)
+  toast(`Remarques à compléter : un${accordE(t) ? 'e' : ''} ${t.rowLabel} est contaminé${accordE(t)}.`)
 }
 
 // Supprime une ligne avec une petite animation de sortie, et demande
@@ -500,6 +507,15 @@ root.addEventListener('click', async (ev) => {
       segRow.closest('.row-card').dataset.status = row.contamine || ''
       refreshCounters()
       clearDefaultRemarques()
+      // "Non" clot la piece : rien a decrire, rien a photographier, on passe a
+      // la suivante - la carte se replie d'elle-meme et la suivante remonte
+      // sous le pouce. "Contaminée" et "?" laissent la carte ouverte : il reste
+      // justement quelque chose a y ecrire.
+      if (row.contamine === 'non' && !row.info && !row.infos && !view.report.photos.some((p) => p.rowId === row.id)) {
+        view.repliees.add(row.id)
+        scheduleSave()
+        return render()
+      }
     } else if (segPath) {
       const current = get(segPath.dataset.seg)
       const next = current === value ? '' : value
@@ -512,6 +528,16 @@ root.addEventListener('click', async (ev) => {
 
   const delRow = el.closest('[data-del-row]')?.dataset.delRow
   if (delRow) return removeRowAnimated(delRow)
+
+  // Replier / deplier une piece. Teste apres la suppression : la croix est
+  // posee dans l'en-tete repliee, qui porte elle-meme le geste de depliage.
+  // Le badge est exclu : c'est la poignee de glissement, et le clic qui suit
+  // un deplacement aurait replie la carte qu'on vient de ranger.
+  const foldId = el.closest('[data-grip]') ? null : el.closest('[data-fold]')?.dataset.fold
+  if (foldId) {
+    if (!view.repliees.delete(foldId)) view.repliees.add(foldId)
+    return render()
+  }
 
   const delPhoto = el.closest('[data-del-photo]')?.dataset.delPhoto
   if (delPhoto) {

@@ -1,10 +1,10 @@
 // Ecran d'un rapport ouvert : mandant, lieu d'intervention, lignes
 // (pieces / appartements / chambres), photos libres, remarques, signature.
 
-import { typeOf, accordE, CONSTATS, RECOMMANDATIONS } from '../templates.js'
+import { typeOf, accordE, rowLabelFor, CONSTATS, RECOMMANDATIONS } from '../templates.js'
 import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
-import { sectionIcon } from '../ui/icons.js'
+import { ICONS, sectionIcon } from '../ui/icons.js'
 import { mandantPicker } from '../ui/chips.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
@@ -63,12 +63,51 @@ function photoStrip(photos) {
     .join('')}</div>`
 }
 
+// Etat d'une ligne, en toutes lettres. Sert au resume d'une carte repliee :
+// "Non" tout seul, sorti de ses trois boutons, ne veut plus rien dire.
+function etatEnMots(row, t) {
+  const e = accordE(t)
+  if (row.contamine === 'oui') return `Contaminé${e}`
+  if (row.contamine === 'non') return `Non contaminé${e}`
+  if (row.contamine) return 'À revoir'
+  return ''
+}
+
+/**
+ * Carte repliee : une ligne, parfois deux. Six pieces depliees font 2 100 px,
+ * soit trois ecrans a faire defiler pour atteindre les photos et la signature.
+ * Repliees, elles en font 320.
+ *
+ * Rien n'est cache pour autant : le resume porte le nom, l'etat, le debut des
+ * constatations et le nombre de photos. Ce qu'on ne voit plus, ce sont les
+ * champs vides et les boutons d'une piece deja traitee.
+ */
+function carteReplieeHTML(row, t, index, titre, infos, nPhotos) {
+  const detail = [infos, nPhotos ? `${nPhotos} photo${nPhotos > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ')
+  return `
+  <div class="row-card repliee" data-row="${row.id}" data-status="${row.contamine || ''}">
+    <div class="row-head" data-fold="${row.id}" role="button" tabindex="0" title="Déplier">
+      <span class="piece-badge" data-grip title="Glisser pour changer la place">${index + 1}</span>
+      <span class="resume">
+        <span class="resume-ligne">
+          <span class="resume-nom">${esc(titre || 'Sans nom')}</span>
+          <span class="resume-etat">${esc(etatEnMots(row, t))}</span>
+        </span>
+        ${detail ? `<span class="resume-detail">${esc(detail)}</span>` : ''}
+      </span>
+      <span class="fold-chevron">${ICONS.chevron}</span>
+      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+    </div>
+  </div>`
+}
+
 // Carte d'une piece : badge numerote colore par statut, labels persistants,
 // puces de noms courants tant que le champ est vide (le champ texte reste
 // disponible pour les cas hors-liste).
-function pieceCardHTML(r, t, row, index) {
+function pieceCardHTML(r, t, row, index, repliee) {
   const photos = r.photos.filter((p) => p.rowId === row.id)
   const status = row.contamine || ''
+  if (repliee) return carteReplieeHTML(row, t, index, row.nom, row.info, photos.length)
   return `
   <div class="row-card" data-row="${row.id}" data-status="${status}">
     <div class="row-head">
@@ -77,6 +116,7 @@ function pieceCardHTML(r, t, row, index) {
         <span class="field-label">Nom de la pièce</span>
         <input class="row-name piece-name" data-row-field="nom" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
       </label>
+      ${status ? `<button class="icon-btn fold-btn" data-fold="${row.id}" title="Replier">${ICONS.chevron}</button>` : ''}
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
     ${
@@ -100,11 +140,17 @@ function pieceCardHTML(r, t, row, index) {
   </div>`
 }
 
-function lineCardHTML(r, t, row, index, children) {
+function lineCardHTML(r, t, row, index, children, repliee) {
   const isHotel = t.id === 'hotel'
   const photos = r.photos.filter((p) => p.rowId === row.id)
   const child = children.find((c) => c.id === row.sousRapportId)
   const status = row.contamine || ''
+  if (repliee) {
+    const resume = [row.resident, row.infos, child ? 'rapport de détection' : ''].filter(Boolean).join(' · ')
+    // rowLabelFor donne "N° 12 - 1er" : un numero seul, sorti de sa colonne,
+    // ne dit plus de quoi il est le numero.
+    return carteReplieeHTML(row, t, index, rowLabelFor(r, row), resume, photos.length)
+  }
   return `
   <div class="row-card" data-row="${row.id}" data-status="${status}">
     <div class="row-head">
@@ -113,6 +159,7 @@ function lineCardHTML(r, t, row, index, children) {
         <span class="field-label">${isHotel ? 'N° de chambre' : "N° d'appartement"}</span>
         <input class="row-name piece-name" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'ex. 101' : 'ex. 12'}" />
       </label>
+      ${status ? `<button class="icon-btn fold-btn" data-fold="${row.id}" title="Replier">${ICONS.chevron}</button>` : ''}
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
     </div>
     <!-- L'etage et la date tenaient sur la ligne du numero, avec la poignee et
@@ -150,9 +197,10 @@ function lineCardHTML(r, t, row, index, children) {
 /** Carte d'une ligne, dans la forme qui correspond au type du rapport. */
 export function rowCardHTML(view, row, index) {
   const t = typeOf(view.report)
+  const repliee = view.repliees?.has(row.id) ?? false
   return t.layout === 'pieces'
-    ? pieceCardHTML(view.report, t, row, index)
-    : lineCardHTML(view.report, t, row, index, view.children)
+    ? pieceCardHTML(view.report, t, row, index, repliee)
+    : lineCardHTML(view.report, t, row, index, view.children, repliee)
 }
 
 // Les deux compteurs de la rubrique. Le libelle et son accord sortent du type

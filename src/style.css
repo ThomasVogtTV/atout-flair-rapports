@@ -998,6 +998,41 @@ input:disabled { opacity: 0.55; }
 .row-card[data-status="inconnu"] .piece-badge { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
 
 .row-head { display: flex; gap: 8px; align-items: center; }
+
+/* --- piece repliee ---------------------------------------------------------
+   Six pieces depliees font 2 100 px : trois ecrans a faire defiler avant
+   d'atteindre les photos et la signature. Repliees, elles en font 320, et la
+   tournee se lit d'un coup d'oeil.
+   Rien n'est perdu pour autant : le resume porte le nom, l'etat, le debut des
+   constatations et le nombre de photos. Ce qui disparait, ce sont les champs
+   vides et les boutons d'une piece deja traitee. */
+.row-card.repliee { padding: 0; }
+.row-card.repliee .row-head { padding: 9px 8px 9px 10px; gap: 10px; cursor: pointer; }
+.row-card.repliee .row-head:active { background: var(--bg); border-radius: var(--radius-lg); }
+.resume { flex: 1 1 0; min-width: 0; display: grid; gap: 1px; }
+.resume-ligne { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.resume-nom {
+  font-weight: 650;
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* L'etat prend la couleur qu'il a deja sur le liseret et sur le badge : la
+   meme information ne change pas de code d'une ligne a l'autre. */
+.resume-etat { margin-left: auto; flex-shrink: 0; font-size: 11.5px; font-weight: 650; color: var(--muted); }
+.row-card.repliee[data-status="oui"] .resume-etat { color: var(--red); }
+.row-card.repliee[data-status="non"] .resume-etat { color: var(--green); }
+.row-card.repliee[data-status="inconnu"] .resume-etat { color: var(--amber); }
+.resume-detail { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Le chevron pointe vers le bas quand la carte est fermee, vers le haut quand
+   elle est ouverte : il montre ou va le contenu, pas ou il est. */
+.fold-chevron { display: grid; place-items: center; width: 20px; flex-shrink: 0; color: var(--muted-soft); }
+.fold-chevron svg { width: 17px; height: 17px; transform: rotate(90deg); }
+.fold-btn { color: var(--muted-soft); }
+.fold-btn svg { width: 17px; height: 17px; transform: rotate(-90deg); }
 .piece-badge {
   width: 26px;
   height: 26px;
