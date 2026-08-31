@@ -12,7 +12,7 @@ import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
-import { homeView } from './views/home.js'
+import { homeView, listeRapportsHTML } from './views/home.js'
 import { contactsView } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
@@ -55,7 +55,10 @@ function set(path, value) {
 // --- navigation ------------------------------------------------------------
 
 async function goHome() {
-  view = { ...view, screen: 'home', report: null, children: [] }
+  // La recherche ne survit pas a la sortie de l'accueil : revenir sur une liste
+  // filtree par des mots tapes une heure plus tot donne un carnet a moitie vide
+  // sans qu'on comprenne pourquoi.
+  view = { ...view, screen: 'home', report: null, children: [], recherche: '' }
   view.reports = (await S.listReports()).filter((r) => !r.parentId)
   await majCompteurs()
   render()
@@ -206,9 +209,24 @@ function rafraichirSuggestions() {
   zone.hidden = !props.length
 }
 
+// La liste des rapports se redessine seule pendant la frappe : un render()
+// complet remplacerait le champ de recherche et le curseur avec lui.
+function rafraichirListeRapports() {
+  const zone = root.querySelector('.report-list')
+  if (!zone) return
+  // Le bouton "Voir les N autres" suit la liste : il reste sinon affiche sous
+  // une recherche qui montre deja tout ce qui correspond.
+  zone.nextElementSibling?.matches('[data-toggle-reports]') && zone.nextElementSibling.remove()
+  zone.outerHTML = listeRapportsHTML(view)
+}
+
 root.addEventListener('input', (ev) => {
   const el = ev.target
   if (el.dataset.appCode !== undefined) return setCode(el.value)
+  if (el.dataset.recherche !== undefined) {
+    view.recherche = el.value
+    return rafraichirListeRapports()
+  }
   if (el.dataset.path) {
     set(el.dataset.path, el.value)
     // Cases "meme adresse / meme nom que le mandant" cochees : les champs du
@@ -678,6 +696,12 @@ root.addEventListener('click', async (ev) => {
     await S.saveReport(view.report)
     return render()
   }
+  if (act === 'dupliquer') {
+    const copie = S.duplicateReport(view.report)
+    await S.saveReport(copie)
+    toast('Rapport dupliqué : le lieu et les pièces sont repris, les constats sont à refaire.')
+    return openReport(copie.id)
+  }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-reglages') return openReglages()
   if (act === 'open-envois') return openEnvois()
@@ -746,7 +770,9 @@ root.addEventListener('click', async (ev) => {
       const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
       hideLoading()
       await shareOrDownload(blob, S.backupFilename())
+      S.markBackup()
       toast(`${data.reports.length} rapport(s) et ${data.contacts.length} contact(s) sauvegardés.`)
+      if (view.screen === 'reglages') render()
     } catch (err) {
       hideLoading()
       console.error('Sauvegarde impossible', err)
@@ -905,6 +931,17 @@ async function updatePendingBadge() {
   pastille.classList.toggle('en-echec', view.enEchec > 0)
 }
 
+// --- reseau ----------------------------------------------------------------
+
+// L'app fonctionne hors ligne par construction : le bandeau ne previent pas
+// d'une panne, il rassure. Dans une cave, on ne savait pas si l'app travaillait
+// ou si le reseau ramait - on ne l'apprenait qu'apres coup, dans Envois.
+function majReseau() {
+  document.body.dataset.reseau = navigator.onLine ? 'en-ligne' : 'hors-ligne'
+}
+window.addEventListener('offline', majReseau)
+window.addEventListener('online', majReseau)
+
 window.addEventListener('online', async () => {
   const { envoyes, echecs } = await flushQueue()
   if (!envoyes && !echecs) return
@@ -916,6 +953,7 @@ window.addEventListener('online', async () => {
 })
 
 export async function boot() {
+  majReseau()
   await goHome()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.

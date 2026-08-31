@@ -2,8 +2,10 @@
   color-scheme: light;
   --ink: #1b1c1e;
   --ink-soft: #4a4b50;
-  --muted: #84868c;
-  --muted-soft: #adafb5;
+  /* #84868c donnait 3,6:1 sur le blanc, sous les 4,5 exiges - illisible en
+     plein jour, dehors, ou ce carnet passe ses journees. */
+  --muted: #6b6d72;
+  --muted-soft: #8e9096;
   --line: #e9e8e4;
   --line-strong: #dbd9d3;
   --bg: #f6f5f2;
@@ -170,6 +172,27 @@ html, body {
 }
 
 #app { padding-bottom: 118px; }
+
+/* Bandeau reseau. Il ne previent pas d'une panne - l'app est faite pour
+   travailler hors ligne - il dit seulement ou l'on en est, la ou l'on ne
+   l'apprenait qu'apres coup dans l'ecran des envois. */
+.hors-ligne {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: var(--bandeau-h);
+  padding: 7px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) var(--voile), var(--bg-solid));
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--amber) var(--liseret), transparent);
+}
+:root { --bandeau-h: 31px; }
+body[data-reseau="hors-ligne"] { --bandeau: var(--bandeau-h); }
+body[data-reseau="hors-ligne"] .hors-ligne { display: block; }
 
 /* --- transition entre ecrans --- */
 @media (prefers-reduced-motion: no-preference) {
@@ -381,7 +404,9 @@ body[data-screen="home"] .content-sheet {
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   box-shadow: 0 1px 0 var(--line), 0 10px 24px -18px rgba(28, 28, 30, 0.35);
   position: sticky;
-  top: 0;
+  /* Le bandeau reseau se colle lui aussi en haut : l'en-tete se pose dessous
+     plutot que de glisser derriere lui. --bandeau vaut zero le reste du temps. */
+  top: var(--bandeau, 0px);
   z-index: 5;
 }
 .top::before {
@@ -667,13 +692,19 @@ input:disabled { opacity: 0.55; }
   background: transparent;
   font-size: 17px;
   color: var(--muted);
-  min-width: 38px;
-  min-height: 38px;
+  min-width: 42px;
+  min-height: 42px;
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.15s;
 }
 .icon-btn:active { background: var(--bg); }
+/* Age de la sauvegarde : en clair au-dessus des deux boutons, et en ocre des
+   qu'il depasse le mois. Une sauvegarde qu'on doit penser a faire ne se fait
+   pas ; celle-ci se rappelle a l'oeil. */
+.etat-sauvegarde { margin: 0 0 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+.etat-sauvegarde.tard { color: var(--amber); }
+
 /* Deuxieme reglage d'une meme carte : un peu d'air le detache du precedent. */
 .reglage-titre { margin-top: 14px; }
 
@@ -705,7 +736,11 @@ input:disabled { opacity: 0.55; }
 .contacts-toggle svg, .envois-toggle svg { width: 19px; height: 19px; }
 .contacts-toggle:active, .envois-toggle:active { transform: scale(0.92); }
 
+/* Un lien de rubrique fait 20 px de haut : trop peu pour un pouce, a plus
+   forte raison ganté. On elargit la zone de prise sans toucher a la mise en
+   page - le texte garde sa taille, la cible fait 42 px. */
 .link {
+  position: relative;
   border: none;
   background: none;
   color: var(--ink-soft);
@@ -716,6 +751,15 @@ input:disabled { opacity: 0.55; }
   cursor: pointer;
   padding: 4px 0;
 }
+.link::after { content: ''; position: absolute; inset: -11px -8px; }
+
+/* Meme elargissement invisible pour le bouton de repliage (32 px a l'oeil,
+   44 px au doigt) et pour les pastilles des bandes deroulantes, qui ne
+   s'elargissent que verticalement : leurs voisines sont a quelques pixels. */
+.fold-btn { position: relative; }
+.fold-btn::after { content: ''; position: absolute; inset: -6px; }
+.chip-sm { position: relative; }
+.chip-sm::after { content: ''; position: absolute; inset: -5px 0; }
 
 /* Puces de recommandation : elles restent sous les remarques, on en empile
    plusieurs, d'ou l'espace qui les detache du champ. */
@@ -928,6 +972,25 @@ input:disabled { opacity: 0.55; }
    largeur de contenu et debordent de l'ecran (le bouton de suppression
    sortait a droite). */
 .report-list > * { min-width: 0; }
+
+/* Champ de recherche : la loupe posee dedans, a gauche, plutot qu'a cote -
+   c'est le champ entier qui devient la cible. */
+.recherche { position: relative; margin-bottom: 9px; }
+.recherche-loupe {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  pointer-events: none;
+}
+.recherche-loupe svg { width: 17px; height: 17px; }
+.recherche input { padding-left: 38px; }
+/* La croix native de type=search est minuscule et depend du navigateur : on la
+   masque, le champ se vide en effaçant. */
+.recherche input::-webkit-search-cancel-button { display: none; }
 
 /* --- une ligne de "Mes rapports" ------------------------------------------
    Trois informations, chacune a sa place : le type en pastille a gauche, qu'on
@@ -1248,7 +1311,9 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
 .piece-name { font-weight: 700; font-size: 16.5px; padding: 7px 6px; }
-.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-soft); }
+/* --muted-soft donnait 2,2:1 : un libelle de champ doit se lire, pas se
+   deviner. Il prend le gris des mentions, qui, lui, passe le seuil. */
+.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .field-info { gap: 6px; }
 
 /* Bandes de pastilles (noms de pieces, constats, filtres). Elles defilent

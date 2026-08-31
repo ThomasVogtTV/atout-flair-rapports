@@ -10,6 +10,7 @@
 // repliables qui n'existaient qu'ici. Une seule grammaire pour toute l'app.
 
 import { TYPE_LIST, typeOf } from '../templates.js'
+import * as S from '../state.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
@@ -165,9 +166,27 @@ function filterBarHTML(reports, active) {
     .join('')}</div>`
 }
 
+/**
+ * Le champ de recherche. Il n'apparait qu'au-dela d'une poignee de rapports :
+ * une loupe sur une liste de trois lignes ne sert a rien qu'a l'encombrer.
+ *
+ * Les filtres ne trient que par type. Passe deux cents rapports, retrouver "la
+ * regie du Lac, avenue de la Gare, en mars" demandait de tout derouler.
+ */
+function rechercheHTML(recherche) {
+  return `
+    <div class="recherche">
+      <span class="recherche-loupe">${ICONS.loupe}</span>
+      <input data-recherche type="search" value="${esc(recherche)}" enterkeyhint="search"
+             autocapitalize="none" autocorrect="off" spellcheck="false"
+             placeholder="Nom, adresse ou n° de rapport" />
+    </div>`
+}
+
 function mesRapportsHTML(view) {
   const reports = view.reports
-  const tout = view.reportsOpen
+  const recherche = (view.recherche ?? '').trim()
+  const tout = view.reportsOpen || !!recherche
   // Le filtre actif peut avoir perdu son dernier rapport (suppression, envoi) :
   // on retombe alors sur "Tous" plutot que d'afficher une liste vide inexplicable.
   const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
@@ -176,12 +195,24 @@ function mesRapportsHTML(view) {
   // deroulee, elle, reste complete - c'est la liste, elle doit tout contenir.
   const enTete = new Set(reports.filter((r) => r.status === 'draft').slice(0, EN_COURS).map((r) => r.id))
   const apercu = reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
-  const listed = tout ? reports.filter(filter.match) : apercu
+  // Une recherche en cours cherche partout : elle ignore l'apercu, et elle
+  // ignore le filtre de type, qui n'aurait plus de sens quand on tape une rue.
+  const listed = recherche
+    ? reports.filter((r) => S.matchRapport(r, recherche))
+    : tout
+      ? reports.filter(filter.match)
+      : apercu
   const reste = reports.length - listed.length - (tout ? 0 : enTete.size)
 
   const items = listed.length
     ? listed.map(reportRowHTML).join('')
-    : `<li class="empty">${reports.length ? 'Aucun rapport dans cette sélection.' : 'Créez un rapport ci-dessus, il apparaîtra ici.'}</li>`
+    : `<li class="empty">${
+        recherche
+          ? `Aucun rapport ne correspond à « ${esc(recherche)} ».`
+          : reports.length
+            ? 'Aucun rapport dans cette sélection.'
+            : 'Créez un rapport ci-dessus, il apparaîtra ici.'
+      }</li>`
 
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span>
@@ -190,8 +221,39 @@ function mesRapportsHTML(view) {
         ${reports.length > APERCU ? `<button class="link" data-toggle-reports>${tout ? 'Réduire' : 'Tout voir'}</button>` : ''}
       </span>
     </h2>
-    ${tout ? filterBarHTML(reports, filter.key) : ''}
-    <ul class="report-list">${items}</ul>
+    ${reports.length > APERCU ? rechercheHTML(view.recherche ?? '') : ''}
+    ${tout && !recherche ? filterBarHTML(reports, filter.key) : ''}
+    ${listeRapportsHTML(view)}`
+}
+
+/**
+ * La seule liste, calculee a part : la recherche la redessine a chaque frappe
+ * sans toucher au reste de l'ecran, sinon le champ perdrait le curseur.
+ */
+export function listeRapportsHTML(view) {
+  const reports = view.reports ?? []
+  const recherche = (view.recherche ?? '').trim()
+  const tout = view.reportsOpen || !!recherche
+  const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
+  const enTete = new Set(reports.filter((r) => r.status === 'draft').slice(0, EN_COURS).map((r) => r.id))
+  const listed = recherche
+    ? reports.filter((r) => S.matchRapport(r, recherche))
+    : tout
+      ? reports.filter(filter.match)
+      : reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
+  const items = listed.length
+    ? listed.map(reportRowHTML).join('')
+    : `<li class="empty">${
+        recherche
+          ? `Aucun rapport ne correspond à « ${esc(recherche)} ».`
+          : reports.length
+            ? 'Aucun rapport dans cette sélection.'
+            : 'Créez un rapport ci-dessus, il apparaîtra ici.'
+      }</li>`
+  // Le bouton fait partie de la liste : redessine avec elle, il ne reste pas
+  // affiche pendant une recherche, qui montre deja tout ce qui correspond.
+  const reste = reports.length - listed.length - (tout ? 0 : enTete.size)
+  return `<ul class="report-list">${items}</ul>
     ${!tout && reste > 0 ? `<button class="btn ghost wide" data-toggle-reports>Voir les ${reste} autres</button>` : ''}`
 }
 
@@ -210,16 +272,22 @@ function mesRapportsHTML(view) {
 function heroHTML(view) {
   const jour = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
   const brouillons = view.reports.filter((r) => r.status === 'draft').length
+  // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
+  // perdre - et il doit apparaitre la ou l'on passe, pas seulement dans les
+  // reglages, ou l'on ne va justement jamais.
+  const jours = S.backupAge()
+  const sauvegardeEnRetard = view.reports.length > 0 && (jours === null || jours > 30)
   const bilan = [
     brouillons ? `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` : '',
     view.enEchec ? `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger` : '',
     !view.enEchec && view.enAttente ? `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` : '',
+    sauvegardeEnRetard ? 'sauvegarde à faire' : '',
   ].filter(Boolean)
   return `
     <div class="hero-caption">
       <span class="hero-kicker">Détection canine professionnelle</span>
       <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
-      <p${view.enEchec ? ' class="hero-alerte"' : ''}>${esc(bilan.join(' · ') || 'Tout est à jour')}</p>
+      <p${view.enEchec || sauvegardeEnRetard ? ' class="hero-alerte"' : ''}>${esc(bilan.join(' · ') || 'Tout est à jour')}</p>
     </div>`
 }
 

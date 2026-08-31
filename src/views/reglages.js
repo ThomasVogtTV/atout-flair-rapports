@@ -6,12 +6,26 @@
 // se reglent une fois sur le telephone et ne se retouchent plus. Chacun a
 // desormais sa porte.
 
+import { backupAge } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
 import { currentCode } from '../mailer.js'
 
+// Au-dela d'un mois, la sauvegarde est signalee comme en retard : c'est le
+// delai au bout duquel perdre le telephone couterait une tournee entiere.
+const SAUVEGARDE_LIMITE = 30
+
+function ageSauvegarde() {
+  const j = backupAge()
+  if (j === null) return { texte: 'Jamais sauvegardé sur cet appareil.', tard: true }
+  if (j === 0) return { texte: "Dernière sauvegarde : aujourd'hui.", tard: false }
+  if (j === 1) return { texte: 'Dernière sauvegarde : hier.', tard: false }
+  return { texte: `Dernière sauvegarde il y a ${j} jours.`, tard: j > SAUVEGARDE_LIMITE }
+}
+
 export function reglagesView() {
+  const sauvegarde = ageSauvegarde()
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
@@ -41,6 +55,7 @@ export function reglagesView() {
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>
       <div class="card">
+        <p class="etat-sauvegarde${sauvegarde.tard ? ' tard' : ''}">${esc(sauvegarde.texte)}</p>
         <p class="muted small">Rapports, carnet et signature n'existent que dans cet appareil. Le fichier de
         sauvegarde les rassemble : envoyez-le-vous par mail, il vous rendra tout sur un téléphone neuf.</p>
         <div class="row-actions">

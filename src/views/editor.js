@@ -488,6 +488,15 @@ export function editorView(view) {
         <h1>${esc(t.label)}</h1>
         <p class="muted">N° ${esc(r.ref)} · ${esc(r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport')}</p>
       </div>
+      ${
+        // Pas de duplication pour un sous-rapport : sa copie serait orpheline,
+        // rattachee a aucun immeuble.
+        r.parentId
+          ? ''
+          : `<span class="top-actions">
+               <button class="btn ghost btn-mini" data-act="dupliquer">Dupliquer</button>
+             </span>`
+      }
     </header>
 
     <section class="pad">

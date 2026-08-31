@@ -138,6 +138,33 @@ export function contaminatedCount(report) {
  */
 export const filledRows = (report) => report.rows
 
+/**
+ * Un nouveau rapport calque sur un ancien.
+ *
+ * Une regie renvoie quatre fois par an dans le meme immeuble : le mandant, le
+ * lieu et le plan des pieces ne changent pas, seule l'inspection recommence.
+ *
+ * Ce qui se reprend : le mandant, le lieu, le technicien, le partenaire, et le
+ * nom des pieces ou le numero des appartements - le plan des lieux.
+ * Ce qui repart a zero : les statuts, les constatations, les photos, les
+ * signatures, les remarques et la date. Un rapport neuf ne peut pas naitre en
+ * affirmant ce qu'on a constate il y a six mois.
+ */
+export function duplicateReport(src) {
+  const copie = newReport(src.type)
+  copie.mandant = { ...src.mandant }
+  copie.lieu = { ...src.lieu, dateIntervention: todayISO(), heureIntervention: nowTime() }
+  copie.technicien = { ...(src.technicien ?? {}) }
+  copie.partenaire = { ...(src.partenaire ?? { nom: '', logo: null }) }
+  copie.rows = src.rows.map((r) => {
+    const vide = newRow(src.type)
+    return TYPES[src.type].layout === 'pieces'
+      ? { ...vide, nom: r.nom ?? '' }
+      : { ...vide, etage: r.etage ?? '', numero: r.numero ?? '', resident: r.resident ?? '' }
+  })
+  return copie
+}
+
 // --- persistance -----------------------------------------------------------
 
 export const saveReport = (report) => {
@@ -148,6 +175,45 @@ export const loadReport = (id) => db.get('reports', id)
 export const deleteReport = (id) => db.del('reports', id)
 export const listReports = async () =>
   (await db.all('reports')).sort((a, b) => b.updatedAt - a.updatedAt)
+
+/**
+ * Un rapport correspond-il a ce qui est tape dans la recherche ?
+ *
+ * On cherche un rapport par ce dont on se souvient : le nom du locataire ou de
+ * la regie, la rue, la localite, le numero du rapport. Les mots peuvent venir
+ * dans n'importe quel ordre - "fontaines favre" doit trouver "Mme Favre, rue
+ * des Fontaines" - donc chaque mot est cherche separement, et tous doivent
+ * etre presents.
+ *
+ * La comparaison se fait sans accents : on tape rarement "Yverdon-les-Bains"
+ * avec ses traits d'union, et jamais "Gerance" avec son accent quand on a les
+ * mains prises.
+ */
+const sansAccent = (s) =>
+  (s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+
+export function matchRapport(report, recherche) {
+  const mots = sansAccent(recherche).split(/\s+/).filter(Boolean)
+  if (!mots.length) return true
+  const foin = sansAccent(
+    [
+      report.ref,
+      report.lieu?.locataire,
+      fullName(report.mandant),
+      report.lieu?.adresseIntervention,
+      report.lieu?.adresse,
+      report.lieu?.npaLieu,
+      report.mandant?.npaLieu,
+      report.lieu?.etagePorte,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  )
+  return mots.every((m) => foin.includes(m))
+}
 
 // --- carnet d'adresses -----------------------------------------------------
 
@@ -307,6 +373,24 @@ export async function importBackup(data) {
   const seq = Math.max(Number(localStorage.getItem('af-ref-seq') ?? '0'), Number(data.refSeq ?? '0'))
   localStorage.setItem('af-ref-seq', String(seq))
   return { reports: (data.reports ?? []).length, contacts: (data.contacts ?? []).length }
+}
+
+/**
+ * Quand la derniere sauvegarde a-t-elle ete faite ?
+ *
+ * Tout vit dans un seul telephone, et l'export est un geste volontaire : perdu,
+ * casse ou vole, l'appareil emporte tout. Une sauvegarde qu'on doit penser a
+ * faire ne se fait pas - on retient donc la date, et l'app la rappelle.
+ */
+const BACKUP_KEY = 'af-backup-date'
+
+export const lastBackup = () => Number(localStorage.getItem(BACKUP_KEY)) || 0
+export const markBackup = () => localStorage.setItem(BACKUP_KEY, String(Date.now()))
+
+/** Nombre de jours depuis la derniere sauvegarde, ou null si jamais faite. */
+export function backupAge() {
+  const t = lastBackup()
+  return t ? Math.floor((Date.now() - t) / 86400000) : null
 }
 
 export function backupFilename() {
