@@ -740,29 +740,40 @@ async function drawLignes(sh, report, logo) {
  * piece : sans elle, une photo de matelas ne prouve rien - on ne sait pas ou
  * elle a ete prise.
  */
-// Deux photos par page. Une seule par page les imprimait sur toute la hauteur
-// utile de l'A4 : une photo de matelas prise au telephone sortait haute de 23
-// cm, la ou 10 cm montrent exactement la meme chose. Deux fois moins de pages,
-// et des photos a l'echelle du document.
-const PHOTOS_PAR_PAGE = 2
+// Quatre photos par page, en deux colonnes et deux rangees.
+//
+// Une photo de telephone est verticale : sa hauteur la limite bien avant sa
+// largeur. A deux par page en pleine largeur, elle n'occupait deja que 229 des
+// 491 pt disponibles - le reste etait du blanc. Passee en grille, elle garde
+// donc exactement la meme taille imprimee, et la page en porte deux fois plus.
+// Un rapport de douze photos tient sur trois pages au lieu de six.
+const PHOTOS_PAR_PAGE = 4
+const COLONNES = 2
+const GOUTTIERE = 18
 
 async function drawPhotos(sh, report) {
   if (!report.photos.length) return
   const t = TYPES[report.type]
+  const cellW = (CW - GOUTTIERE * (COLONNES - 1)) / COLONNES
+  const rangees = PHOTOS_PAR_PAGE / COLONNES
 
   let haut = 0
-  let dispo = 0
+  let cellH = 0
   for (let i = 0; i < report.photos.length; i++) {
     const place = i % PHOTOS_PAR_PAGE
     if (place === 0) {
       haut = enteteAnnexe(sh, report, t)
-      dispo = haut - (BOTTOM + 6)
+      // Les cases d'une page font toutes la meme taille, meme si la page n'est
+      // pas pleine : les dernieres photos d'un rapport ne doivent pas
+      // s'imprimer plus grandes que les premieres.
+      cellH = (haut - (BOTTOM + 6)) / rangees
     }
-    // Les photos d'une page se partagent la hauteur a parts egales, meme quand
-    // la page n'en porte qu'une : la derniere photo d'un rapport impair ne doit
-    // pas s'imprimer deux fois plus grande que les autres.
-    const caseH = dispo / PHOTOS_PAR_PAGE
-    await drawPhoto(sh, report, i, haut - place * caseH, caseH)
+    await drawPhoto(sh, report, i, {
+      x: M + (place % COLONNES) * (cellW + GOUTTIERE),
+      haut: haut - Math.floor(place / COLONNES) * cellH,
+      w: cellW,
+      h: cellH,
+    })
   }
 }
 
@@ -776,34 +787,37 @@ function enteteAnnexe(sh, report, t) {
   return y - 24
 }
 
-async function drawPhoto(sh, report, i, caseHaut, caseH) {
+async function drawPhoto(sh, report, i, cell) {
   const photo = report.photos[i]
   const img = await sh.doc.embedJpg(dataUrlToBytes(photo.dataUrl))
   const row = report.rows.find((r) => r.id === photo.rowId)
   const where = row ? row.nom || [row.numero && `N° ${row.numero}`, row.etage].filter(Boolean).join(' - ') : ''
   const caption = `Photo ${i + 1} / ${report.photos.length}${where ? ` — ${where}` : ''}`
 
-  // La legende garde sa largeur meme sous une photo verticale etroite : reduite
-  // a la largeur de l'image, elle finissait ecrite en 5 pt.
-  const infoLines = row?.info ? Math.min(2, sh.countLines(row.info, { size: 8, maxW: CW })) : 0
-  const legendH = 15 + infoLines * 10
-  const scale = Math.min(CW / img.width, (caseH - legendH - 12) / img.height)
-  const w = img.width * scale
-  const h = img.height * scale
-  const x = M + (CW - w) / 2
-  const legendW = Math.max(w, 240)
+  // La legende s'etend jusqu'au bord de sa case, meme sous une photo plus
+  // etroite : ramenee a la largeur de l'image, elle finissait ecrite en 5 pt.
+  // Le compte des lignes se fait sur cette meme largeur - mesure ailleurs, il
+  // reservait une hauteur qui ne correspondait a rien.
+  const legendMax = cell.w - 2
+  const infoLines = row?.info ? Math.min(2, sh.countLines(row.info, { size: 7.4, maxW: legendMax })) : 0
+  const legendH = 14 + infoLines * 9.5
+  const echelle = Math.min(cell.w / img.width, (cell.h - legendH - 12) / img.height)
+  const w = img.width * echelle
+  const h = img.height * echelle
+  const x = cell.x + (cell.w - w) / 2
 
   // Image et legende forment un seul bloc, centre dans sa case : la legende
   // reste collee a sa photo (convention des rapports d'expertise) et le blanc
   // se repartit au lieu de s'accumuler.
-  const blockTop = caseHaut - (caseH - (h + legendH)) / 2
+  const blockTop = cell.haut - (cell.h - (h + legendH)) / 2
+  const legendW = cell.x + cell.w - x
 
   sh.page.drawImage(img, { x, y: blockTop - h, width: w, height: h })
   sh.rect(x - 1.5, blockTop - h - 1.5, w + 3, h + 3, 0.7, { color: LINE_FRAME })
 
-  const ly = blockTop - h - 15
-  sh.text(caption, x, ly, { size: 9, bold: true, maxW: legendW })
-  if (row?.info) sh.wrap(row.info, x, ly - 11, { size: 8, maxW: legendW, lh: 10, color: INK_SOFT, maxLines: 2 })
+  const ly = blockTop - h - 14
+  sh.text(caption, x, ly, { size: 8.4, bold: true, maxW: legendW })
+  if (row?.info) sh.wrap(row.info, x, ly - 10, { size: 7.4, maxW: legendW, lh: 9.5, color: INK_SOFT, maxLines: 2 })
 }
 
 // --- pied de page et pagination --------------------------------------------
