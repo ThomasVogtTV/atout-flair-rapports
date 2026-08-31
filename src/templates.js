@@ -49,21 +49,29 @@ export const TYPES = {
     hint: 'Appartement / maison',
     badge: 'Rapport de détection',
     layout: 'pieces',
-    // Bloc "Lieu d'intervention et informations" : deux colonnes de champs
+    // Bloc "Lieu d'intervention et informations".
+    // L'ecran de saisie deroule ces champs dans l'ordre ou ils sont ecrits ici,
+    // colonne apres colonne. La date et l'heure se suivent donc : separees par
+    // trois champs, on remplissait l'une, on descendait, et on revenait pour
+    // l'autre. Le PDF du rapport de detection, lui, a sa propre mise en page
+    // (voir drawDetection) et ne lit pas cette liste.
     lieuFields: [
       [
         // Dans les trois rapports de reference, ce champ est toujours identique
         // au nom du mandant : pas de saisie separee, valeur reprise automatiquement.
         { key: 'regie', label: 'Régie', derived: 'mandant.nom' },
-        { key: 'adresseIntervention', label: 'Adresse intervention' },
-        { key: 'locataire', label: 'Locataire' },
-        { key: 'dateIntervention', label: 'Date Intervention', type: 'date' },
+        { key: 'adresseIntervention', label: "Adresse d'intervention", large: true },
+        { key: 'locataire', label: 'Locataire', large: true },
+        // "Date" et "Heure" suffisent sous un titre qui dit deja
+        // "Lieu d'intervention" : ecrits en entier, le second libelle passait a
+        // la ligne et les deux champs ne s'alignaient plus.
+        { key: 'dateIntervention', label: 'Date', type: 'date' },
       ],
       [
-        { key: 'bon', label: 'Bon de Commande' },
-        { key: 'etagePorte', label: 'Etage/N° porte' },
-        { key: 'presenceLocataire', label: 'Présence locataire', type: 'ouinon' },
-        { key: 'heureIntervention', label: 'Heure Intervention', type: 'time' },
+        { key: 'heureIntervention', label: 'Heure', type: 'time' },
+        { key: 'etagePorte', label: 'Étage / n° de porte', large: true },
+        { key: 'bon', label: 'Bon de commande', large: true },
+        { key: 'presenceLocataire', label: 'Présence du locataire', type: 'ouinon', large: true },
       ],
     ],
     rowLabel: 'pièce',
@@ -86,9 +94,9 @@ export const TYPES = {
     lieuFields: [
       [
         { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
-        { key: 'adresse', label: 'Adresse' },
-        { key: 'npaLieu', label: 'NPA/Lieu' },
-        { key: 'bon', label: 'Bon' },
+        { key: 'adresse', label: 'Adresse', large: true },
+        { key: 'npaLieu', label: 'NPA / Lieu', large: true },
+        { key: 'bon', label: 'Bon de commande', large: true },
       ],
     ],
     rowLabel: 'appartement',
@@ -115,9 +123,9 @@ export const TYPES = {
     lieuFields: [
       [
         { key: 'gerance', label: 'Gérance', derived: 'mandant.nom' },
-        { key: 'adresse', label: 'Adresse' },
-        { key: 'npaLieu', label: 'NPA/Lieu' },
-        { key: 'bon', label: 'Bon' },
+        { key: 'adresse', label: 'Adresse', large: true },
+        { key: 'npaLieu', label: 'NPA / Lieu', large: true },
+        { key: 'bon', label: 'Bon de commande', large: true },
       ],
     ],
     rowLabel: 'chambre',

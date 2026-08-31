@@ -187,6 +187,8 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* La reserve qui degage la barre Apercu / Envoyer est posee sur #app, une fois
+   pour tous les ecrans. */
 .pad { padding: 4px 16px 28px; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
@@ -408,7 +410,8 @@ body[data-screen="home"] .content-sheet {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   font-size: 12.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -416,7 +419,12 @@ body[data-screen="home"] .content-sheet {
   color: var(--ink-soft);
   margin: 26px 4px 10px;
 }
-.section-title-main { display: inline-flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
+/* min-width: min-content -> l'intitule ne se laisse pas rogner. Avec min-width
+   a 0 il retrecissait sous sa propre longueur et les pastilles du bout de ligne
+   venaient peindre par-dessus : "APPARTEMENTS" s'affichait "APPART". Quand tout
+   ne tient pas, c'est la ligne entiere qui passe a deux lignes (flex-wrap plus
+   haut) - un intitule tronque ne se rattrape pas, une ligne de plus, si. */
+.section-title-main { display: inline-flex; align-items: center; gap: 9px; flex: 1 1 auto; min-width: min-content; }
 .section-title-main::after {
   content: '';
   flex: 1;
@@ -478,9 +486,9 @@ body[data-screen="home"] .content-sheet {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 13px;
+  padding: 16px;
 }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
 .grid2 .full { grid-column: 1 / -1; }
 
 /* Type de mandant : une ligne de pastilles, comme les noms de pieces et les
@@ -509,29 +517,41 @@ body[data-screen="home"] .content-sheet {
 .chip:active { transform: scale(0.96); }
 .chip.on { background: var(--fill); color: var(--fill-text); border-color: var(--fill); box-shadow: var(--shadow-sm); }
 
+/* Le libelle annonce, la valeur compte. Les deux s'ecrivaient a la meme taille
+   (le champ heritait le 11 px de son label), si bien que rien ne distinguait
+   "Adresse" de ce qui avait ete tape dedans : l'oeil devait lire pour trier.
+   Le libelle recule donc d'un cran, et la valeur passe devant. */
 label {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 11.5px;
   font-weight: 650;
   letter-spacing: 0.02em;
-  color: var(--ink-soft);
+  color: var(--muted);
+  text-transform: uppercase;
 }
 
 input, textarea, select {
-  font: inherit;
+  font-family: inherit;
+  font-weight: 500;
+  /* 16 px : la taille a laquelle une valeur se relit d'un coup d'oeil sur le
+     terrain - et le seuil sous lequel iOS zoome de force a la mise au point du
+     champ, ce qui decalait tout le formulaire a chaque tap. */
+  font-size: 16px;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--ink);
   background: var(--card);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
-  padding: 9px 11px;
+  padding: 11px 13px;
   min-height: var(--tap);
   width: 100%;
   box-shadow: inset 0 1px 2px rgba(28, 28, 30, 0.035);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
+textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
@@ -544,8 +564,10 @@ input:disabled { opacity: 0.55; }
 .same-addr {
   flex-direction: row;
   align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: 9px;
+  margin-top: -4px;
+  text-transform: none;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0;
   color: var(--ink-soft);
@@ -945,16 +967,16 @@ input:disabled { opacity: 0.55; }
 /* --- lignes du rapport --- */
 /* position: relative -> repere de la carte en cours de glissement, qui passe en
    absolu sans quitter la liste (voir ui/dragsort.js). */
-.rows { display: grid; gap: 8px; position: relative; }
+.rows { display: grid; gap: 12px; position: relative; }
 .row-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 10px;
+  padding: 14px;
   display: grid;
-  gap: 7px;
+  gap: 11px;
   transition: border-color 0.15s;
 }
 /* Le statut Contaminee/Non/? remonte au niveau de la carte entiere (liseret
@@ -1045,17 +1067,34 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 }
 
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 2px; }
-.piece-name { font-weight: 700; font-size: 14.5px; padding: 5px 4px; }
-.field-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted-soft); }
-.field-info { gap: 3px; }
+.piece-name { font-weight: 700; font-size: 16.5px; padding: 7px 6px; }
+.field-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-soft); }
+.field-info { gap: 6px; }
 
-.quick-rooms, .report-filters { display: flex; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 1px; }
+/* Bandes de pastilles (noms de pieces, constats, filtres). Elles defilent
+   lateralement plutot que de passer a la ligne : six constats sur six cartes de
+   piece rallongeraient le formulaire de plusieurs ecrans.
+   Restait a ce que ca se lise comme tel - la derniere pastille etait tranchee
+   net en plein mot, avec un bout de barre de defilement dessous, et l'ensemble
+   avait l'air casse plutot que deroulable. Le fond s'efface donc sur le bord
+   droit : ce qui s'estompe se prolonge, ce qui est coupe est perdu. */
+.quick-rooms, .report-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1px 22px 2px 1px;
+  margin-right: -22px;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+}
+.quick-rooms::-webkit-scrollbar, .report-filters::-webkit-scrollbar { display: none; }
 .chip-sm { flex: 0 0 auto; min-height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; }
 
 .row-name { font-weight: 650; }
 .row-head input { flex: 1 1 0; min-width: 0; }
 .row-head input[type="date"] { flex: 1.5 1 0; }
-.small-input { padding: 8px 7px; font-size: 13px; }
+.small-input { padding: 9px 8px; font-size: 15px; }
 .row-actions { display: flex; gap: 7px; }
 .row-actions .btn { flex: 1; }
 

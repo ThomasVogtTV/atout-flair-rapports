@@ -316,6 +316,12 @@ export function backupFilename() {
 
 const slug = (s) =>
   (s || '')
+    // Les ligatures ne se decomposent pas en NFD : elles traversaient donc le
+    // retrait des accents intactes, pour se faire supprimer juste apres par le
+    // filtre des lettres autorisees. "Mme Cœur-Favre" arrivait chez la regie en
+    // "Mme Cur-Favre", dans le nom du fichier comme dans l'objet du mail.
+    // Meme chose pour les lettres barrees, que la decomposition ignore aussi.
+    .replace(/[œŒæÆøØłŁđĐ]/g, (c) => ({ œ: 'oe', Œ: 'OE', æ: 'ae', Æ: 'AE', ø: 'o', Ø: 'O', ł: 'l', Ł: 'L', đ: 'd', Đ: 'D' })[c])
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .replace(/[^A-Za-z0-9 .'-]/g, '')

@@ -109,10 +109,18 @@ function lineCardHTML(r, t, row, index, children) {
   <div class="row-card" data-row="${row.id}" data-status="${status}">
     <div class="row-head">
       <span class="piece-badge" data-grip title="Glisser pour changer la place">${index + 1}</span>
-      <input class="row-name small-input" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'N° chambre' : 'N° appart.'}" />
-      <input class="row-name small-input" data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="Étage" />
-      <input type="date" class="small-input" data-row-field="date" value="${esc(row.date)}" />
+      <label class="piece-name-wrap">
+        <span class="field-label">${isHotel ? 'N° de chambre' : "N° d'appartement"}</span>
+        <input class="row-name piece-name" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'ex. 101' : 'ex. 12'}" />
+      </label>
       <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+    </div>
+    <!-- L'etage et la date tenaient sur la ligne du numero, avec la poignee et
+         la croix : trois champs pour 200 px, ou "Étage" s'affichait "Éta" et la
+         date "31/08/". Ils descendent d'un cran, apparies. -->
+    <div class="grid2">
+      <label>Étage<input data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="1er" /></label>
+      <label>Date<input type="date" data-row-field="date" value="${esc(row.date)}" /></label>
     </div>
     <label class="field-info"><span class="field-label">${isHotel ? 'Occupation' : 'Résident'}</span>
       <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'ex. occupée, libre, en travaux…' : 'Nom du résident'}" />
@@ -306,10 +314,14 @@ function mandantSection(view, r, contacts) {
       </label>
       ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
       ${contactSuggestions(view, r)}
-      <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
-      <label>NPA/Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
-      <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
-      <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
+      <!-- Adresse, localite et email prennent la ligne entiere : sur un ecran de
+           telephone, une demi-colonne fait 153 px, et "1400 Yverdon-les-Bains"
+           comme "contact@regiedulac.ch" n'y tiennent pas - on ne voyait jamais
+           la valeur en entier. Le nom et le prenom, eux, restent apparies. -->
+      <label class="full">Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
+      <label class="full">NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
+      <label class="full">Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
+      <label class="full">Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
     </div>`
 }
 
@@ -322,7 +334,11 @@ function lieuSection(r, t) {
       const isLocataire = f.key === 'locataire'
       const disabled =
         (LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant) || (isLocataire && r.lieu.sameNameAsMandant)
-      const field = `<label class="${isAddrField || isLocataire ? 'full' : ''}">
+      // Regle unique dans tout le formulaire : la ligne entiere, sauf pour les
+      // valeurs courtes qui vont naturellement par deux (date et heure, nom et
+      // prenom). Une demi-colonne fait 153 px sur un telephone - "2e etage,
+      // porte gauche" y etait coupe en plein milieu.
+      const field = `<label class="${f.large ? 'full' : ''}">
         ${esc(f.label)}${fieldInput(f, r.lieu[f.key], disabled)}
       </label>`
       if (isAddrField) {

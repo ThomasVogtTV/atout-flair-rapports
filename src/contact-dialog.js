@@ -42,10 +42,13 @@ export function openContactDialog(contact, onChanged) {
     return `
       <label class="${societe ? 'full' : ''}">Nom<input id="ct-nom" value="${esc(v.nom)}" /></label>
       ${societe ? '' : `<label>Prénom<input id="ct-prenom" value="${esc(v.prenom)}" /></label>`}
-      <label>Adresse<input id="ct-adresse" value="${esc(v.adresse)}" /></label>
-      <label>NPA/Lieu<input id="ct-npa" value="${esc(v.npaLieu)}" /></label>
-      <label>Email<input id="ct-email" value="${esc(v.email)}" inputmode="email" /></label>
-      <label>Téléphone<input id="ct-tel" value="${esc(v.tel)}" inputmode="tel" /></label>`
+      <!-- Meme regle que le bloc Mandant du rapport : la ligne entiere, sauf
+           pour le nom et le prenom qui vont par deux. Une demi-colonne ne
+           montre pas "1400 Yverdon-les-Bains" en entier. -->
+      <label class="full">Adresse<input id="ct-adresse" value="${esc(v.adresse)}" /></label>
+      <label class="full">NPA / Lieu<input id="ct-npa" value="${esc(v.npaLieu)}" /></label>
+      <label class="full">Email<input id="ct-email" value="${esc(v.email)}" inputmode="email" /></label>
+      <label class="full">Téléphone<input id="ct-tel" value="${esc(v.tel)}" inputmode="tel" /></label>`
   }
 
   const overlay = openOverlay(`
