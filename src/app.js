@@ -14,6 +14,7 @@ import { confirmLeave } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
+import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
@@ -79,6 +80,11 @@ async function majCompteurs() {
 async function openContacts() {
   view = { ...view, screen: 'contacts', report: null }
   view.contacts = await S.listContacts()
+  render()
+}
+
+function openReglages() {
+  view = { ...view, screen: 'reglages', report: null }
   render()
 }
 
@@ -153,9 +159,11 @@ function render() {
       ? homeView(view)
       : view.screen === 'contacts'
         ? contactsView(view)
-        : view.screen === 'envois'
-          ? envoisView(view)
-          : editorView(view)
+        : view.screen === 'reglages'
+          ? reglagesView()
+          : view.screen === 'envois'
+            ? envoisView(view)
+            : editorView(view)
   if (navigated) {
     document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
@@ -671,6 +679,7 @@ root.addEventListener('click', async (ev) => {
     return render()
   }
   if (act === 'open-contacts') return openContacts()
+  if (act === 'open-reglages') return openReglages()
   if (act === 'open-envois') return openEnvois()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
   if (act === 'home') {

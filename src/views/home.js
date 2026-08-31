@@ -149,7 +149,8 @@ export function homeView(view) {
       <span class="top-actions">
         <button class="icon-btn envois-toggle${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
                 data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${ICONS.mail}</button>
-        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet et réglages">${ICONS.contacts}</button>
+        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet">${ICONS.contacts}</button>
+        <button class="icon-btn contacts-toggle" data-act="open-reglages" title="Réglages">${ICONS.reglages}</button>
       </span>
     </header>
     <div class="hero-caption">
