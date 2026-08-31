@@ -377,8 +377,8 @@ body[data-screen="home"] .content-sheet {
   opacity: 0.92;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
-/* Un envoi refuse est la seule chose du bandeau qui reclame un geste. */
-.hero-caption p.hero-alerte { color: #ffb4ae; opacity: 1; font-weight: 650; }
+/* Seul le morceau qui reclame un geste se colore - pas la ligne entiere. */
+.hero-caption .hero-alerte { color: #f3b7a8; font-weight: 700; }
 
 /* Les brouillons en tete : une liste, plus une ligne unique. */
 .lead-list { display: grid; gap: 8px; }
@@ -838,11 +838,6 @@ input:disabled { opacity: 0.55; }
   }
 }
 .type-chip:active .type-chip-icon,
-.lead-row:active .type-chip-icon {
-  transform: translateY(0.5px) scale(0.97);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.26), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
 /* Les trois types, cote a cote dans le volet "Nouveau rapport". Colonne
    entiere cliquable : la cible reste large malgre la taille reduite. */
 .type-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
@@ -928,40 +923,39 @@ input:disabled { opacity: 0.55; }
 .pill.queued { background: color-mix(in srgb, var(--amber) var(--voile), transparent); color: var(--amber); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) var(--liseret), transparent); }
 
 /* --- "En cours" : la ligne de reprise ------------------------------------
-   Meme silhouette qu'une ligne de la liste, avec une pastille en tete et le
-   liseret de la maison a gauche : on la reconnait comme un rapport, et on voit
-   du premier coup d'oeil lequel. Elle n'apparait que s'il y a un brouillon. */
+   Elle portait quatre marques de la couleur de la maison a la fois : pastille
+   pleine, liseret de 3 px, bordure teintee et fond degrade. Trois de ces lignes
+   pesaient autant que les trois cartes de choix juste au-dessus - or on ne
+   choisit pas trois fois.
+   Il n'en reste qu'une, le liseret de gauche, et il suffit : la rubrique dit
+   deja "En cours". Pour le reste, la ligne est exactement celle de "Mes
+   rapports" - meme carte, meme pastille de type. */
 .lead-row {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 11px 13px;
-  background: linear-gradient(180deg, var(--card), color-mix(in srgb, var(--accent) 7%, var(--card)));
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line-strong));
-  border-left: 3px solid var(--accent);
+  padding: 9px 12px 9px 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 .lead-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .lead-name, .lead-where { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lead-name { font-weight: 700; font-size: 14.5px; }
+.lead-name { font-weight: 650; font-size: 14.5px; }
 .lead-where { font-size: 12px; color: var(--muted); }
-.lead-go { display: flex; flex-shrink: 0; color: var(--accent); }
+.lead-go { display: flex; flex-shrink: 0; color: var(--muted-soft); }
 .lead-go svg { width: 17px; height: 17px; }
-.type-chip-icon.icon-resume { --ton: var(--accent-fill); }
 @media (hover: hover) {
-  .lead-row:hover {
-    transform: translateY(-1.5px);
-    box-shadow: 0 12px 20px -14px color-mix(in srgb, var(--accent) 70%, transparent), var(--shadow-sm);
-  }
+  .lead-row:hover { transform: translateY(-1.5px); }
 }
-.lead-row:active { transform: scale(0.985); box-shadow: inset 0 1px 4px rgba(28, 28, 30, 0.1); }
+.lead-row:active { transform: scale(0.985); }
 
 /* La premiere rubrique de l'accueil colle au haut de la feuille : c'est le
    bord arrondi qui fait la respiration, pas une marge en plus. */

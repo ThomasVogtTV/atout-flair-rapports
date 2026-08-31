@@ -113,12 +113,18 @@ function enCoursHTML(reports) {
   const tous = reports.filter((r) => r.status === 'draft')
   const brouillons = tous.slice(0, EN_COURS)
   if (!brouillons.length) return ''
+  // Meme silhouette et meme pastille que les lignes de "Mes rapports" : ce sont
+  // les memes objets, ils ne se peignent pas de deux facons a dix centimetres
+  // d'ecart. La pastille porte le type - maison, immeuble, lit - plutot qu'un
+  // stylo repete trois fois : la rubrique dit deja qu'ils sont en cours, et le
+  // type, lui, ne se lisait nulle part.
   const ligne = (r) => {
+    const t = typeOf(r)
     const qui = r.lieu?.locataire || fullName(r.mandant) || `Rapport ${r.ref}`
     const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
     return `
     <button type="button" class="lead-row" data-open="${r.id}">
-      <span class="type-chip-icon icon-resume">${ICONS.pen}</span>
+      <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="lead-body">
         <span class="lead-name">${esc(qui)}</span>
         <span class="lead-where">${esc([ou, quand(r.updatedAt)].filter(Boolean).join(' · '))}</span>
@@ -277,17 +283,24 @@ function heroHTML(view) {
   // reglages, ou l'on ne va justement jamais.
   const jours = S.backupAge()
   const sauvegardeEnRetard = view.reports.length > 0 && (jours === null || jours > 30)
+  // Seul ce qui reclame un geste porte la couleur d'alerte. La ligne entiere y
+  // passait des qu'un seul de ses morceaux alertait : "10 rapports en cours"
+  // devenait rouge parce que la sauvegarde datait.
   const bilan = [
-    brouillons ? `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` : '',
-    view.enEchec ? `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger` : '',
-    !view.enEchec && view.enAttente ? `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` : '',
-    sauvegardeEnRetard ? 'sauvegarde à faire' : '',
+    brouillons && { t: `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` },
+    view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true },
+    !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` },
+    sauvegardeEnRetard && { t: 'sauvegarde à faire', alerte: true },
   ].filter(Boolean)
   return `
     <div class="hero-caption">
       <span class="hero-kicker">Détection canine professionnelle</span>
       <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
-      <p${view.enEchec || sauvegardeEnRetard ? ' class="hero-alerte"' : ''}>${esc(bilan.join(' · ') || 'Tout est à jour')}</p>
+      <p>${
+        bilan.length
+          ? bilan.map((m) => (m.alerte ? `<b class="hero-alerte">${esc(m.t)}</b>` : esc(m.t))).join(' · ')
+          : 'Tout est à jour'
+      }</p>
     </div>`
 }
 
