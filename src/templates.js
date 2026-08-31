@@ -48,7 +48,6 @@ export const TYPES = {
     label: 'Rapport de détection',
     hint: 'Appartement / maison',
     badge: 'Rapport de détection',
-    sectionTitle: 'Détection Canine - Rapport',
     layout: 'pieces',
     // Bloc "Lieu d'intervention et informations" : deux colonnes de champs
     lieuFields: [
@@ -76,10 +75,7 @@ export const TYPES = {
       { key: 'contamine', label: 'Contaminée', width: 0.24, type: 'contamine' },
       { key: 'info', label: 'Informations', width: 0.5, align: 'left' },
     ],
-    hasCounters: true,
     hasSignature: true,
-    hasRemarques: true,
-    minRows: 8,
   },
 
   immeuble: {
@@ -101,24 +97,21 @@ export const TYPES = {
     defaultRows: [],
     columns: [
       { key: 'date', label: 'Date', width: 0.11, type: 'date', align: 'center' },
-      { key: 'etage', label: 'Etage', width: 0.08, align: 'center', suggestions: ['Rez inf', 'Rez sup', 'Rez', '1er', '2ème', '3ème', '4ème', '5ème', 'Comble'] },
+      { key: 'etage', label: 'Étage', width: 0.08, align: 'center', suggestions: ['Rez inf', 'Rez sup', 'Rez', '1er', '2ème', '3ème', '4ème', '5ème', 'Comble'] },
       { key: 'numero', label: 'N° appart.', width: 0.08, align: 'center' },
       { key: 'resident', label: 'Résident', width: 0.24, align: 'center' },
-      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine', ouiNon: true },
+      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine' },
       { key: 'infos', label: 'Infos', width: 0.28, align: 'center' },
       { key: 'sousRapport', label: 'Rapport de détection', width: 0.1, type: 'sousRapport' },
     ],
-    hasCounters: false,
     hasSignature: true,
-    hasRemarques: true,
-    minRows: 12,
   },
 
   hotel: {
     id: 'hotel',
     label: "Rapport d'hôtel",
     hint: 'Chambres, photos uniquement',
-    badge: "Rapport d'hotel",
+    badge: "Rapport d'hôtel",
     layout: 'lignes',
     lieuFields: [
       [
@@ -133,17 +126,14 @@ export const TYPES = {
     defaultRows: [],
     columns: [
       { key: 'date', label: 'Date', width: 0.11, type: 'date', align: 'center' },
-      { key: 'etage', label: 'Etage', width: 0.08, align: 'center', suggestions: ['Rez', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'] },
+      { key: 'etage', label: 'Étage', width: 0.08, align: 'center', suggestions: ['Rez', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'] },
       { key: 'numero', label: 'N° chambre', width: 0.09, align: 'center' },
       { key: 'resident', label: 'Informations', width: 0.24, align: 'center' },
-      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine', ouiNon: true },
+      { key: 'contamine', label: 'Contaminé', width: 0.11, type: 'contamine' },
       { key: 'infos', label: 'Comp. Informations', width: 0.27, align: 'center' },
       { key: 'photo', label: 'Photo', width: 0.1, type: 'photoFlag' },
     ],
-    hasCounters: false,
     hasSignature: true,
-    hasRemarques: true,
-    minRows: 12,
   },
 }
 
@@ -152,6 +142,11 @@ export const TYPE_LIST = [TYPES.detection, TYPES.immeuble, TYPES.hotel]
 export function typeOf(report) {
   return TYPES[report.type] ?? TYPES.detection
 }
+
+// Le "e" des accords : une piece et une chambre sont contaminees, un
+// appartement est contamine. La derniere lettre du libelle suffit a trancher,
+// et evite d'ecrire le genre a la main dans l'app comme dans le PDF.
+export const accordE = (t) => (t.rowLabel.endsWith('e') ? 'e' : '')
 
 // Libelle utilise pour nommer une photo quand elle est prise depuis une ligne.
 export function rowLabelFor(report, row) {

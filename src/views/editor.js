@@ -1,7 +1,7 @@
 // Ecran d'un rapport ouvert : mandant, lieu d'intervention, lignes
 // (pieces / appartements / chambres), photos libres, remarques, signature.
 
-import { typeOf, CONSTATS, RECOMMANDATIONS } from '../templates.js'
+import { typeOf, accordE, CONSTATS, RECOMMANDATIONS } from '../templates.js'
 import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
@@ -147,21 +147,24 @@ export function rowCardHTML(view, row, index) {
     : lineCardHTML(view.report, t, row, index, view.children)
 }
 
-function countersHTML(r, unit) {
+// Les deux compteurs de la rubrique. Le libelle et son accord sortent du type
+// de rapport : un immeuble compte des appartements contamines, pas des
+// "lignes contaminees". Exporte car l'app les redessine a chaque changement,
+// sans re-rendre l'ecran - c'est la seule facon que le pluriel suive.
+export function counterPills(r, t) {
   const total = S.filledRows(r).length
   const cont = S.contaminatedCount(r)
+  const e = accordE(t)
   return `
-    <span class="counter-pills">
-      <span class="count-pill"><b id="cnt-total">${total}</b> ${unit}${total > 1 ? 's' : ''}</span>
-      <span class="count-pill${cont ? ' cont' : ''}"><b id="cnt-cont">${cont}</b> contaminée${cont > 1 ? 's' : ''}</span>
-    </span>`
+      <span class="count-pill"><b id="cnt-total">${total}</b> ${esc(total > 1 ? t.rowLabelPlural : t.rowLabel)}</span>
+      <span class="count-pill${cont ? ' cont' : ''}"><b id="cnt-cont">${cont}</b> contaminé${e}${cont > 1 ? 's' : ''}</span>`
 }
 
 function piecesSection(view, r, t) {
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}Pièces</span>
       <span class="section-title-trailer">
-        ${countersHTML(r, 'pièce')}
+        <span class="counter-pills">${counterPills(r, t)}</span>
         <button class="link" data-act="add-row">+ Ajouter</button>
       </span>
     </h2>
@@ -174,7 +177,7 @@ function lignesSection(view, r, t) {
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
       <span class="section-title-trailer">
-        ${countersHTML(r, 'ligne')}
+        <span class="counter-pills">${counterPills(r, t)}</span>
         <button class="link" data-act="add-row">+ Ajouter</button>
       </span>
     </h2>

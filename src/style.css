@@ -47,10 +47,8 @@
   --amber-soft: #fbf0dd;
   --violet: #7b3fc4;      /* lieu d'intervention, type "Immeuble" */
   --violet-soft: #f0e9fb;
-  --violet-fill: #7b3fc4;
   --magenta: #ad3392;     /* photos, type "Hotel" */
   --magenta-soft: #fae8f5;
-  --magenta-fill: #ad3392;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -90,10 +88,8 @@
     --amber-soft: #3a2c15;
     --violet: #b48ef0;
     --violet-soft: #251a42;
-    --violet-fill: #6a37ad;
     --magenta: #e58acd;
     --magenta-soft: #3a1533;
-    --magenta-fill: #9c2f83;
   }
 }
 :root[data-theme="dark"] {
@@ -124,10 +120,8 @@
   --amber-soft: #3a2c15;
   --violet: #b48ef0;
   --violet-soft: #251a42;
-  --violet-fill: #6a37ad;
   --magenta: #e58acd;
   --magenta-soft: #3a1533;
-  --magenta-fill: #9c2f83;
 }
 /* Repasse les controles natifs (date/heure, defilement...) en rendu clair
    si le systeme est sombre mais que l'utilisateur a choisi le clair. */
@@ -667,7 +661,7 @@ input:disabled { opacity: 0.55; }
                         ombre grise sous un objet colore fait de la salissure.
 
    Chaque type ne redefinit que ses quatre variables. */
-.type-icon, .type-chip-icon {
+.type-chip-icon {
   --c-haut: #4f8bee;
   --c-bas: #1c3a86;
   --c-ombre: rgba(28, 58, 134, 0.55);
@@ -690,35 +684,25 @@ input:disabled { opacity: 0.55; }
 }
 /* Le trait de l'icone est grave dans la pastille : une ombre d'un pixel sous
    lui suffit a le decoller du fond colore. */
-.type-icon svg, .type-chip-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42)); }
+.type-chip-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42)); }
 
-.type-icon { width: 48px; height: 48px; border-radius: 15px; }
-.type-icon svg { width: 23px; height: 23px; }
 .type-chip-icon { width: 34px; height: 34px; border-radius: 11px; }
 .type-chip-icon svg { width: 19px; height: 19px; }
 
-.type-icon.icon-immeuble, .type-chip-icon.icon-immeuble {
+.type-chip-icon.icon-immeuble {
   --c-haut: #a877ea;
   --c-bas: #4f2394;
   --c-ombre: rgba(79, 35, 148, 0.55);
 }
 /* Hotel : rubis profond et liseret champagne. Le trait de l'icone passe a l'or
    pale plutot qu'au blanc - c'est ce contraste chaud qui fait le luxe. */
-.type-icon.icon-hotel, .type-chip-icon.icon-hotel {
+.type-chip-icon.icon-hotel {
   --c-haut: #b8465f;
   --c-bas: #5d1028;
   --c-ombre: rgba(93, 16, 40, 0.6);
   --c-liseret: rgba(240, 214, 164, 0.45);
   color: #f4dcac;
 }
-/* "Mes rapports" : le rangement ne merite pas une couleur, seulement de la
-   matiere. Gris chaud, meme relief que les autres. */
-.type-icon.icon-all {
-  --c-haut: #bab5ac;
-  --c-bas: #78726a;
-  --c-ombre: rgba(90, 85, 78, 0.45);
-}
-
 /* Elevation au survol, enfoncement a l'appui. Le survol est reserve aux
    pointeurs : sur un ecran tactile, il resterait colle apres le tap. */
 @media (hover: hover) {
@@ -1145,8 +1129,16 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   box-shadow: var(--shadow-sm);
 }
 
-.sig-card { display: grid; gap: 10px; justify-items: center; padding: 18px 14px; }
-.sig-preview { max-height: 84px; max-width: 100%; }
+/* La signature est un trace noir sur fond transparent - c'est ce qui part dans
+   le PDF. Posee telle quelle dans une carte sombre, elle devenait invisible :
+   on lui rend son papier, et on la montre donc comme elle sera imprimee. */
+.sig-preview {
+  max-height: 84px;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 12px;
+}
 
 /* --- barre du bas --- */
 .bottom-bar {
@@ -1282,8 +1274,5 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 
 @media (min-width: 720px) {
   #app { max-width: 780px; margin: 0 auto; }
-  .type-grid { grid-template-columns: repeat(3, 1fr); }
-  .type-card { flex-direction: column; align-items: flex-start; text-align: left; }
-  .type-chevron { display: none; }
   .bottom-bar { max-width: 780px; margin: 0 auto; border-radius: 18px 18px 0 0; }
 }

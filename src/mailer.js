@@ -32,9 +32,7 @@ function storedCode() {
   return localStorage.getItem(CODE_KEY) ?? ''
 }
 
-
-export const hasCode = () => !!storedCode()
-export const forgetCode = () => localStorage.removeItem(CODE_KEY)
+const forgetCode = () => localStorage.removeItem(CODE_KEY)
 export const currentCode = () => storedCode()
 export const setCode = (v) => {
   const c = (v ?? '').trim()
@@ -42,11 +40,11 @@ export const setCode = (v) => {
   else localStorage.removeItem(CODE_KEY)
 }
 
-export class BadCodeError extends Error {}
+class BadCodeError extends Error {}
 /** La boite mail n'est pas encore configuree cote serveur : inutile de reessayer. */
-export class NotConfiguredError extends Error {}
+class NotConfiguredError extends Error {}
 /** Le serveur de mail a refuse. Le message porte l'explication d'Infomaniak. */
-export class ServerRefusedError extends Error {}
+class ServerRefusedError extends Error {}
 
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -76,7 +74,12 @@ function expliquer(brut) {
   return m || 'Refus du serveur de mail, sans explication.'
 }
 
-async function post(job, { code = storedCode(), retried = false } = {}) {
+// `demander` : autorise l'ouverture du dialogue du code. Vrai quand c'est
+// l'utilisateur qui vient d'appuyer sur Envoyer ou Reessayer, faux pour la
+// vidange automatique de la file - sinon le simple fait d'ouvrir l'app, ou de
+// retrouver du reseau en pleine saisie, faisait surgir une question de nulle
+// part par-dessus l'ecran en cours.
+async function post(job, { code = storedCode(), retried = false, demander = true } = {}) {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-app-code': code },
@@ -87,7 +90,7 @@ async function post(job, { code = storedCode(), retried = false } = {}) {
     forgetCode()
     // Premier refus : on demande le code dans un vrai dialogue, qui explique de
     // quoi il s'agit, puis on retente une seule fois.
-    if (!retried) {
+    if (demander && !retried) {
       // Le voile "Envoi en cours..." s'efface : on ne pose pas une question
       // par-dessus un ecran qui dit que le travail est en cours.
       hideLoading()
@@ -97,7 +100,11 @@ async function post(job, { code = storedCode(), retried = false } = {}) {
         return post(job, { code: asked, retried: true })
       }
     }
-    throw new BadCodeError("Code d'accès refusé. Vérifiez les majuscules, ou demandez-le à Thomas.")
+    throw new BadCodeError(
+      demander
+        ? "Code d'accès refusé. Vérifiez les majuscules, ou demandez-le à Thomas."
+        : "Code d'envoi refusé. Corrigez-le dans « Carnet et réglages », puis réessayez ici."
+    )
   }
   if (!res.ok) {
     const texte = await res.text().catch(() => '')
@@ -220,7 +227,10 @@ export async function flushQueue() {
   let echecs = 0
   for (const job of jobs) {
     try {
-      await post(job)
+      // Sans dialogue : la vidange se declenche toute seule (demarrage, retour
+      // du reseau). Un code manquant fait passer l'envoi en "a corriger", et
+      // l'ecran Envois le dit - c'est la que l'utilisateur le reprendra.
+      await post(job, { demander: false })
       await marquerEnvoye(job)
       envoyes++
     } catch (err) {

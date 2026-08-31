@@ -5,7 +5,6 @@
 // celles qui ont echoue, le motif en toutes lettres plutot qu'un message
 // rassurant et faux.
 
-import { frDate } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 

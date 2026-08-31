@@ -117,10 +117,17 @@ export function contaminatedCount(report) {
   return report.rows.filter((r) => r.contamine === 'oui').length
 }
 
+// Les champs qui font qu'une ligne existe vraiment : sans eux, c'est une ligne
+// vide qu'on ne compte pas. Une seule liste, lue a la fois pour compter et pour
+// savoir quelle frappe doit rafraichir le compteur (voir app.js) - separees,
+// les deux avaient derive : le compteur d'un immeuble ne bougeait plus.
+const CHAMPS_LIGNE = { pieces: ['nom'], lignes: ['numero', 'resident', 'etage'] }
+
+export const champsQuiComptent = (report) => CHAMPS_LIGNE[TYPES[report.type].layout]
+
 export function filledRows(report) {
-  const t = TYPES[report.type]
-  if (t.layout === 'pieces') return report.rows.filter((r) => (r.nom || '').trim())
-  return report.rows.filter((r) => (r.numero || '').trim() || (r.resident || '').trim() || (r.etage || '').trim())
+  const champs = champsQuiComptent(report)
+  return report.rows.filter((r) => champs.some((c) => (r[c] || '').trim()))
 }
 
 // --- persistance -----------------------------------------------------------

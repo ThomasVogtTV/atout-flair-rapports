@@ -90,7 +90,20 @@ class Sheet {
 
   newPage() {
     this.page = this.doc.addPage([PAGE.W, PAGE.H])
+    this.posee = null
     return this.page
+  }
+
+  // pdf-lib inscrit une entree de police dans la page a chaque fois qu'on lui
+  // passe `font` : 200 textes sur une page donnaient 200 entrees, toutes vers
+  // les deux memes polices. On pose donc la police une fois, et seulement
+  // quand elle change vraiment.
+  useFont(bold) {
+    const font = bold ? this.f.bold : this.f.reg
+    if (this.posee !== font) {
+      this.page.setFont(font)
+      this.posee = font
+    }
   }
 
   width(text, bold, size) {
@@ -112,7 +125,8 @@ class Sheet {
     let px = x
     if (align === 'center') px = x - w / 2
     else if (align === 'right') px = x - w
-    this.page.drawText(str, { x: px, y, size: s, font: bold ? this.f.bold : this.f.reg, color })
+    this.useFont(bold)
+    this.page.drawText(str, { x: px, y, size: s, color })
   }
 
   spacedWidth(text, { size = 8, bold = true, gap = 0.9 } = {}) {
@@ -131,8 +145,9 @@ class Sheet {
       width = maxW
     }
     let cx = x
+    this.useFont(bold)
     for (const c of chars) {
-      this.page.drawText(c, { x: cx, y, size: s, font: bold ? this.f.bold : this.f.reg, color })
+      this.page.drawText(c, { x: cx, y, size: s, color })
       cx += this.width(c, bold, s) + gap
     }
     return width
@@ -337,9 +352,10 @@ async function signatureBlock(sh, report, y) {
   await drawCol(M, 'Le technicien', [tech.nom, SOCIETE].filter(Boolean).join(' · '), tech.signature)
   await drawCol(
     M + colW + 16,
-    'Le locataire / le mandant',
-    // Le nom saisi au moment de la signature prime : sur place, ce n'est pas
-    // toujours le locataire ni le mandant qui ouvre la porte.
+    // Meme intitule qu'a l'ecran, et volontairement neutre : celui qui ouvre la
+    // porte n'est pas toujours le locataire ni le mandant. C'est son nom, juste
+    // en dessous, qui dit qui a signe.
+    'Signature sur place',
     report.signataire?.nom || report.lieu?.locataire || fullName(report.mandant) || '',
     report.signature
   )
@@ -652,8 +668,9 @@ async function drawLignes(sh, report, logo) {
     y -= sh.wrap(report.remarques, M, y - 2, { size: 8.4, maxW: CW - 4, lh: 11 }) + 6
   }
 
-  // Immeuble / hotel : pas de signature du locataire a l'ecran, mais le
-  // rapport porte quand meme celle du technicien qui l'a etabli.
+  // Les trois types se signent sur place. Le bloc reste dessine meme sans
+  // signature : le technicien qui a etabli le rapport y figure toujours, et un
+  // rapport imprime doit pouvoir etre signe a la main.
   if (t.hasSignature || report.signature || report.technicien?.signature) {
     if (y - 84 < BOTTOM) {
       sh.newPage()
@@ -718,14 +735,16 @@ async function drawPhotos(sh, report) {
  * appose a la fin, quand le nombre total de pages est connu - y compris apres
  * la fusion des sous-rapports d'un immeuble.
  */
-async function paginate(doc) {
-  const reg = await doc.embedFont(StandardFonts.Helvetica)
+function paginate(doc, reg) {
   const pages = doc.getPages()
   pages.forEach((page, i) => {
     const y = 34
+    // La police est posee une fois pour la page : la passer a chaque texte
+    // ajouterait une entree de police par appel (voir Sheet.useFont).
+    page.setFont(reg)
     const center = (text, ty, size, color) => {
       const w = reg.widthOfTextAtSize(san(text), size)
-      page.drawText(san(text), { x: (PAGE.W - w) / 2, y: ty, size, font: reg, color })
+      page.drawText(san(text), { x: (PAGE.W - w) / 2, y: ty, size, color })
     }
     page.drawLine({ start: { x: M, y: y + 20 }, end: { x: RIGHT, y: y + 20 }, thickness: 0.5, color: LINE_HAIR })
     page.drawLine({
@@ -738,7 +757,7 @@ async function paginate(doc) {
     center(FOOTER_LINE2, y, 6.3, MUTED)
     const num = `${i + 1} / ${pages.length}`
     const w = reg.widthOfTextAtSize(num, 7.2)
-    page.drawText(num, { x: RIGHT - w, y: y + 8, size: 7.2, font: reg, color: MUTED })
+    page.drawText(num, { x: RIGHT - w, y: y + 8, size: 7.2, color: MUTED })
   })
 }
 
@@ -773,17 +792,7 @@ async function buildDoc(report) {
   doc.setAuthor([SOCIETE, report.technicien?.nom].filter(Boolean).join(' - '))
   doc.setProducer(SOCIETE)
   doc.setCreator('Atout Flair - Rapports')
-  return doc
-}
-
-export async function buildPdf(report) {
-  const doc = await buildDoc(report)
-  await paginate(doc)
-  return doc.save()
-}
-
-export async function buildPdfBlob(report) {
-  return new Blob([await buildPdf(report)], { type: 'application/pdf' })
+  return { doc, fonts }
 }
 
 /**
@@ -792,14 +801,14 @@ export async function buildPdfBlob(report) {
  * sur le document fusionne, pour qu'elle compte l'ensemble.
  */
 export async function buildCombinedPdf(report, children = []) {
-  const main = await buildDoc(report)
+  const { doc: main, fonts } = await buildDoc(report)
   for (const child of children) {
-    const sub = await buildDoc(child)
+    const { doc: sub } = await buildDoc(child)
     const bytes = await sub.save()
     const loaded = await PDFDocument.load(bytes)
     const pages = await main.copyPages(loaded, loaded.getPageIndices())
     pages.forEach((p) => main.addPage(p))
   }
-  await paginate(main)
+  paginate(main, fonts.reg)
   return main.save()
 }

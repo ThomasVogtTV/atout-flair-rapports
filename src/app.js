@@ -15,7 +15,7 @@ import { setTheme } from './ui/theme.js'
 import { homeView } from './views/home.js'
 import { contactsView } from './views/contacts.js'
 import { envoisView } from './views/envois.js'
-import { editorView, rowCardHTML, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
+import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 
@@ -157,7 +157,6 @@ function mirrorLieuFields(keys) {
 // Redessine la seule bande des propositions du carnet, sans toucher au reste
 // de l'ecran : un render() complet pendant la frappe ferait perdre le curseur.
 function rafraichirSuggestions() {
-  const bande = root.querySelector('[data-mandant-type]')?.closest('.card')?.querySelector('.quick-rooms:not(.quick-constats)')
   const props = S.matchContacts(view.report.mandant.nom, view.contacts ?? [])
   const zone = root.querySelector('.suggestions-carnet')
   if (!zone) return
@@ -195,11 +194,14 @@ root.addEventListener('input', (ev) => {
   } else if (el.dataset.rowField) {
     const row = rowOf(el)
     if (!row) return
-    row[el.dataset.rowField] = el.value
-    if (el.dataset.rowField === 'nom') {
-      refreshCounters()
-      if (el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
-    }
+    const champ = el.dataset.rowField
+    row[champ] = el.value
+    // Le compteur suit tout champ qui fait qu'une ligne compte : le nom d'une
+    // piece, mais aussi le numero d'appartement ou de chambre.
+    if (S.champsQuiComptent(view.report).includes(champ)) refreshCounters()
+    // Les puces de noms de piece ont fait leur travail des que le champ porte
+    // quelque chose : elles laissent la place au reste de la carte.
+    if (champ === 'nom' && el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
     scheduleSave()
   }
 })
@@ -246,19 +248,18 @@ root.addEventListener('change', async (ev) => {
   render()
 })
 
+// Les compteurs sont redessines entierement, et non juste le chiffre : sinon le
+// pluriel restait celui du rendu precedent ("2 pièce", "2 contaminée"). La
+// pulsation ne se declenche que sur un compteur qui a vraiment change, pour
+// qu'elle continue de vouloir dire quelque chose.
 function refreshCounters() {
-  const totalEl = document.getElementById('cnt-total')
-  const contEl = document.getElementById('cnt-cont')
-  const total = S.filledRows(view.report).length
-  const contVal = S.contaminatedCount(view.report)
-  if (totalEl) {
-    totalEl.textContent = total
-    pulse(totalEl)
-  }
-  if (contEl) {
-    contEl.textContent = contVal
-    contEl.closest('.count-pill')?.classList.toggle('cont', contVal > 0)
-    pulse(contEl)
+  const zone = root.querySelector('.counter-pills')
+  if (!zone) return
+  const avant = { total: zone.querySelector('#cnt-total')?.textContent, cont: zone.querySelector('#cnt-cont')?.textContent }
+  zone.innerHTML = counterPills(view.report, typeOf(view.report))
+  for (const [cle, id] of [['total', 'cnt-total'], ['cont', 'cnt-cont']]) {
+    const el = zone.querySelector(`#${id}`)
+    if (el && el.textContent !== avant[cle]) pulse(el)
   }
 }
 
