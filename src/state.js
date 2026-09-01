@@ -90,6 +90,10 @@ export function newReport(type) {
     signature: null,
     photos: [],
     sentAt: null,
+    // Quand le rapport a ete declare remis (voir terminerReport). Distinct de
+    // sentAt : un rapport peut etre remis de la main a la main, ou par la
+    // messagerie du telephone, sans jamais passer par l'envoi automatique.
+    remisAt: null,
   }
   if (t.layout === 'pieces') {
     report.lieu.dateIntervention = todayISO()
@@ -165,11 +169,64 @@ export function duplicateReport(src) {
   return copie
 }
 
+// --- cycle de vie ----------------------------------------------------------
+
+/**
+ * Un rapport encore sur les bras, et le seul que l'accueil pose en tete.
+ *
+ * L'etat ne quittait 'draft' qu'a l'instant ou le mail partait (voir send.js).
+ * Tant que l'envoi automatique n'est pas branche, le PDF se remet a la main -
+ * par la messagerie du telephone, ou de vive voix - et le rapport n'avait alors
+ * aucun moyen de se declarer fini : "En cours" grossissait sans fin jusqu'a ne
+ * plus rien vouloir dire. "Terminer" est ce geste-la, rendu explicite.
+ */
+export const enCours = (r) => r.status === 'draft'
+
+/** Remis d'une facon ou d'une autre : a la main, ou parti par mail. */
+export const estTermine = (r) => r.status === 'done' || r.status === 'sent'
+
+export function terminerReport(report) {
+  report.status = 'done'
+  report.remisAt = Date.now()
+  return saveReport(report)
+}
+
+// Rouvrir ne fait que revenir en arriere : un rapport termine d'un doigt trop
+// rapide, ou une correction que la regie demande apres coup. `sentAt` reste :
+// s'il est reellement parti, cela s'est produit et le nier serait faux.
+export function rouvrirReport(report) {
+  report.status = 'draft'
+  report.remisAt = null
+  return saveReport(report)
+}
+
 // --- persistance -----------------------------------------------------------
 
-export const saveReport = (report) => {
+/**
+ * L'ecriture refusee est le seul echec de l'app qui coute du travail : sans
+ * signal, la photo reste a l'ecran, le rapport parait enregistre, et tout
+ * disparait au rechargement. Ce fichier n'a pas a connaitre l'interface, il se
+ * contente de prevenir qui veut l'entendre (voir app.js).
+ */
+let signalEcriture = null
+export const onEcritureRefusee = (fn) => {
+  signalEcriture = fn
+}
+
+const memoirePleine = (err) =>
+  err?.name === 'QuotaExceededError' || /quota|storage|space/i.test(err?.message ?? '')
+
+/** @returns {Promise<boolean>} vrai si le rapport est bien dans l'appareil */
+export const saveReport = async (report) => {
   report.updatedAt = Date.now()
-  return db.put('reports', report)
+  try {
+    await db.put('reports', report)
+    return true
+  } catch (err) {
+    console.error('Enregistrement du rapport impossible', err)
+    signalEcriture?.(memoirePleine(err))
+    return false
+  }
 }
 export const loadReport = (id) => db.get('reports', id)
 export const deleteReport = (id) => db.del('reports', id)
@@ -391,6 +448,42 @@ export const markBackup = () => localStorage.setItem(BACKUP_KEY, String(Date.now
 export function backupAge() {
   const t = lastBackup()
   return t ? Math.floor((Date.now() - t) / 86400000) : null
+}
+
+// --- place restante --------------------------------------------------------
+
+/**
+ * Ce que l'app occupe dans l'appareil, et ce que le navigateur lui accorde.
+ *
+ * Les photos sont stockees en clair : une tournee chargee pese plus qu'on ne
+ * croit, et un telephone plein refuse l'ecriture sans prevenir. C'est le seul
+ * endroit ou du travail peut disparaitre - autant le voir venir.
+ *
+ * Retourne null quand le navigateur ne sait pas repondre : mieux vaut ne rien
+ * afficher qu'un chiffre invente.
+ *
+ * @returns {Promise<{usage: number, quota: number, part: number}|null>}
+ */
+export async function stockage() {
+  if (!navigator.storage?.estimate) return null
+  try {
+    const { usage = 0, quota = 0 } = await navigator.storage.estimate()
+    if (!quota) return null
+    return { usage, quota, part: usage / quota }
+  } catch {
+    return null
+  }
+}
+
+// Au-dela, la prochaine photo peut ne plus tenir : c'est le seuil ou l'app
+// previent au lieu de laisser l'ecriture echouer.
+export const STOCKAGE_ALERTE = 0.9
+
+/** Un poids lisible d'un coup d'oeil, a la virgule suisse. */
+export function enPoids(octets) {
+  if (octets >= 1_073_741_824) return `${(octets / 1_073_741_824).toFixed(1).replace('.', ',')} Go`
+  if (octets >= 1_048_576) return `${Math.round(octets / 1_048_576)} Mo`
+  return `${Math.max(1, Math.round(octets / 1024))} Ko`
 }
 
 export function backupFilename() {

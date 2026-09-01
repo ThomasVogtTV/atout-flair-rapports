@@ -705,6 +705,25 @@ input:disabled { opacity: 0.55; }
 .etat-sauvegarde { margin: 0 0 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
 .etat-sauvegarde.tard { color: var(--amber); }
 
+/* La place occupee dans l'appareil, sous la sauvegarde : meme sujet - ce qui
+   peut se perdre - et meme remede, exporter puis effacer ce qui est rendu. */
+.etat-place { margin: 12px 0 6px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.etat-place.tard { color: var(--amber); }
+.jauge {
+  height: 6px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+.jauge span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 62%, transparent);
+}
+.jauge.tard span { background: color-mix(in srgb, var(--amber) 78%, transparent); }
+
 /* Deuxieme reglage d'une meme carte : un peu d'air le detache du precedent. */
 .reglage-titre { margin-top: 14px; }
 
@@ -921,6 +940,10 @@ input:disabled { opacity: 0.55; }
 .pill.draft { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--muted); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent); }
 .pill.sent { background: color-mix(in srgb, var(--green) var(--voile), transparent); color: var(--green); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) var(--liseret), transparent); }
 .pill.queued { background: color-mix(in srgb, var(--amber) var(--voile), transparent); color: var(--amber); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) var(--liseret), transparent); }
+/* "Terminé" : rendu a la main, sans passer par l'envoi automatique. Il se pose
+   plus discretement que "Envoyé" - on sait qu'il est fini, pas qu'il est parti
+   d'ici - et emprunte donc le gris du repos plutot que le vert de l'accompli. */
+.pill.done { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--muted); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 13%, transparent); }
 
 /* --- "En cours" : la ligne de reprise ------------------------------------
    Elle portait quatre marques de la couleur de la maison a la fois : pastille
@@ -1476,7 +1499,11 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   border-top: 1px solid var(--line);
   backdrop-filter: blur(12px);
 }
-.bottom-bar .btn { flex: 1; }
+/* Trois sorties au lieu de deux : a 375 px chaque bouton ne dispose plus que
+   de 72 px de texte avec la marge d'origine, et "Aperçu PDF" - qui en demande
+   77 - passait a la ligne pendant que ses voisins tenaient sur une seule. La
+   marge interieure se resserre plutot que le libelle. */
+.bottom-bar .btn { flex: 1; padding: 0 10px; white-space: nowrap; }
 
 /* --- overlays --- */
 .overlay {

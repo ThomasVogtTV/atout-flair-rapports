@@ -480,13 +480,15 @@ export function editorView(view) {
   const t = typeOf(r)
   const replie = (cle) => view.sectionsRepliees?.has(cle) ?? false
   const libres = r.photos.filter((p) => !p.rowId)
+  const fini = !S.enCours(r)
+  const sousTitre = [`N° ${r.ref}`, r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport']
 
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
       <div class="top-title">
         <h1>${esc(t.label)}</h1>
-        <p class="muted">N° ${esc(r.ref)} · ${esc(r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport')}</p>
+        <p class="muted">${esc(sousTitre.join(' · '))}${fini ? ' · <b>Terminé</b>' : ''}</p>
       </div>
       ${
         // Pas de duplication pour un sous-rapport : sa copie serait orpheline,
@@ -542,8 +544,19 @@ export function editorView(view) {
       ${t.hasSignature ? signatureSection(r) : ''}
     </section>
 
+    <!-- Les trois sorties d'un rapport, dans l'ordre ou on les emprunte : le
+         relire, le declarer fini, l'envoyer. "Terminer" a d'abord loge dans
+         l'en-tete, a cote de "Dupliquer" : a 375 px les deux boutons y
+         mangeaient le titre, qui tombait a "Rapport d'..." et le numero a
+         "N° AF-00096 · No...". Une cloture est de toute facon une sortie, pas
+         un reglage : sa place est ici. -->
     <div class="bottom-bar">
       <button class="btn ghost" data-act="preview">Aperçu PDF</button>
-      <button class="btn primary" data-act="send">Envoyer</button>
+      ${
+        r.parentId
+          ? ''
+          : `<button class="btn ghost" data-act="${fini ? 'rouvrir' : 'terminer'}">${fini ? 'Rouvrir' : 'Terminer'}</button>`
+      }
+      <button class="btn primary" data-act="send">${fini ? 'Renvoyer' : 'Envoyer'}</button>
     </div>`
 }

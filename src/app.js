@@ -10,7 +10,7 @@ import { openSignaturePad } from './signature.js'
 import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
-import { confirmLeave } from './ui/dialogs.js'
+import { confirmLeave, alerteStockage } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
 import { homeView, listeRapportsHTML } from './views/home.js'
 import { contactsView } from './views/contacts.js'
@@ -60,6 +60,7 @@ async function goHome() {
   // sans qu'on comprenne pourquoi.
   view = { ...view, screen: 'home', report: null, children: [], recherche: '' }
   view.reports = (await S.listReports()).filter((r) => !r.parentId)
+  view.stockage = await S.stockage()
   await majCompteurs()
   render()
 }
@@ -86,8 +87,9 @@ async function openContacts() {
   render()
 }
 
-function openReglages() {
+async function openReglages() {
   view = { ...view, screen: 'reglages', report: null }
+  view.stockage = await S.stockage()
   render()
 }
 
@@ -163,7 +165,7 @@ function render() {
       : view.screen === 'contacts'
         ? contactsView(view)
         : view.screen === 'reglages'
-          ? reglagesView()
+          ? reglagesView(view)
           : view.screen === 'envois'
             ? envoisView(view)
             : editorView(view)
@@ -702,6 +704,18 @@ root.addEventListener('click', async (ev) => {
     toast('Rapport dupliqué : le lieu et les pièces sont repris, les constats sont à refaire.')
     return openReport(copie.id)
   }
+  if (act === 'terminer') {
+    await S.terminerReport(view.report)
+    toast('Rapport terminé. Il reste dans « Mes rapports ».')
+    return goHome()
+  }
+  if (act === 'rouvrir') {
+    // On ne quitte pas l'ecran : on rouvre justement pour corriger quelque
+    // chose, et repartir a l'accueil obligerait a revenir aussitot.
+    await S.rouvrirReport(view.report)
+    toast('Rapport rouvert.')
+    return render()
+  }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-reglages') return openReglages()
   if (act === 'open-envois') return openEnvois()
@@ -710,7 +724,7 @@ root.addEventListener('click', async (ev) => {
     // Un rapport deja envoye/en file n'a plus rien a "annuler" : on ne
     // demande que pour un brouillon, qu'il vienne d'etre cree ou repris.
     // Le carnet de contacts n'a pas de rapport ouvert, rien a confirmer.
-    if (view.screen === 'editor' && view.report.status === 'draft') {
+    if (view.screen === 'editor' && S.enCours(view.report)) {
       const choice = await confirmLeave()
       if (choice === 'cancel') return
       if (choice === 'delete') await S.deleteReport(view.report.id)
@@ -834,6 +848,7 @@ function pickFile({ capture = null } = {}) {
 }
 
 async function capture(rowId) {
+  if (!(await placePourUnePhoto())) return
   const file = await pickFile({ capture: 'environment' })
   if (!file) return
   toast('Traitement de la photo…')
@@ -952,7 +967,46 @@ window.addEventListener('online', async () => {
   else updatePendingBadge()
 })
 
+// --- place restante --------------------------------------------------------
+
+// L'ecriture peut echouer plusieurs fois par seconde (l'enregistrement
+// automatique repasse toutes les 400 ms) : sans ce delai, l'ecran se couvrirait
+// de la meme alerte. Une minute suffit a la rendre lisible sans la noyer.
+const REPOS_ALERTE = 60_000
+let derniereAlerte = 0
+
+async function signalerStockage(motif) {
+  if (Date.now() - derniereAlerte < REPOS_ALERTE) return
+  derniereAlerte = Date.now()
+  if ((await alerteStockage(motif)) === 'reglages') openReglages()
+}
+
+/**
+ * Avant une photo : la seule ecriture assez lourde pour faire basculer un
+ * appareil deja plein. Prevenir avant la prise vaut mieux que de perdre le
+ * cliche apres, quand on a range le telephone et quitte l'appartement.
+ *
+ * @returns {Promise<boolean>} faux si l'on renonce a la photo
+ */
+async function placePourUnePhoto() {
+  const place = await S.stockage()
+  view.stockage = place
+  if (!place || place.part <= S.STOCKAGE_ALERTE) return true
+  derniereAlerte = Date.now()
+  if ((await alerteStockage('bientot')) === 'reglages') {
+    openReglages()
+    return false
+  }
+  return true
+}
+
 export async function boot() {
+  // Une ecriture refusee ne doit pas passer inapercue : c'est le seul incident
+  // de l'app qui fait disparaitre du travail deja saisi.
+  S.onEcritureRefusee((plein) => {
+    if (plein) return signalerStockage('refus')
+    toast("Enregistrement impossible sur cet appareil. Exportez une sauvegarde avant de fermer l'app.")
+  })
   majReseau()
   await goHome()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour

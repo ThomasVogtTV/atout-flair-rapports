@@ -6,7 +6,7 @@
 // se reglent une fois sur le telephone et ne se retouchent plus. Chacun a
 // desormais sa porte.
 
-import { backupAge } from '../state.js'
+import { backupAge, enPoids, STOCKAGE_ALERTE } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
@@ -24,8 +24,29 @@ function ageSauvegarde() {
   return { texte: `Dernière sauvegarde il y a ${j} jours.`, tard: j > SAUVEGARDE_LIMITE }
 }
 
-export function reglagesView() {
+/**
+ * La place que l'app occupe dans l'appareil.
+ *
+ * Elle vit sous la sauvegarde parce que le remede est le meme : exporter, puis
+ * effacer ce qui a ete rendu. Rien ne s'affiche quand le navigateur ne sait pas
+ * repondre - une jauge vide inquieterait sans rien apprendre.
+ */
+function jaugeHTML(place) {
+  if (!place) return ''
+  const part = Math.min(1, place.part)
+  const serre = part > STOCKAGE_ALERTE
+  return `
+    <p class="etat-place${serre ? ' tard' : ''}">${esc(enPoids(place.usage))} utilisés sur ${esc(enPoids(place.quota))}</p>
+    <div class="jauge${serre ? ' tard' : ''}" role="img"
+         aria-label="${Math.round(part * 100)} % de la place occupée">
+      <span style="width:${Math.max(2, Math.round(part * 100))}%"></span>
+    </div>
+    ${serre ? `<p class="muted small">Les prochaines photos risquent de ne plus tenir.</p>` : ''}`
+}
+
+export function reglagesView(view) {
   const sauvegarde = ageSauvegarde()
+  const place = view?.stockage ?? null
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
@@ -58,6 +79,7 @@ export function reglagesView() {
         <p class="etat-sauvegarde${sauvegarde.tard ? ' tard' : ''}">${esc(sauvegarde.texte)}</p>
         <p class="muted small">Rapports, carnet et signature n'existent que dans cet appareil. Le fichier de
         sauvegarde les rassemble : envoyez-le-vous par mail, il vous rendra tout sur un téléphone neuf.</p>
+        ${jaugeHTML(place)}
         <div class="row-actions">
           <button class="btn ghost" data-act="export-backup">Exporter</button>
           <button class="btn ghost" data-act="import-backup">Restaurer</button>

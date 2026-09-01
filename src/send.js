@@ -5,7 +5,7 @@ import * as S from './state.js'
 import { recompress } from './photo.js'
 import { sendReport } from './mailer.js'
 import { esc, toast, showLoading, hideLoading } from './ui/dom.js'
-import { openOverlay } from './ui/dialogs.js'
+import { openOverlay, confirmRemise } from './ui/dialogs.js'
 
 // Boite mail de l'entreprise : copie par defaut proposee dans le dialogue.
 const COPY_DEFAULT = 'info@atout-flair.ch'
@@ -102,6 +102,23 @@ export async function shareOrDownload(blob, filename) {
 }
 
 /**
+ * Sortie du rapport a la main : le PDF part par la messagerie du telephone.
+ *
+ * C'est le seul instant ou l'on sait que le rapport a quitte l'app, donc le
+ * seul bon moment pour lui demander s'il est fini. Sans cela son etat ne
+ * changeait jamais - il ne quittait 'draft' qu'en partant par l'envoi
+ * automatique - et "En cours" accumulait la tournee entiere.
+ */
+async function remisALaMain(report, blob, filename, onSent) {
+  await shareOrDownload(blob, filename)
+  if (!S.enCours(report)) return
+  if (!(await confirmRemise())) return
+  await S.terminerReport(report)
+  toast('Rapport terminé. Il reste dans « Mes rapports ».')
+  onSent()
+}
+
+/**
  * Dialogue d'envoi du rapport.
  * @param {object} report rapport ouvert (son statut est mis a jour apres envoi)
  * @param {object[]} children sous-rapports du rapport ouvert
@@ -139,7 +156,10 @@ Atout Flair</textarea></label>
         showLoading('Génération du PDF…')
         const { blob } = await currentPdf(report, children)
         hideLoading()
-        await shareOrDownload(blob, filename)
+        // Le dialogue s'efface avant le partage : sans cela la question qui
+        // suit s'empilait par-dessus lui.
+        overlay.remove()
+        await remisALaMain(report, blob, filename, onSent)
         return
       }
 
@@ -163,7 +183,7 @@ Atout Flair</textarea></label>
         // qu'on puisse rien y faire : on passe la main a l'application mail.
         hideLoading()
         toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
-        await shareOrDownload(blob, filename)
+        await remisALaMain(report, blob, filename, onSent)
         return
       }
 
@@ -174,14 +194,16 @@ Atout Flair</textarea></label>
         // La boite mail n'est pas branchee cote serveur. Mettre le rapport en
         // attente donnerait l'illusion d'un envoi a venir.
         toast('Envoi automatique pas encore activé : je passe le PDF à votre messagerie.')
-        await shareOrDownload(blob, filename)
+        await remisALaMain(report, blob, filename, onSent)
         return
       }
 
-      // Un refus du serveur laisse le rapport en brouillon : le marquer
-      // "envoye" alors qu'il n'est jamais parti est exactement le piege qu'on
-      // veut eviter. Il reste modifiable, et l'ecran Envois porte le motif.
-      report.status = etat === 'envoye' ? 'sent' : etat === 'attente' ? 'queued' : 'draft'
+      // Un refus du serveur laisse le rapport dans l'etat ou il etait : le
+      // marquer "envoye" alors qu'il n'est jamais parti est exactement le piege
+      // qu'on veut eviter, et rouvrir d'office un rapport deja declare terminé
+      // en serait un autre - c'est l'envoi qui a echoue, pas le travail. Il
+      // reste modifiable, et l'ecran Envois porte le motif.
+      report.status = etat === 'envoye' ? 'sent' : etat === 'attente' ? 'queued' : report.status
       report.sentAt = etat === 'envoye' ? Date.now() : null
       await S.saveReport(report)
       toast(

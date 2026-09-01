@@ -28,13 +28,17 @@ const shortLabel = (t) => {
   return s[0].toUpperCase() + s.slice(1)
 }
 
-// Les filtres : les trois types, plus l'etat "envoye" - c'est ainsi qu'on
+// Les filtres : les trois types, plus ce qui est fini - c'est ainsi qu'on
 // cherche un rapport ("le rapport d'immeuble de mardi", "celui que j'ai deja
-// envoye"), pas en se souvenant d'un dossier ou il serait range.
+// rendu"), pas en se souvenant d'un dossier ou il serait range.
+//
+// "Envoyés" ne repondait qu'a l'envoi automatique : un rapport remis a la main
+// n'y entrait jamais, et le filtre restait vide sur un telephone qui avait
+// pourtant rendu trente rapports.
 const FILTERS = [
   { key: 'tous', label: 'Tous', match: () => true },
   ...TYPE_LIST.map((t) => ({ key: t.id, label: shortLabel(t), match: (r) => r.type === t.id })),
-  { key: 'envoyes', label: 'Envoyés', match: (r) => r.status === 'sent' },
+  { key: 'termines', label: 'Terminés', match: (r) => S.estTermine(r) },
 ]
 
 /**
@@ -67,9 +71,11 @@ function quand(ts) {
 const etatPill = (r) =>
   r.status === 'sent'
     ? `<span class="pill sent">Envoyé</span>`
-    : r.status === 'queued'
-      ? `<span class="pill queued">En attente</span>`
-      : ''
+    : r.status === 'done'
+      ? `<span class="pill done">Terminé</span>`
+      : r.status === 'queued'
+        ? `<span class="pill queued">En attente</span>`
+        : ''
 
 /**
  * Une ligne de la liste des rapports.
@@ -89,7 +95,7 @@ function reportRowHTML(r) {
   const qui = r.lieu?.locataire || fullName(r.mandant) || ou || `Rapport ${r.ref}`
   const detail = [ou === qui ? '' : ou, quand(r.updatedAt)].filter(Boolean).join(' · ')
   return `
-    <li class="rapport-ligne${r.status === 'sent' ? ' fini' : ''}" data-open="${r.id}">
+    <li class="rapport-ligne${S.estTermine(r) ? ' fini' : ''}" data-open="${r.id}">
       <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="rapport-corps">
         <span class="rapport-nom">${esc(qui)}</span>
@@ -110,7 +116,7 @@ const EN_COURS = 3
 // qu'une tournee en laisse volontiers trois derriere elle : les deux autres se
 // retrouvaient noyes dans "Mes rapports", au milieu de ce qui est deja parti.
 function enCoursHTML(reports) {
-  const tous = reports.filter((r) => r.status === 'draft')
+  const tous = reports.filter(S.enCours)
   const brouillons = tous.slice(0, EN_COURS)
   if (!brouillons.length) return ''
   // Meme silhouette et meme pastille que les lignes de "Mes rapports" : ce sont
@@ -199,7 +205,7 @@ function mesRapportsHTML(view) {
   // L'apercu ne repete pas les brouillons deja poses en tete d'ecran : le meme
   // rapport apparaissait deux fois, a deux centimetres d'intervalle. La liste
   // deroulee, elle, reste complete - c'est la liste, elle doit tout contenir.
-  const enTete = new Set(reports.filter((r) => r.status === 'draft').slice(0, EN_COURS).map((r) => r.id))
+  const enTete = new Set(reports.filter(S.enCours).slice(0, EN_COURS).map((r) => r.id))
   const apercu = reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
   // Une recherche en cours cherche partout : elle ignore l'apercu, et elle
   // ignore le filtre de type, qui n'aurait plus de sens quand on tape une rue.
@@ -241,7 +247,7 @@ export function listeRapportsHTML(view) {
   const recherche = (view.recherche ?? '').trim()
   const tout = view.reportsOpen || !!recherche
   const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
-  const enTete = new Set(reports.filter((r) => r.status === 'draft').slice(0, EN_COURS).map((r) => r.id))
+  const enTete = new Set(reports.filter(S.enCours).slice(0, EN_COURS).map((r) => r.id))
   const listed = recherche
     ? reports.filter((r) => S.matchRapport(r, recherche))
     : tout
@@ -277,7 +283,7 @@ export function listeRapportsHTML(view) {
  */
 function heroHTML(view) {
   const jour = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
-  const brouillons = view.reports.filter((r) => r.status === 'draft').length
+  const brouillons = view.reports.filter(S.enCours).length
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
   // perdre - et il doit apparaitre la ou l'on passe, pas seulement dans les
   // reglages, ou l'on ne va justement jamais.
@@ -286,10 +292,14 @@ function heroHTML(view) {
   // Seul ce qui reclame un geste porte la couleur d'alerte. La ligne entiere y
   // passait des qu'un seul de ses morceaux alertait : "10 rapports en cours"
   // devenait rouge parce que la sauvegarde datait.
+  // La place restante ne s'annonce qu'au moment ou elle devient un probleme :
+  // une jauge permanente sur l'accueil serait du bruit trois cent jours par an.
+  const memoirePleine = (view.stockage?.part ?? 0) > S.STOCKAGE_ALERTE
   const bilan = [
     brouillons && { t: `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` },
     view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true },
     !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` },
+    memoirePleine && { t: 'mémoire presque pleine', alerte: true },
     sauvegardeEnRetard && { t: 'sauvegarde à faire', alerte: true },
   ].filter(Boolean)
   return `

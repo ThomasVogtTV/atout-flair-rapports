@@ -36,6 +36,69 @@ export function confirmLeave() {
 }
 
 /**
+ * Propose de clore le rapport quand son PDF vient d'etre passe a la messagerie
+ * du telephone.
+ *
+ * C'est le seul instant ou l'on sait que le rapport a quitte l'app : le
+ * demander ici evite d'avoir a y repenser plus tard, quand "En cours" aura
+ * accumule une tournee entiere.
+ *
+ * @returns {Promise<boolean>} vrai si le rapport doit passer en "terminé"
+ */
+export function confirmRemise() {
+  const overlay = openOverlay(`
+    <h2>Rapport remis ?</h2>
+    <p class="muted small">Le PDF est passé à votre messagerie. Une fois parti, ce rapport peut quitter « En cours » : il reste consultable, modifiable et renvoyable dans « Mes rapports ».</p>
+    <div class="dialog-actions">
+      <button class="btn ghost" data-remise="non">Le garder en cours</button>
+      <button class="btn primary" data-remise="oui">Terminer</button>
+    </div>`)
+
+  return new Promise((resolve) => {
+    overlay.addEventListener('click', (ev) => {
+      const choix = ev.target === overlay ? 'non' : ev.target.closest('[data-remise]')?.dataset.remise
+      if (!choix) return
+      overlay.remove()
+      resolve(choix === 'oui')
+    })
+  })
+}
+
+/**
+ * Previent que l'appareil n'a plus de place, ou vient de refuser une ecriture.
+ *
+ * Un toast ne suffit pas ici : c'est le seul incident de l'app qui fait perdre
+ * du travail deja saisi, et le remede - exporter la sauvegarde, puis effacer
+ * des rapports remis - demande d'aller ailleurs dans l'app.
+ *
+ * @param {'refus'|'bientot'} motif ecriture deja refusee, ou place qui manque
+ * @returns {Promise<'reglages'|'continuer'>}
+ */
+export function alerteStockage(motif) {
+  const refus = motif === 'refus'
+  const overlay = openOverlay(`
+    <h2>${refus ? 'Enregistrement refusé' : 'Mémoire presque pleine'}</h2>
+    <p class="muted small">${
+      refus
+        ? "L'appareil n'a plus de place : ce qui vient d'être saisi n'a pas pu être enregistré et sera perdu au prochain démarrage. Exportez la sauvegarde, puis supprimez des rapports déjà remis."
+        : "Il reste peu de place sur cet appareil. Les prochaines photos risquent de ne plus tenir. Exportez la sauvegarde, puis supprimez des rapports déjà remis."
+    }</p>
+    <div class="dialog-actions">
+      <button class="btn ghost" data-place="continuer">${refus ? 'Plus tard' : 'Continuer quand même'}</button>
+      <button class="btn primary" data-place="reglages">Ouvrir les réglages</button>
+    </div>`)
+
+  return new Promise((resolve) => {
+    overlay.addEventListener('click', (ev) => {
+      const choix = ev.target === overlay ? 'continuer' : ev.target.closest('[data-place]')?.dataset.place
+      if (!choix) return
+      overlay.remove()
+      resolve(choix)
+    })
+  })
+}
+
+/**
  * Demande le code d'acces de l'app. Un vrai dialogue, et non la boite nue du
  * navigateur : celle-ci ne disait pas ce qu'etait ce code ni ou le trouver, et
  * un technicien a qui l'on confie le telephone se retrouvait bloque devant une
