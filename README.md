@@ -63,6 +63,39 @@ npm run dev
 
 Puis `npm run build` pour la version de production (dossier `dist/`).
 
+## Tests
+
+```bash
+npm test
+```
+
+Le PDF est ce que le client reçoit : une régression y est invisible depuis
+l'écran et ne se découvre que chez le destinataire. Les tests le lisent donc
+vraiment — pas en le comparant à une image, mais en décompressant ses flux de
+contenu et en mesurant les ordres de dessin : quel texte, à quelle place, dans
+quelle taille, de quelle couleur, quelle image à quelle dimension.
+
+Ils tournent sous Node, sans navigateur : `test/aide/navigateur.js` fournit des
+doublures de `localStorage`, d'IndexedDB, de `navigator.storage` et du `fetch`
+du logo — uniquement ce que l'app appelle réellement.
+
+| Fichier | Rôle |
+| --- | --- |
+| `test/pdf.test.js` | Le document remis au client : pages, pièces, verdict, tableau, annexe photo, typographie |
+| `test/state.test.js` | Le modèle : numérotation, suppression en cascade, cycle de vie, sauvegarde, recherche |
+| `test/aide/navigateur.js` | Les doublures de navigateur |
+| `test/aide/pdf-lecture.js` | Lecture d'un PDF : textes placés, aplats, filets, images |
+| `test/aide/rapports.js` | Rapports de référence, construits comme l'app les construit |
+
+```bash
+npm run test:mutations
+```
+
+Une suite verte ne prouve rien tant qu'on ne l'a pas vue rougir. Ce script casse
+l'app un défaut à la fois — chacun étant un défaut qu'on a réellement eu — et
+vérifie que la suite le voit. Il doit annoncer **16/16**. Un `TROU` signale un
+défaut qui passerait inaperçu : c'est un test à écrire.
+
 ## Mise en ligne (Vercel)
 
 Le projet est un site statique + une fonction serveur (`api/send.js`).
@@ -172,6 +205,7 @@ rouvrir.
 | `src/style.css` | Toute la mise en forme, jetons de couleur en tête de fichier |
 | `api/send.js` | Fonction serveur d'envoi du mail |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |
+| `test/` | Tests et harnais de lecture du PDF (voir « Tests » plus haut) |
 
 Le PDF est écrit avec les polices standard, encodées en WinAnsi. `san()` dans
 `src/pdf.js` y ramène ce qui n'y passe pas — « cœur » devient « coeur », « Szymańska »

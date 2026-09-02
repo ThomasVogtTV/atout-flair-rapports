@@ -434,7 +434,15 @@ root.addEventListener('click', async (ev) => {
   const delId = el.closest('[data-del]')?.dataset.del
   if (delId) {
     ev.stopPropagation()
-    if (confirm('Supprimer ce rapport ?')) {
+    // Un immeuble emporte ses rapports de detection : on le dit avant, pas
+    // apres. Le compte vient de la vue, deja chargee.
+    const enfants = (view.reports ?? []).find((r) => r.id === delId)
+      ? (await S.listReports()).filter((r) => r.parentId === delId).length
+      : 0
+    const question = enfants
+      ? `Supprimer ce rapport et ${enfants === 1 ? 'le rapport de détection qui en dépend' : `les ${enfants} rapports de détection qui en dépendent`} ?`
+      : 'Supprimer ce rapport ?'
+    if (confirm(question)) {
       await S.deleteReport(delId)
       goHome()
     }
@@ -1007,6 +1015,10 @@ export async function boot() {
     if (plein) return signalerStockage('refus')
     toast("Enregistrement impossible sur cet appareil. Exportez une sauvegarde avant de fermer l'app.")
   })
+  // Avant qu'un seul rapport ne puisse etre cree : le compteur de numeros vit
+  // dans localStorage, les rapports dans IndexedDB, et le navigateur peut vider
+  // le premier sans toucher au second.
+  await S.repriseCompteur()
   majReseau()
   await goHome()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour

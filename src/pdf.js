@@ -58,28 +58,49 @@ const VILLE = 'Vaugondry'
 const FOOTER_LINE1 = `${SOCIETE} · Oberli Stessy · Rue des Fontaines 6, 1423 ${VILLE} · 079 269 94 96 · info@atout-flair.ch`
 const FOOTER_LINE2 = 'www.atout-flair.ch · Chiens certifiés Bed Bug Foundation'
 
-// Les polices standard du PDF sont encodees en WinAnsi (Latin-1). Ce qui n'y
-// passe pas est ramene a son equivalent le plus proche - et non supprime, comme
-// ce fut le cas jusqu'ici : un rapport qui imprimait "au cur du matelas" pour
-// "au coeur", ou "Mme Szymaska" pour "Szymanska", partait chez la regie avec
-// des lettres en moins, sans que rien ne le signale.
-const HORS_LATIN1 = {
-  'œ': 'oe', 'Œ': 'OE', 'ł': 'l', 'Ł': 'L', 'đ': 'd', 'Đ': 'D',
-  'ø': 'o', 'Ø': 'O', 'ƒ': 'f', '€': 'EUR', '№': 'No', 'ș': 's', 'Ș': 'S', 'ț': 't', 'Ț': 'T',
+// Les polices standard du PDF sont encodees en WinAnsi. On a longtemps traite
+// celui-ci comme du Latin-1, dont il ne differe que par une trentaine de
+// signes - mais ce sont precisement ceux de la typographie francaise :
+// l'apostrophe courbe, les guillemets, le tiret cadratin, les points de
+// suspension, la ligature du "oe". Chaque rapport partait donc chez la regie
+// avec une apostrophe droite de machine a ecrire, la ligature ecrite "OE", et
+// des points de suspension en trois points - alors que la police savait les
+// ecrire toutes.
+//
+// Ce qui n'y passe vraiment pas - le polonais, le roumain - est ramene a son
+// equivalent le plus proche, et non supprime : un rapport qui imprimait
+// "Mme Szymaska" pour un nom polonais partait avec des lettres en moins sans
+// que rien ne le signale.
+const WINANSI_SUP = new Set('\u20ac\u201a\u0192\u201e\u2026\u2020\u2021\u02c6\u2030\u0160\u2039\u0152\u017d\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u02dc\u2122\u0161\u203a\u0153\u017e\u0178')
+
+const dansWinAnsi = (c) => {
+  const n = c.codePointAt(0)
+  return (n >= 0x20 && n <= 0x7e) || (n >= 0xa0 && n <= 0xff) || WINANSI_SUP.has(c)
+}
+
+const HORS_WINANSI = {
+  '\u0142': 'l', '\u0141': 'L', '\u0111': 'd', '\u0110': 'D', '\u00f8': 'o', '\u00d8': 'O',
+  '\u2116': 'No', '\u0219': 's', '\u0218': 'S', '\u021b': 't', '\u021a': 'T',
+  '\u201b': "'", '\u2032': "'", '\u2033': '"',
 }
 
 function san(s) {
-  return String(s ?? '')
-    .replace(/[‘’‛]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/[–—]/g, '-')
-    .replace(/…/g, '...')
-    .replace(/ /g, ' ')
-    .replace(/[^\x20-\x7E¡-ÿ]/g, (c) =>
-      // Le repli general : on retire l'accent et on garde la lettre. "ń" devient
-      // "n", "ě" devient "e". Ce qui n'a meme pas de forme de base disparait.
-      HORS_LATIN1[c] ?? c.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^\x20-\x7E¡-ÿ]/g, '')
-    )
+  return (
+    String(s ?? '')
+      // L'espace insecable se mesure mal au moment du retour a la ligne : elle
+      // redevient une espace ordinaire. C'est de mise en page qu'il s'agit ici,
+      // pas d'encodage - WinAnsi la porte tres bien.
+      .replace(/\u00a0/g, ' ')
+      .replace(/./gsu, (c) =>
+        dansWinAnsi(c)
+          ? c
+          : // Le repli general : on retire l'accent et on garde la lettre. Un "n"
+            // accent aigu devient "n". Ce qui n'a meme pas de forme de base
+            // disparait.
+            HORS_WINANSI[c] ??
+            [...c.normalize('NFD').replace(/\p{Diacritic}/gu, '')].filter(dansWinAnsi).join('')
+      )
+  )
 }
 
 // Un logo depose garde son format d'origine (PNG detoure, ou JPEG) : pdf-lib

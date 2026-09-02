@@ -45,10 +45,52 @@ export function newRow(type) {
 // Reference imprimee sur le rapport (ex. AF-00001). Compteur local a
 // l'appareil : suffisant pour un usage a un seul technicien, et sans
 // dependance a un serveur pour rester utilisable hors ligne.
+const REF_KEY = 'af-ref-seq'
+
+/** Le numero contenu dans une reference, ou 0 si elle n'en porte pas. */
+export const numeroDeRef = (ref) => {
+  const m = /^AF-(\d+)$/.exec(String(ref ?? '').trim())
+  return m ? Number(m[1]) : 0
+}
+
+// Copie en memoire du compteur. localStorage et IndexedDB sont deux stockages
+// que le navigateur vide separement : si le premier disparait en cours de
+// session, celle-ci continue de numeroter juste.
+let compteurMemoire = 0
+
 function nextRef() {
-  const n = Number(localStorage.getItem('af-ref-seq') ?? '0') + 1
-  localStorage.setItem('af-ref-seq', String(n))
+  const n = Math.max(Number(localStorage.getItem(REF_KEY) ?? '0'), compteurMemoire) + 1
+  compteurMemoire = n
+  localStorage.setItem(REF_KEY, String(n))
   return `AF-${String(n).padStart(5, '0')}`
+}
+
+/**
+ * Remet le compteur au niveau des rapports reellement presents dans la base.
+ *
+ * Le compteur vivait dans le seul localStorage, les rapports dans IndexedDB.
+ * Un nettoyage du navigateur, un "effacer les donnees du site", l'eviction
+ * d'une PWA non installee sur iOS : localStorage part sans emporter la base,
+ * la numerotation repart a AF-00001, et un numero deja imprime chez une regie
+ * se retrouve porte par une autre intervention. Les rapports, eux, disent la
+ * verite - ils portent leur numero.
+ *
+ * Appele au demarrage, avant qu'aucun rapport ne puisse etre cree.
+ *
+ * @returns {Promise<{compteur: number, plusHaut: number, repris: boolean}>}
+ */
+export async function repriseCompteur() {
+  const reports = await db.all('reports')
+  const plusHaut = reports.reduce((max, r) => Math.max(max, numeroDeRef(r.ref)), 0)
+  const enregistre = Number(localStorage.getItem(REF_KEY) ?? '0')
+  const compteur = Math.max(enregistre, compteurMemoire)
+  const juste = Math.max(compteur, plusHaut)
+  compteurMemoire = juste
+  // La comparaison porte sur ce que localStorage contient, et non sur le plus
+  // haut des trois : la copie en memoire masquerait sinon un localStorage vide,
+  // et la sauvegarde exportee ensuite emporterait un compteur a zero.
+  if (juste > enregistre) localStorage.setItem(REF_KEY, String(juste))
+  return { compteur, plusHaut, repris: plusHaut > compteur }
 }
 
 // Constat par defaut, pre-rempli a la creation : c'est le cas le plus frequent
@@ -229,7 +271,41 @@ export const saveReport = async (report) => {
   }
 }
 export const loadReport = (id) => db.get('reports', id)
-export const deleteReport = (id) => db.del('reports', id)
+
+/**
+ * Efface un rapport, et avec lui tout ce qui n'aurait plus de sens sans lui.
+ *
+ * Un immeuble porte des rapports de detection, un par appartement visite. Le
+ * parent efface seul, ils restaient dans la base : exclus de toutes les listes
+ * par `!r.parentId`, donc invisibles et inatteignables - mais leurs photos
+ * occupaient toujours la place de l'appareil, celle-la meme que la jauge des
+ * reglages surveille.
+ *
+ * Dans l'autre sens : un sous-rapport efface laissait sa ligne d'immeuble
+ * pointer sur du vide, et le bouton "Rapport de detection ✓" ouvrait un rapport
+ * qui n'existait plus. La ligne redevient donc une ligne sans sous-rapport.
+ *
+ * @returns {Promise<{enfants: number}>} ce qui est parti avec lui
+ */
+export async function deleteReport(id) {
+  const tous = await db.all('reports')
+  const cible = tous.find((r) => r.id === id)
+
+  const enfants = tous.filter((r) => r.parentId === id)
+  for (const enfant of enfants) await db.del('reports', enfant.id)
+
+  if (cible?.parentId) {
+    const parent = tous.find((r) => r.id === cible.parentId)
+    const ligne = parent?.rows?.find((x) => x.sousRapportId === id)
+    if (ligne) {
+      ligne.sousRapportId = null
+      await db.put('reports', parent)
+    }
+  }
+
+  await db.del('reports', id)
+  return { enfants: enfants.length }
+}
 export const listReports = async () =>
   (await db.all('reports')).sort((a, b) => b.updatedAt - a.updatedAt)
 
@@ -410,7 +486,7 @@ export async function exportBackup() {
   return {
     format: BACKUP_FORMAT,
     date: new Date().toISOString(),
-    refSeq: localStorage.getItem('af-ref-seq') ?? '0',
+    refSeq: localStorage.getItem(REF_KEY) ?? '0',
     reports,
     contacts,
     settings,
@@ -426,9 +502,12 @@ export async function importBackup(data) {
   for (const c of data.contacts ?? []) await db.put('contacts', c)
   for (const s of data.settings ?? []) await db.put('settings', s)
   // Le compteur de numeros repart au plus haut des deux : sans cela, un rapport
-  // restaure sur un appareil neuf reattribuerait un numero deja imprime.
-  const seq = Math.max(Number(localStorage.getItem('af-ref-seq') ?? '0'), Number(data.refSeq ?? '0'))
-  localStorage.setItem('af-ref-seq', String(seq))
+  // restaure sur un appareil neuf reattribuerait un numero deja imprime. Les
+  // rapports restaures ont ensuite le dernier mot (repriseCompteur) - une
+  // sauvegarde peut avoir perdu son `refSeq`, jamais les numeros qu'elle porte.
+  const seq = Math.max(Number(localStorage.getItem(REF_KEY) ?? '0'), Number(data.refSeq ?? '0'))
+  localStorage.setItem(REF_KEY, String(seq))
+  await repriseCompteur()
   return { reports: (data.reports ?? []).length, contacts: (data.contacts ?? []).length }
 }
 
@@ -513,7 +592,11 @@ export function reportFilename(report) {
   const who = slug(report.lieu.locataire || fullName(report.mandant) || 'Rapport')
   const date = frDate(report.lieu.dateIntervention || report.rows[0]?.date || todayISO())
   const adresse = slug(report.lieu.adresseIntervention || report.lieu.adresse || '')
-  const parts = [who, `${t.label} du ${date}`]
+  // Le libelle passe par le meme tamis que le nom du locataire : sans cela le
+  // fichier melangeait "Mme Elise Favre-OEuvray" - poncee jusqu'a l'ASCII - et
+  // "Rapport de détection", avec son accent. Ou l'on tient au nom de fichier
+  // sans accent, ou l'on n'y tient pas ; on ne fait pas les deux.
+  const parts = [who, `${slug(t.label)} du ${date}`]
   if (adresse) parts.push(adresse)
   return `${parts.join(' - ')}.pdf`.replace(/\s+/g, ' ')
 }
