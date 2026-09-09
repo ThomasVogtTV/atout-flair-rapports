@@ -613,6 +613,9 @@ root.addEventListener('click', async (ev) => {
     return render()
   }
 
+  const move = el.closest('[data-move-photo]')
+  if (move) return movePhoto(move.dataset.movePhoto, Number(move.dataset.dir))
+
   const thumb = el.closest('[data-photo-id]')
   if (thumb && !el.closest('[data-del-photo]')) {
     const photo = view.report.photos.find((p) => p.id === thumb.dataset.photoId)
@@ -740,6 +743,7 @@ root.addEventListener('click', async (ev) => {
     return view.screen === 'editor' && view.report?.parentId ? openReport(view.report.parentId) : goHome()
   }
   if (act === 'add-row') return insertNewRow()
+  if (act === 'residents-carnet') return residentsAuCarnet()
   if (act === 'save-contact') {
     await S.rememberContact(view.report.mandant)
     view.contacts = await S.listContacts()
@@ -919,6 +923,54 @@ root.addEventListener('drop', (ev) => {
   zone.classList.remove('survol')
   poserLogoPartenaire(ev.dataTransfer?.files?.[0])
 })
+
+/**
+ * Deplace une photo d'un cran dans son propre groupe - les photos d'une piece,
+ * ou les photos libres. L'echange se fait dans le tableau general du rapport,
+ * celui que suit l'annexe du PDF : ce qu'on voit dans la bande est l'ordre qui
+ * sera imprime.
+ */
+async function movePhoto(id, dir) {
+  const photos = view.report.photos
+  const photo = photos.find((p) => p.id === id)
+  if (!photo) return
+  const groupe = photos.filter((p) => (p.rowId ?? null) === (photo.rowId ?? null))
+  const cible = groupe.indexOf(photo) + dir
+  if (cible < 0 || cible >= groupe.length) return
+  const a = photos.indexOf(photo)
+  const b = photos.indexOf(groupe[cible])
+  ;[photos[a], photos[b]] = [photos[b], photos[a]]
+  await S.saveReport(view.report)
+  render()
+}
+
+/**
+ * Verse les residents d'un immeuble dans le carnet : chaque ligne nommee
+ * devient un contact, a l'adresse de l'immeuble et avec son numero
+ * d'appartement. Sans cela il faudrait les ressaisir un par un a la prochaine
+ * intervention dans le meme batiment.
+ */
+async function residentsAuCarnet() {
+  const r = view.report
+  const nouveaux = r.rows
+    .filter((row) => (row.resident || '').trim())
+    .map((row) => ({
+      type: 'locataire',
+      nom: row.resident.trim(),
+      prenom: '',
+      adresse: [r.lieu.adresse, row.numero && `app. ${row.numero}`].filter(Boolean).join(', '),
+      npaLieu: r.lieu.npaLieu ?? '',
+      email: '',
+      tel: '',
+    }))
+  const { ajoutes, connus } = await S.ajouterContacts(nouveaux)
+  view.contacts = await S.listContacts()
+  toast(
+    ajoutes
+      ? `${ajoutes} résident${ajoutes > 1 ? 's' : ''} ajouté${ajoutes > 1 ? 's' : ''} au carnet${connus ? `, ${connus} déjà connu${connus > 1 ? 's' : ''}` : ''}`
+      : 'Tous ces résidents sont déjà dans le carnet'
+  )
+}
 
 async function createChild(rowId) {
   const parent = view.report

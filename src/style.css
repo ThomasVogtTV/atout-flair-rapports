@@ -1437,6 +1437,37 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   box-shadow: var(--shadow-sm);
 }
 
+/* Ordre des photos. Le glisser-deposer serait plus elegant, mais au doigt,
+   sur une bande qui defile deja lateralement, il se confond avec le
+   defilement : deux fleches et le numero sont plus surs. */
+.thumb-order {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 7px;
+  background: rgba(20, 18, 16, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.thumb-move {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.thumb-move:disabled { opacity: 0.32; cursor: default; }
+.thumb-rank { color: #fff; font-size: 11px; font-weight: 700; }
+
 /* --- case du logo partenaire --- */
 
 /* Un cadre en pointille dit qu'il attend quelque chose ; une fois le logo pose,

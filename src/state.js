@@ -364,6 +364,32 @@ export async function rememberContact(mandant) {
 }
 
 /**
+ * Entre plusieurs contacts d'un coup, sans jamais ecraser un existant : deux
+ * "M. Rochat" a deux adresses sont deux personnes, et un carnet qui se
+ * reecrit tout seul cesse d'etre une reference.
+ *
+ * @param {object[]} nouveaux
+ * @returns {Promise<{ajoutes: number, connus: number}>}
+ */
+export async function ajouterContacts(nouveaux) {
+  const cle = (c) => `${fullName(c).toLowerCase()}|${(c.adresse || '').trim().toLowerCase()}`
+  const vus = new Set((await listContacts()).map(cle))
+  let ajoutes = 0
+  let connus = 0
+  for (const c of nouveaux) {
+    if (!(c.nom || '').trim()) continue
+    if (vus.has(cle(c))) {
+      connus++
+      continue
+    }
+    vus.add(cle(c))
+    await db.put('contacts', { id: uid(), ...c })
+    ajoutes++
+  }
+  return { ajoutes, connus }
+}
+
+/**
  * Contacts du carnet qui correspondent a ce qui est en train d'etre tape.
  * La recherche porte sur le nom, le prenom et le lieu : on cherche parfois une
  * regie par sa ville quand son nom exact echappe.

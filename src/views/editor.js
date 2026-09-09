@@ -51,13 +51,26 @@ function constatChips() {
   ).join('')}</div>`
 }
 
+// Les photos arrivent dans l'ordre des prises, qui n'est pas toujours celui du
+// recit. La barre du bas porte le numero que la photo aura dans l'annexe du
+// PDF, et une fleche de chaque cote pour la deplacer.
 function photoStrip(photos) {
   if (!photos.length) return ''
+  const n = photos.length
   return `<div class="photos">${photos
     .map(
-      (p) => `<div class="thumb" data-photo-id="${p.id}">
+      (p, i) => `<div class="thumb" data-photo-id="${p.id}">
         <img src="${p.dataUrl}" alt="" />
         <button class="thumb-del" data-del-photo="${p.id}">✕</button>
+        ${
+          n > 1
+            ? `<div class="thumb-order">
+                <button class="thumb-move" data-move-photo="${p.id}" data-dir="-1"${i === 0 ? ' disabled' : ''} title="Reculer">‹</button>
+                <span class="thumb-rank">${i + 1}</span>
+                <button class="thumb-move" data-move-photo="${p.id}" data-dir="1"${i === n - 1 ? ' disabled' : ''} title="Avancer">›</button>
+              </div>`
+            : ''
+        }
       </div>`
     )
     .join('')}</div>`
@@ -268,6 +281,18 @@ function piecesSection(view, r, t) {
     <button class="btn ghost wide" data-act="add-row">+ Ajouter une pièce</button>`
 }
 
+// Un immeuble apporte d'un coup les coordonnees d'un batiment entier. Le
+// bouton n'apparait que la ou il a un sens : dans un hotel, la colonne du meme
+// nom decrit l'occupation d'une chambre, pas une personne.
+function residentsSection(r, t) {
+  if (t.id !== 'immeuble') return ''
+  const n = r.rows.filter((row) => (row.resident || '').trim()).length
+  if (!n) return ''
+  return `<button class="btn ghost wide" data-act="residents-carnet">+ Ajouter ${
+    n > 1 ? `les ${n} résidents` : 'le résident'
+  } au carnet</button>`
+}
+
 function lignesSection(view, r, t) {
   const etages = t.columns.find((c) => c.key === 'etage')?.suggestions ?? []
   return `
@@ -279,7 +304,8 @@ function lignesSection(view, r, t) {
     </h2>
     <datalist id="etages-list">${etages.map((s) => `<option value="${esc(s)}"></option>`).join('')}</datalist>
     <div class="rows">${r.rows.map((row, i) => rowCardHTML(view, row, i)).join('')}</div>
-    <button class="btn ghost wide" data-act="add-row">+ Ajouter une ligne</button>`
+    <button class="btn ghost wide" data-act="add-row">+ Ajouter une ligne</button>
+    ${residentsSection(r, t)}`
 }
 
 // Signature de la personne presente. Son nom est un champ a part entiere : sur
