@@ -71,3 +71,22 @@ describe('les resumes', () => {
     assert.equal(relu.photos.length, 1)
   })
 })
+
+describe("l'avancement d'un rapport en cours", () => {
+  test('compte les lignes deja tranchees', async () => {
+    const r = rapportDetection()
+    r.rows.forEach((x, i) => (x.contamine = i < 2 ? 'non' : ''))
+    await S.saveReport(r)
+    assert.deepEqual(contenu('resumes')[0].avancement, { fait: 2, total: r.rows.length })
+  })
+
+  test("se recalcule pour un resume d'une version precedente", async () => {
+    const r = rapportDetection()
+    await db.put('reports', r)
+    await db.put('resumes', { id: r.id, resume: true })
+    await S.synchroniserResumes()
+    const [resume] = contenu('resumes')
+    assert.equal(resume.avancement.total, r.rows.length)
+    assert.equal(resume.ref, r.ref)
+  })
+})

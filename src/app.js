@@ -329,6 +329,7 @@ async function refreshContacts() {
 // (accueil <-> rapport, ou changement de rapport ouvert), pas a chaque
 // re-rendu local (ajout d'une ligne, d'une photo, etc.).
 let lastViewKey = null
+let entreeTimer = null
 
 function render() {
   const key = `${view.screen}:${view.report?.id ?? ''}`
@@ -356,6 +357,11 @@ function render() {
     root.classList.remove('view-enter')
     void root.offsetWidth // force le reflow pour redemarrer l'animation
     root.classList.add('view-enter')
+    // Les blocs de l'accueil entrent l'un apres l'autre, a l'arrivee
+    // seulement : un re-rendu (un filtre, une recherche) ne les rejoue pas.
+    root.classList.add('entree')
+    clearTimeout(entreeTimer)
+    entreeTimer = setTimeout(() => root.classList.remove('entree'), 900)
   }
   updatePendingBadge()
   if (view.screen === 'editor' && view.report) chargerVignettes(view.report.photos, root)

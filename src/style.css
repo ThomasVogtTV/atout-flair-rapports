@@ -1939,3 +1939,196 @@ span.contact-etoile svg { width: 15px; height: 15px; }
 .fiche-suppr { margin-top: 22px; }
 
 .picker-liste { margin-top: 10px; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; }
+
+/* ==========================================================================
+   Accueil : l'en-tete photo, les chiffres du jour, le grand bouton
+   --------------------------------------------------------------------------
+   La photo des chiens gagne de la hauteur : c'est l'identite de la maison, et
+   elle ne se voyait plus qu'en bandeau. Dessus, trois tuiles vitrees disent
+   ce qu'on vient chercher le matin. Pas de flou d'arriere-plan sur ces tuiles
+   : elles defilent avec la page, et le flou se recalculerait a chaque image.
+   Un voile sombre translucide donne la meme matiere, sans le calcul.
+   ========================================================================== */
+.hero-caption {
+  min-height: 188px;
+  max-width: none;
+  padding: 20px 20px 14px;
+}
+.hero-caption h2 {
+  margin: 10px 0 2px;
+  font-size: clamp(31px, 9.2vw, 38px);
+  font-weight: 800;
+  letter-spacing: -1.2px;
+  line-height: 1;
+}
+.hero-caption .hero-date {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+.hero-stats {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.hero-stat {
+  display: grid;
+  gap: 2px;
+  padding: 11px 12px 10px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 60%), rgba(12, 15, 18, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 24px -16px rgba(0, 0, 0, 0.6);
+}
+.hero-stat b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
+}
+.hero-stat span { font-size: 11px; font-weight: 600; opacity: 0.8; line-height: 1.2; }
+/* Le seul chiffre qui reclame un geste prend la couleur de la maison. */
+.hero-stat.vif b { color: #9ad8e3; }
+.hero-alertes {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -6px;
+  padding: 0 16px 16px;
+}
+.hero-alerte-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(12, 15, 18, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.hero-alerte-chip.alerte { color: #ffd9cf; background: rgba(110, 36, 28, 0.55); border-color: rgba(243, 183, 168, 0.45); }
+
+/* --- le grand bouton : le rapport de neuf interventions sur dix ---------- */
+.nouveau { display: grid; gap: 8px; }
+.cta-principal {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 14px 16px 14px;
+  border: 0;
+  border-radius: 20px;
+  font: inherit;
+  text-align: left;
+  color: #fff;
+  cursor: pointer;
+  /* Le petrole du PDF, en profondeur : une lumiere douce en haut a gauche, la
+     teinte pleine, puis le meme ton assombri vers le bas. Mat, pas verni. */
+  background:
+    radial-gradient(130% 150% at 0% 0%, color-mix(in srgb, var(--accent-fill) 55%, white) 0%, transparent 52%),
+    linear-gradient(140deg, var(--accent-fill) 20%, color-mix(in srgb, var(--accent-fill) 62%, #06161a));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 16px 30px -18px color-mix(in srgb, var(--accent-fill) 95%, transparent),
+    0 2px 4px rgba(10, 20, 22, 0.18);
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.16s;
+}
+/* Un halo tres doux dans l'angle : il donne le volume sans rien dessiner. */
+.cta-principal::after {
+  content: '';
+  position: absolute;
+  right: -46px;
+  top: -58px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 68%);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .cta-principal:hover { transform: translateY(-2px); }
+}
+.cta-principal:active { transform: scale(0.982); }
+.cta-icone {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.cta-icone svg { width: 27px; height: 27px; }
+.cta-texte { position: relative; z-index: 1; flex: 1; min-width: 0; display: grid; gap: 1px; }
+.cta-sur { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.78; }
+.cta-titre { font-size: 17.5px; font-weight: 800; letter-spacing: -0.35px; line-height: 1.2; }
+.cta-sous { font-size: 12.5px; opacity: 0.86; }
+.cta-go {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+.cta-go svg { width: 18px; height: 18px; }
+
+/* Les deux autres types : couches, a cote l'un de l'autre. */
+.types-secondaires { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.types-secondaires .type-chip {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 11px 11px;
+  text-align: left;
+  border-radius: 16px;
+}
+.type-chip-texte { display: grid; gap: 1px; min-width: 0; }
+.types-secondaires .type-chip-name { font-size: 13.5px; }
+
+/* --- "En cours" : ou en est la visite ------------------------------------ */
+.lead-progres { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.lead-barre {
+  flex: 1;
+  max-width: 150px;
+  height: 5px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+}
+.lead-barre > span {
+  display: block;
+  width: var(--p);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, white));
+}
+.lead-progres-txt { font-size: 11px; font-weight: 650; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* --- entree en cascade, a l'arrivee sur l'accueil seulement ------------- */
+.content-sheet > .reveal:first-child > .section-title:first-child { margin-top: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  #app.entree .reveal {
+    animation: reveal-up 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 65ms);
+  }
+}
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}

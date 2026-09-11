@@ -130,12 +130,22 @@ function enCoursHTML(reports) {
     const t = typeOf(r)
     const qui = r.lieu?.locataire || fullName(r.mandant) || `Rapport ${r.ref}`
     const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+    // Ou en est la visite : les pieces deja tranchees sur l'ensemble. Voir
+    // resumeDe dans state.js.
+    const av = r.avancement
+    const progres = av?.total
+      ? `<span class="lead-progres">
+           <span class="lead-barre"><span style="--p:${Math.round((av.fait / av.total) * 100)}%"></span></span>
+           <span class="lead-progres-txt">${av.fait}/${av.total} ${esc(t.rowLabel)}${av.total > 1 ? 's' : ''}</span>
+         </span>`
+      : ''
     return `
     <button type="button" class="lead-row" data-open="${r.id}">
       <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="lead-body">
         <span class="lead-name">${esc(qui)}</span>
         <span class="lead-where">${esc([ou, quand(r.updatedAt)].filter(Boolean).join(' · '))}</span>
+        ${progres}
       </span>
       <span class="lead-go">${ICONS.chevron}</span>
     </button>`
@@ -149,19 +159,34 @@ function enCoursHTML(reports) {
 
 // --- je commence ? ---------------------------------------------------------
 
+// Neuf fois sur dix, on ouvre l'app devant une porte d'appartement : ce type-la
+// devient le grand bouton de l'ecran, plein de la couleur de la maison. Les
+// deux autres restent a portee, juste dessous, sans lui disputer l'oeil.
 function nouveauHTML() {
-  const choices = TYPE_LIST.map(
-    (t) => `
+  const [principal, ...autres] = TYPE_LIST
+  const secondaire = (t) => `
     <button type="button" class="type-chip card-${t.id}" data-new="${t.id}">
       <span class="type-chip-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
-      <span class="type-chip-name">${esc(t.choix)}</span>
-      <span class="type-chip-hint">${esc(t.hint)}</span>
+      <span class="type-chip-texte">
+        <span class="type-chip-name">${esc(t.choix)}</span>
+        <span class="type-chip-hint">${esc(t.hint)}</span>
+      </span>
     </button>`
-  ).join('')
 
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('plus', 'accent')}Nouveau rapport</span></h2>
-    <div class="type-chips">${choices}</div>`
+    <div class="nouveau">
+      <button type="button" class="cta-principal" data-new="${principal.id}">
+        <span class="cta-icone">${ICONS[principal.id] ?? ''}</span>
+        <span class="cta-texte">
+          <span class="cta-sur">Le plus courant</span>
+          <span class="cta-titre">${esc(principal.choix)}</span>
+          <span class="cta-sous">${esc(principal.hint)}</span>
+        </span>
+        <span class="cta-go">${ICONS.chevron}</span>
+      </button>
+      <div class="types-secondaires">${autres.map(secondaire).join('')}</div>
+    </div>`
 }
 
 // --- je cherche ? ----------------------------------------------------------
@@ -304,8 +329,18 @@ function sessionHTML() {
 }
 
 function heroHTML(view) {
-  const jour = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
+  const maintenant = new Date()
+  const jour = maintenant.toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
+  const heure = maintenant.getHours()
+  const salut = heure >= 5 && heure < 18 ? 'Bonjour' : 'Bonsoir'
+
+  // Trois chiffres, ceux qu'on vient chercher le matin : ce qui reste sur les
+  // bras, et ce que le mois a deja produit.
+  const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).getTime()
   const brouillons = view.reports.filter(S.enCours).length
+  const crees = view.reports.filter((r) => (r.createdAt ?? 0) >= debutMois).length
+  const remis = view.reports.filter((r) => S.estTermine(r) && (r.sentAt ?? r.remisAt ?? r.updatedAt ?? 0) >= debutMois).length
+
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
   // perdre - et il doit apparaitre la ou l'on passe, pas seulement dans les
   // reglages, ou l'on ne va justement jamais.
@@ -314,30 +349,37 @@ function heroHTML(view) {
   // elle n'a pas pu passer depuis une semaine.
   const enLigneRecente = Date.now() - derniereSauvegarde() < 7 * 86_400_000
   const sauvegardeEnRetard = view.reports.length > 0 && !enLigneRecente && (jours === null || jours > 30)
-  // Seul ce qui reclame un geste porte la couleur d'alerte. La ligne entiere y
-  // passait des qu'un seul de ses morceaux alertait : "10 rapports en cours"
-  // devenait rouge parce que la sauvegarde datait.
   // La place restante ne s'annonce qu'au moment ou elle devient un probleme :
   // une jauge permanente sur l'accueil serait du bruit trois cent jours par an.
   const memoirePleine = (view.stockage?.part ?? 0) > S.STOCKAGE_ALERTE
-  const bilan = [
-    brouillons && { t: `${brouillons} rapport${brouillons > 1 ? 's' : ''} en cours` },
+  // Seul ce qui reclame un geste porte la couleur d'alerte.
+  const alertes = [
     view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true },
     !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` },
-    memoirePleine && { t: 'mémoire presque pleine', alerte: true },
-    sauvegardeEnRetard && { t: 'sauvegarde à faire', alerte: true },
+    memoirePleine && { t: 'Mémoire presque pleine', alerte: true },
+    sauvegardeEnRetard && { t: 'Sauvegarde à faire', alerte: true },
   ].filter(Boolean)
+
+  const tuile = (n, libelle, classe = '') => `<div class="hero-stat${classe}"><b>${n}</b><span>${libelle}</span></div>`
   return `
-    <div class="hero-caption">
+    <div class="hero-caption reveal" style="--i:0">
       <span class="hero-kicker">Détection canine professionnelle</span>
-      <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
-      <p>${
-        bilan.length
-          ? bilan.map((m) => (m.alerte ? `<b class="hero-alerte">${esc(m.t)}</b>` : esc(m.t))).join(' · ')
-          : 'Tout est à jour'
-      }</p>
+      <h2>${salut}</h2>
+      <p class="hero-date">${esc(jour[0].toUpperCase() + jour.slice(1))}</p>
       ${sessionHTML()}
-    </div>`
+    </div>
+    <div class="hero-stats reveal" style="--i:1">
+      ${tuile(brouillons, 'en cours', brouillons ? ' vif' : '')}
+      ${tuile(crees, 'créés ce mois')}
+      ${tuile(remis, 'remis ce mois')}
+    </div>
+    ${
+      alertes.length
+        ? `<div class="hero-alertes reveal" style="--i:1">${alertes
+            .map((m) => `<span class="hero-alerte-chip${m.alerte ? ' alerte' : ''}">${esc(m.t)}</span>`)
+            .join('')}</div>`
+        : ''
+    }`
 }
 
 export function homeView(view) {
@@ -364,8 +406,8 @@ export function homeView(view) {
     </header>
     ${heroHTML(view)}
     <section class="content-sheet">
-      ${nouveauHTML()}
-      ${enCoursHTML(view.reports)}
-      ${mesRapportsHTML(view)}
+      <div class="reveal" style="--i:2">${nouveauHTML()}</div>
+      <div class="reveal" style="--i:3">${enCoursHTML(view.reports)}</div>
+      <div class="reveal" style="--i:4">${mesRapportsHTML(view)}</div>
     </section>`
 }

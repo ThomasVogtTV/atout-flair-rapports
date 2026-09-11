@@ -326,14 +326,23 @@ export const loadReport = (id) => db.get('reports', id)
 // signatures. Les listes ne lisent que lui ; le rapport entier ne se charge
 // qu'a l'ouverture.
 
+// A monter quand le resume gagne un champ : les resumes d'une version plus
+// ancienne se refont d'eux-memes au demarrage (voir synchroniserResumes).
+const VERSION_RESUME = 2
+
 /** Le rapport sans ce qui pese. Marque, pour ne jamais etre enregistre a sa place. */
 export function resumeDe(report) {
   const { photos, signature, rows, technicien, partenaire, ...reste } = report
+  const lignes = rows ?? []
   return {
     ...reste,
     resume: true,
+    v: VERSION_RESUME,
     rows: [],
     nPhotos: photos?.length ?? 0,
+    // Ou en est la visite, pour la barre de l'accueil : les lignes deja
+    // tranchees (contaminee, rien trouve, a revoir) sur l'ensemble.
+    avancement: { fait: lignes.filter((l) => l.contamine).length, total: lignes.length },
     technicien: { nom: technicien?.nom ?? '' },
     partenaire: { nom: partenaire?.nom ?? '' },
   }
@@ -352,15 +361,17 @@ export async function ecrireRapport(report) {
  * demarrage apres la mise a jour, une ecriture interrompue).
  */
 export async function synchroniserResumes() {
-  const [rapports, resumes] = await Promise.all([db.keys('reports'), db.keys('resumes')])
-  const connus = new Set(resumes)
+  // Les resumes sont legers : les relire tous coute peu, et dit lesquels
+  // datent d'une version precedente.
+  const [rapports, resumes] = await Promise.all([db.keys('reports'), db.all('resumes')])
+  const aJour = new Set(resumes.filter((r) => r.v === VERSION_RESUME).map((r) => r.id))
   const presents = new Set(rapports)
   for (const id of rapports) {
-    if (connus.has(id)) continue
+    if (aJour.has(id)) continue
     const r = await db.get('reports', id)
     if (r) await db.put('resumes', resumeDe(r))
   }
-  for (const id of resumes) if (!presents.has(id)) await db.del('resumes', id)
+  for (const r of resumes) if (!presents.has(r.id)) await db.del('resumes', r.id)
 }
 
 /** Les sous-rapports d'un immeuble, en entier : le PDF fusionne en a besoin. */
