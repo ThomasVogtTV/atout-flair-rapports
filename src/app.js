@@ -25,7 +25,7 @@ import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
-import { nomClient } from './agenda-outils.js'
+import { nomClient, decalerMois } from './agenda-outils.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
@@ -336,6 +336,9 @@ async function openAgenda() {
   await flushSave()
   view = { ...view, screen: 'agenda', report: null, retour: null }
   view.agenda ??= agendaEnCache()
+  // Le calendrier s'ouvre sur aujourd'hui.
+  view.agendaJour = S.todayISO()
+  view.agendaMois = view.agendaJour.slice(0, 7)
   render()
   rafraichirAgenda()
 }
@@ -370,11 +373,15 @@ async function editerRdv(rdv = null) {
   if (!navigator.onLine) return toast("Pas de réseau : l'agenda de l'équipe se modifie avec du réseau.")
   const admin = estAdmin()
   const [contacts, equipe] = await Promise.all([contactsVisibles(), admin ? equipePourAgenda() : null])
-  const saisi = await formulaireRdv(rdv, { contacts, reports: view.reports ?? [], equipe, admin, choisirContact })
+  const date = view.screen === 'agenda' ? view.agendaJour : undefined
+  const saisi = await formulaireRdv(rdv, { contacts, reports: view.reports ?? [], equipe, admin, choisirContact, date })
   if (!saisi) return
   try {
     await enregistrerRdv(saisi)
     toast(rdv ? 'Rendez-vous modifié' : 'Rendez-vous ajouté')
+    // Le calendrier se place sur le jour du rendez-vous, pour le montrer.
+    view.agendaJour = saisi.date
+    view.agendaMois = saisi.date.slice(0, 7)
   } catch (err) {
     return toast(err.message)
   }
@@ -765,6 +772,20 @@ root.addEventListener('click', async (ev) => {
     // Un rapport ouvert depuis la fiche d'un client y ramene au retour.
     if (view.screen === 'fiche') view.retour = view.fiche.id
     return openReport(openId)
+  }
+
+  // Le calendrier : un jour touche (il peut etre du mois voisin, le calendrier
+  // suit), ou les fleches d'un mois a l'autre.
+  const jourAgenda = el.closest('[data-agenda-jour]')?.dataset.agendaJour
+  if (jourAgenda) {
+    view.agendaJour = jourAgenda
+    view.agendaMois = jourAgenda.slice(0, 7)
+    return render()
+  }
+  const pasMois = el.closest('[data-agenda-mois]')?.dataset.agendaMois
+  if (pasMois) {
+    view.agendaMois = decalerMois(view.agendaMois ?? S.todayISO().slice(0, 7), Number(pasMois))
+    return render()
   }
 
   // Un rendez-vous de l'agenda (ou de l'accueil) : sa fiche.

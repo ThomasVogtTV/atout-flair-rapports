@@ -44,6 +44,9 @@ export async function chargerAgenda() {
   if (!navigator.onLine || !currentCode()) return agendaEnCache()
   try {
     const data = await appel('GET')
+    // Une reponse qui n'est pas un agenda (page d'erreur, reseau de captif
+    // d'hotel...) ne doit pas ecraser la derniere version valable.
+    if (!Array.isArray(data?.rdvs)) return agendaEnCache()
     retenir(data)
     return data
   } catch {

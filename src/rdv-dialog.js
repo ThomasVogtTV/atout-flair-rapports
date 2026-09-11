@@ -76,10 +76,11 @@ export function ouvrirRdv(rdv, { modifiable }) {
  * @param {{contacts: object[], reports: object[], equipe: object[]|null, admin: boolean, choisirContact: Function}} ctx
  * @returns {Promise<object|null>} le rendez-vous saisi, ou null si l'on renonce
  */
-export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact }) {
+export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date }) {
+  // Un nouveau rendez-vous prend le jour touche dans le calendrier.
   const r = rdv
     ? structuredClone(rdv)
-    : { id: uid(), date: todayISO(), heure: '', type: 'detection', client: clientVide(), lieu: { adresse: '', npaLieu: '' }, note: '', pour: null }
+    : { id: uid(), date: date || todayISO(), heure: '', type: 'detection', client: clientVide(), lieu: { adresse: '', npaLieu: '' }, note: '', pour: null }
 
   const choixPour = admin
     ? `<label class="full">Pour

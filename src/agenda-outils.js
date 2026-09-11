@@ -26,6 +26,40 @@ export const plusJours = (iso, n) => {
   return isoDe(new Date(a, m - 1, j + n))
 }
 
+// --- le calendrier du mois ---------------------------------------------------
+
+/** Le mois d'une date : "2026-09". */
+export const moisDe = (iso) => iso.slice(0, 7)
+
+export function decalerMois(mois, n) {
+  const [a, m] = mois.split('-').map(Number)
+  const d = new Date(a, m - 1 + n, 1)
+  return `${d.getFullYear()}-${deux(d.getMonth() + 1)}`
+}
+
+/** "Septembre 2026". */
+export function libelleMois(mois) {
+  const [a, m] = mois.split('-').map(Number)
+  const s = new Date(a, m - 1, 1).toLocaleDateString('fr-CH', { month: 'long', year: 'numeric' })
+  return s[0].toUpperCase() + s.slice(1)
+}
+
+/**
+ * Les cases du calendrier d'un mois, semaine par semaine, lundi en premier
+ * (l'usage suisse). Les jours des mois voisins completent la premiere et la
+ * derniere semaine ; cinq ou six semaines selon le mois.
+ */
+export function grilleMois(mois) {
+  const [a, m] = mois.split('-').map(Number)
+  const decalage = (new Date(a, m - 1, 1).getDay() + 6) % 7
+  const jours = new Date(a, m, 0).getDate()
+  const cases = Math.ceil((decalage + jours) / 7) * 7
+  return Array.from({ length: cases }, (_, i) => {
+    const d = new Date(a, m - 1, 1 - decalage + i)
+    return { iso: isoDe(d), jour: d.getDate(), dansMois: d.getMonth() === m - 1 }
+  })
+}
+
 export const aVenir = (rdvs, aujourdhui) => trierRdv(rdvs.filter((r) => r.date >= aujourdhui))
 
 /** Les rendez-vous des deux dernieres semaines, du plus recent au plus ancien. */

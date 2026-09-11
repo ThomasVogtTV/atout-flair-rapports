@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { nettoyerRdv, visiblesPour, peutModifier } from '../api/_lib/agenda.js'
 import * as E from '../api/_lib/equipe.js'
 import handler from '../api/agenda.js'
-import { fichierIcs, lienGoogleAgenda, trierRdv, libelleJour, plusJours, aVenir } from '../src/agenda-outils.js'
+import { fichierIcs, lienGoogleAgenda, trierRdv, libelleJour, plusJours, aVenir, grilleMois, decalerMois, libelleMois } from '../src/agenda-outils.js'
 
 const rdvBrut = (x = {}) => ({ id: 'r1', date: '2026-09-14', heure: '14:30', type: 'immeuble', client: { type: 'gerance', nom: 'Régie Duval' }, ...x })
 
@@ -138,5 +138,24 @@ describe("vers l'agenda du telephone", () => {
     assert.equal(libelleJour(plusJours('2026-09-11', 1), '2026-09-11'), 'Demain')
     assert.match(libelleJour('2026-09-14', '2026-09-11'), /^Lundi 14 septembre$/)
     assert.equal(aVenir([{ date: '2026-09-10' }, { date: '2026-09-12' }], '2026-09-11').length, 1)
+  })
+})
+
+describe('le calendrier du mois', () => {
+  // Septembre 2026 commence un mardi : la grille part du lundi 31 aout.
+  test('commence un lundi et couvre des semaines entieres', () => {
+    const g = grilleMois('2026-09')
+    assert.equal(g[0].iso, '2026-08-31')
+    assert.equal(g[0].dansMois, false)
+    assert.equal(g[1].iso, '2026-09-01')
+    assert.equal(g.length % 7, 0)
+    assert.equal(g.filter((c) => c.dansMois).length, 30)
+    assert.equal(g.at(-1).iso, '2026-10-04')
+  })
+
+  test('passe d un mois a l autre, annee comprise', () => {
+    assert.equal(decalerMois('2026-12', 1), '2027-01')
+    assert.equal(decalerMois('2026-01', -1), '2025-12')
+    assert.equal(libelleMois('2026-09'), 'Septembre 2026')
   })
 })

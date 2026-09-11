@@ -4,7 +4,7 @@
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { todayISO } from '../state.js'
-import { aVenir, recents, libelleJour, nomClient, adresseRdv, typeRdv } from '../agenda-outils.js'
+import { aVenir, libelleJour, nomClient, adresseRdv, typeRdv, trierRdv, grilleMois, libelleMois, moisDe } from '../agenda-outils.js'
 
 /**
  * Une ligne de rendez-vous : l'heure en tete, le type, le client et l'adresse.
@@ -53,50 +53,85 @@ export function rdvAccueilHTML(view) {
     <ul class="report-list">${montres.map((r) => rdvLigneHTML(r, { montrerQui: qui(r) })).join('')}</ul>`
 }
 
+const JOURS_SEMAINE = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+
+/**
+ * Le calendrier du mois, comme sur un telephone : un point de la couleur du
+ * type sous chaque jour qui a un rendez-vous, aujourd'hui cercle, le jour
+ * choisi plein. Dessous, les rendez-vous de ce jour-la.
+ */
 export function agendaView(view) {
   const a = view.agenda
-  const jour = todayISO()
+  const aujourdhui = todayISO()
+  const jour = view.agendaJour ?? aujourdhui
+  const mois = view.agendaMois ?? moisDe(jour)
   const invite = a?.role === 'invite'
-  const avenir = a ? aVenir(a.rdvs ?? [], jour) : []
-  const passes = a ? recents(a.rdvs ?? [], jour) : []
   const qui = a ? pasAMoi(a) : () => false
 
-  // Groupes par jour, dans l'ordre.
   const parJour = new Map()
-  for (const r of avenir) parJour.set(r.date, [...(parJour.get(r.date) ?? []), r])
-  const groupes = [...parJour]
-    .map(
-      ([date, rdvs]) => `
-      <h3 class="agenda-jour${date === jour ? ' aujourdhui' : ''}">${esc(libelleJour(date, jour))}</h3>
-      <ul class="report-list">${rdvs.map((r) => rdvLigneHTML(r, { montrerQui: qui(r) })).join('')}</ul>`
-    )
+  for (const r of a?.rdvs ?? []) parJour.set(r.date, [...(parJour.get(r.date) ?? []), r])
+
+  const cases = grilleMois(mois)
+    .map((c) => {
+      const du = parJour.get(c.iso) ?? []
+      const classes = [
+        'cal-case',
+        c.dansMois ? '' : 'hors',
+        c.iso === aujourdhui ? 'aujourdhui' : '',
+        c.iso === jour ? 'choisi' : '',
+        du.length ? 'occupe' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+      const points = du
+        .slice(0, 3)
+        .map((r) => `<i class="cal-point t-${r.type}"></i>`)
+        .join('')
+      const titre = `${libelleJour(c.iso, aujourdhui)}${du.length ? ` : ${du.length} rendez-vous` : ''}`
+      return `<button type="button" class="${classes}" data-agenda-jour="${c.iso}" aria-label="${esc(titre)}">
+        <span class="cal-num">${c.jour}</span>
+        <span class="cal-points">${points}${du.length > 3 ? '<i class="cal-plus">+</i>' : ''}</span>
+      </button>`
+    })
     .join('')
 
+  const duJour = trierRdv(parJour.get(jour) ?? [])
   const vide = !a
     ? navigator.onLine
       ? "Chargement de l'agenda…"
       : "Hors ligne : l'agenda s'affichera au retour du réseau."
-    : invite
-      ? 'Aucun rendez-vous prévu pour vous.'
-      : 'Aucun rendez-vous à venir. « + Ajouter » pour en noter un.'
+    : 'Aucun rendez-vous ce jour-là.'
+  const ailleurs = mois !== moisDe(aujourdhui) || jour !== aujourdhui
+  const avenir = a ? aVenir(a.rdvs ?? [], aujourdhui).length : 0
 
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home">‹</button>
       <div class="top-title">
         <h1>Agenda</h1>
-        <p class="muted">${avenir.length} rendez-vous à venir</p>
+        <p class="muted">${avenir} rendez-vous à venir</p>
       </div>
       ${invite ? '' : `<span class="top-actions"><button class="btn ghost btn-mini" data-act="ajouter-rdv">+ Ajouter</button></span>`}
     </header>
     <section class="pad">
       ${a && !navigator.onLine ? '<p class="muted small agenda-horsligne">Hors ligne : dernière version enregistrée sur ce téléphone.</p>' : ''}
-      ${groupes || `<p class="empty">${esc(vide)}</p>`}
+      <div class="card calendrier">
+        <div class="cal-tete">
+          <button type="button" class="icon-btn cal-nav" data-agenda-mois="-1" aria-label="Mois précédent">‹</button>
+          <strong class="cal-titre">${esc(libelleMois(mois))}</strong>
+          <button type="button" class="icon-btn cal-nav" data-agenda-mois="1" aria-label="Mois suivant">›</button>
+        </div>
+        <div class="cal-semaine">${JOURS_SEMAINE.map((j) => `<span>${j}</span>`).join('')}</div>
+        <div class="cal-grille">${cases}</div>
+        ${ailleurs ? `<button type="button" class="link cal-auj" data-agenda-jour="${aujourdhui}">Revenir à aujourd'hui</button>` : ''}
+      </div>
+
+      <h3 class="agenda-jour${jour === aujourdhui ? ' aujourdhui' : ''}">${esc(libelleJour(jour, aujourdhui))}</h3>
       ${
-        passes.length
-          ? `<h3 class="agenda-jour passe">Ces deux dernières semaines</h3>
-             <ul class="report-list passes">${passes.map((r) => rdvLigneHTML(r, { montrerQui: qui(r) })).join('')}</ul>`
-          : ''
+        duJour.length
+          ? `<ul class="report-list">${duJour.map((r) => rdvLigneHTML(r, { montrerQui: qui(r) })).join('')}</ul>`
+          : `<p class="empty">${esc(vide)}</p>`
       }
+      ${invite ? '' : '<button type="button" class="btn ghost wide agenda-ajouter" data-act="ajouter-rdv">+ Ajouter un rendez-vous ce jour-là</button>'}
     </section>`
 }
