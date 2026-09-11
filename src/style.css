@@ -1657,3 +1657,42 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   #app { max-width: 780px; margin: 0 auto; }
   .bottom-bar { max-width: 780px; margin: 0 auto; border-radius: 18px 18px 0 0; }
 }
+
+/* --- verrou : code d'acces a chaque ouverture (src/lock.js) --- */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-solid);
+}
+body.verrouille { overflow: hidden; }
+.lock-card {
+  width: 100%;
+  max-width: 320px;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  background: var(--card-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 30px 22px 24px;
+}
+.lock-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  padding: 7px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.lock-card h1 { margin: 2px 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.4px; }
+.lock-card p { margin: 0; }
+.lock-input { width: 100%; text-align: center; letter-spacing: 0.06em; }
+.lock-error { min-height: 16px; font-size: 12.5px; font-weight: 600; color: var(--red); }

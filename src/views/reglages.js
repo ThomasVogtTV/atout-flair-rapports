@@ -66,12 +66,12 @@ export function reglagesView(view) {
         <p class="muted small reglage-note">« Système » suit le réglage du téléphone : sombre le soir s'il l'est.</p>
       </div>
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('mail', 'accent')}Code d'envoi</span></h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('mail', 'accent')}Code d'accès</span></h2>
       <div class="card">
         <input data-app-code type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
                value="${esc(currentCode())}" placeholder="Non renseigné sur cet appareil" />
-        <p class="muted small reglage-note">Il autorise l'envoi des rapports depuis la boîte de l'entreprise. Majuscules et
-        minuscules sont indifférentes. À saisir une fois sur chaque téléphone.</p>
+        <p class="muted small reglage-note">Il ouvre l'application et autorise l'envoi des rapports depuis la boîte de
+        l'entreprise. Majuscules et minuscules sont indifférentes.</p>
       </div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>

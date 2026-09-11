@@ -19,6 +19,7 @@ import { envoisView } from './views/envois.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
+import { installerVerrou } from './lock.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -1061,6 +1062,9 @@ async function placePourUnePhoto() {
 }
 
 export async function boot() {
+  // Le verrou se pose avant tout affichage : l'accueil se dessine dessous, sans
+  // qu'une liste de rapports ne transparaisse une fraction de seconde avant le code.
+  installerVerrou()
   // Une ecriture refusee ne doit pas passer inapercue : c'est le seul incident
   // de l'app qui fait disparaitre du travail deja saisi.
   S.onEcritureRefusee((plein) => {
