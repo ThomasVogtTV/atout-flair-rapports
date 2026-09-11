@@ -18,6 +18,7 @@ import { derniereSauvegarde } from '../sauvegarde.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { ILLUSTRATIONS } from '../ui/illustrations.js'
 import { ICONES_3D } from '../ui/icones3d.js'
+import { rdvAccueilHTML } from './agenda.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -360,7 +361,8 @@ function heroHTML(view) {
     <div class="hero-caption reveal" style="--i:0">
       <!-- Une carte vitree posee sur la photo : la page du calendrier a
            gauche, le metier, le jour et la session a droite. -->
-      <div class="hero-carte" title="${esc(jour[0].toUpperCase() + jour.slice(1))}">
+      <div class="hero-carte" data-act="open-agenda" role="button" tabindex="0"
+           title="Ouvrir l'agenda · ${esc(jour[0].toUpperCase() + jour.slice(1))}">
         <div class="hero-cal" aria-hidden="true">
           <span class="hero-cal-mois">${esc(mois)}</span>
           <span class="hero-cal-jour">${maintenant.getDate()}</span>
@@ -370,6 +372,7 @@ function heroHTML(view) {
           <h2>${esc(semaine[0].toUpperCase() + semaine.slice(1))}</h2>
           ${sessionHTML()}
         </div>
+        <span class="hero-carte-go" aria-hidden="true">${ICONS.chevron}</span>
       </div>
     </div>
     <div class="hero-stats reveal" style="--i:1">
@@ -420,8 +423,9 @@ export function homeView(view) {
     </header>
     ${heroHTML(view)}
     <section class="content-sheet">
-      <div class="reveal" style="--i:2">${nouveauHTML()}</div>
-      <div class="reveal" style="--i:3">${enCoursHTML(view.reports)}</div>
-      <div class="reveal" style="--i:4">${mesRapportsHTML(view)}</div>
+      <div class="reveal rdv-accueil-zone" style="--i:2">${rdvAccueilHTML(view)}</div>
+      <div class="reveal" style="--i:3">${nouveauHTML()}</div>
+      <div class="reveal" style="--i:4">${enCoursHTML(view.reports)}</div>
+      <div class="reveal" style="--i:5">${mesRapportsHTML(view)}</div>
     </section>`
 }

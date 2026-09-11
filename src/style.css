@@ -2243,3 +2243,67 @@ span.contact-etoile svg { width: 15px; height: 15px; }
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* --- Agenda de l'equipe ----------------------------------------------------
+   La carte-calendrier de l'accueil l'ouvre ; les rendez-vous du jour sont
+   aussi poses en tete de l'accueil. Une ligne : l'heure d'abord - c'est elle
+   qu'on cherche - puis le type, le client et l'adresse. */
+.hero-carte[data-act] { cursor: pointer; transition: transform 0.14s cubic-bezier(0.2, 0.7, 0.3, 1); }
+.hero-carte[data-act]:active { transform: scale(0.98); }
+.hero-carte-go { position: relative; z-index: 1; display: grid; place-items: center; margin-left: 2px; opacity: 0.8; }
+.hero-carte-go svg { width: 17px; height: 17px; }
+
+.rdv-accueil-zone:empty { display: none; }
+.content-sheet > .rdv-accueil-zone:empty + .reveal > .section-title:first-child { margin-top: 0; }
+
+.rdv-heure {
+  flex-shrink: 0;
+  min-width: 42px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.rdv-ligne.fait .rapport-nom { color: var(--ink-soft); font-weight: 600; }
+.rdv-ligne .pill { flex-shrink: 0; }
+
+.agenda-jour {
+  margin: 20px 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pad > .agenda-jour:first-child,
+.agenda-horsligne + .agenda-jour { margin-top: 4px; }
+.agenda-jour.aujourdhui { color: var(--accent); }
+.agenda-jour.passe { opacity: 0.75; }
+.report-list.passes { opacity: 0.8; }
+.agenda-horsligne { margin: 0 4px 8px; }
+
+/* Fiche et formulaire d'un rendez-vous */
+.rdv-tete { display: flex; align-items: center; gap: 12px; }
+.rdv-tete h2 { margin: 0; }
+.rdv-tete p { margin: 2px 0 0; }
+.rdv-adresse { margin: 12px 0 2px; font-weight: 600; }
+.rdv-note {
+  margin: 8px 0 4px;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-size: 13.5px;
+  white-space: pre-wrap;
+}
+.rdv-commencer { margin-top: 12px; }
+.rdv-form textarea { resize: vertical; }
+.rdv-form select {
+  width: 100%;
+  padding: 10px 11px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}

@@ -280,6 +280,30 @@ export const lireSauvegarde = async (id) => lireJson(await r('HGET', SAUVEGARDES
 export const indexerSauvegarde = (entree) => r('HSET', SAUVEGARDES, entree.id, JSON.stringify(entree))
 export const retirerSauvegarde = (id) => r('HDEL', SAUVEGARDES, id)
 
+// --- agenda de l'equipe ------------------------------------------------------
+// Un hash : id du rendez-vous -> rendez-vous en JSON.
+const AGENDA = 'af:agenda'
+
+export async function lireAgenda() {
+  const o = enObjet(await r('HGETALL', AGENDA))
+  const agenda = new Map()
+  for (const [id, json] of Object.entries(o)) {
+    try {
+      agenda.set(id, JSON.parse(json))
+    } catch {
+      // Une entree illisible est ignoree plutot que de bloquer tout l'agenda.
+    }
+  }
+  return agenda
+}
+
+export async function ecrireAgenda(rdvs) {
+  if (!rdvs.length) return
+  await r('HSET', AGENDA, ...rdvs.flatMap((x) => [x.id, JSON.stringify(x)]))
+}
+
+export const retirerDeAgenda = (id) => r('HDEL', AGENDA, id)
+
 // --- carnet commun -----------------------------------------------------------
 // Un seul hash : id du contact -> contact en JSON. Un contact supprime y reste
 // sous forme de pierre tombale ({id, supprime, maj}) : sans elle, le telephone

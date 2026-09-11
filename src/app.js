@@ -21,7 +21,11 @@ import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName,
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
-import { installerVerrou, seDeconnecter, estInvite } from './lock.js'
+import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
+import { agendaView, rdvAccueilHTML } from './views/agenda.js'
+import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, ajouterAuCalendrier } from './agenda.js'
+import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
+import { nomClient } from './agenda-outils.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
@@ -83,6 +87,9 @@ function set(path, value) {
 async function goHome() {
   await flushSave()
   viderVignettes()
+  // Les rendez-vous du jour s'affichent tout de suite, depuis la derniere
+  // version gardee ; la version en ligne suit (voir rafraichirAgenda).
+  view.agenda ??= agendaEnCache()
   // La recherche ne survit pas a la sortie de l'accueil : revenir sur une liste
   // filtree par des mots tapes une heure plus tot donne un carnet a moitie vide
   // sans qu'on comprenne pourquoi.
@@ -323,6 +330,99 @@ async function refreshContacts() {
   render()
 }
 
+// --- agenda de l'equipe ----------------------------------------------------
+
+async function openAgenda() {
+  await flushSave()
+  view = { ...view, screen: 'agenda', report: null, retour: null }
+  view.agenda ??= agendaEnCache()
+  render()
+  rafraichirAgenda()
+}
+
+// Relit l'agenda en ligne et remet a jour ce qui l'affiche - sur l'accueil,
+// la seule rubrique des rendez-vous : un rendu complet ferait perdre son
+// curseur a une recherche en cours.
+async function rafraichirAgenda() {
+  const data = await chargerAgenda()
+  if (!data) return
+  view.agenda = data
+  if (view.screen === 'home') {
+    const zone = root.querySelector('.rdv-accueil-zone')
+    if (zone) zone.innerHTML = rdvAccueilHTML(view)
+  } else if (view.screen === 'agenda') {
+    render()
+  }
+}
+
+// L'administrateur attribue un rendez-vous a un membre de l'equipe : il lui
+// faut la liste. Sans elle, il ne peut l'attribuer qu'a lui-meme.
+async function equipePourAgenda() {
+  try {
+    const data = await adminAppel('GET')
+    return (data.employes ?? []).filter((e) => e.actif && !e.expire)
+  } catch {
+    return []
+  }
+}
+
+async function editerRdv(rdv = null) {
+  if (!navigator.onLine) return toast("Pas de réseau : l'agenda de l'équipe se modifie avec du réseau.")
+  const admin = estAdmin()
+  const [contacts, equipe] = await Promise.all([contactsVisibles(), admin ? equipePourAgenda() : null])
+  const saisi = await formulaireRdv(rdv, { contacts, reports: view.reports ?? [], equipe, admin, choisirContact })
+  if (!saisi) return
+  try {
+    await enregistrerRdv(saisi)
+    toast(rdv ? 'Rendez-vous modifié' : 'Rendez-vous ajouté')
+  } catch (err) {
+    return toast(err.message)
+  }
+  await rafraichirAgenda()
+}
+
+// Le rapport d'un rendez-vous nait deja rempli : client, lieu, date et heure.
+// Deja commence sur ce telephone, il se rouvre au lieu d'en creer un second.
+async function commencerRdv(rdv) {
+  if (rdv.rapportId && (await S.loadReport(rdv.rapportId))) return openReport(rdv.rapportId)
+  const report = S.newReport(rdv.type)
+  report.technicien = await S.loadTechnicien()
+  report.mandant = S.contactVersMandant(rdv.client)
+  const { adresse = '', npaLieu = '' } = rdv.lieu ?? {}
+  if (typeOf(report).layout === 'pieces') {
+    if (adresse || npaLieu) report.lieu.adresseIntervention = [adresse, npaLieu].filter(Boolean).join(', ')
+    if (rdv.date) report.lieu.dateIntervention = rdv.date
+    if (rdv.heure) report.lieu.heureIntervention = rdv.heure
+  } else {
+    report.lieu.adresse = adresse
+    report.lieu.npaLieu = npaLieu
+  }
+  await S.saveReport(report)
+  reserverNumeros()
+  marquerCommence(rdv.id, report.id).then(rafraichirAgenda)
+  openReport(report.id)
+}
+
+async function montrerRdv(rdv) {
+  const a = view.agenda
+  const moi = a?.moi?.id
+  const modifiable = a?.role === 'admin' || (a?.role === 'employe' && (rdv.pour?.id === moi || rdv.par?.id === moi))
+  const choix = await ouvrirRdv(rdv, { modifiable })
+  if (choix === 'commencer') return commencerRdv(rdv)
+  if (choix === 'agenda') return ajouterAuCalendrier(rdv)
+  if (choix === 'modifier') return editerRdv(rdv)
+  if (choix === 'supprimer') {
+    if (!confirm(`Supprimer le rendez-vous avec ${nomClient(rdv.client) || 'ce client'} ?`)) return
+    try {
+      await supprimerRdv(rdv.id)
+      toast('Rendez-vous supprimé')
+    } catch (err) {
+      return toast(err.message)
+    }
+    await rafraichirAgenda()
+  }
+}
+
 // --- rendu -----------------------------------------------------------------
 
 // Sert a ne rejouer l'animation d'entree que lors d'une vraie navigation
@@ -345,6 +445,8 @@ function render() {
         ? contactsView(view)
         : view.screen === 'fiche'
           ? ficheContactView(view)
+        : view.screen === 'agenda'
+          ? agendaView(view)
         : view.screen === 'reglages'
           ? reglagesView(view)
           : view.screen === 'envois'
@@ -665,6 +767,14 @@ root.addEventListener('click', async (ev) => {
     return openReport(openId)
   }
 
+  // Un rendez-vous de l'agenda (ou de l'accueil) : sa fiche.
+  const rdvId = el.closest('[data-rdv]')?.dataset.rdv
+  if (rdvId) {
+    const rdv = view.agenda?.rdvs?.find((r) => r.id === rdvId)
+    if (rdv) montrerRdv(rdv)
+    return
+  }
+
   // L'etoile d'une ligne du carnet : marque un client habituel sans ouvrir sa
   // fiche. Teste avant la ligne, qui la contient.
   const favoriId = el.closest('[data-favori]')?.dataset.favori
@@ -948,6 +1058,8 @@ root.addEventListener('click', async (ev) => {
     return render()
   }
   if (act === 'open-contacts') return openContacts()
+  if (act === 'open-agenda') return openAgenda()
+  if (act === 'ajouter-rdv') return editerRdv()
   if (act === 'open-reglages') return openReglages()
   if (act === 'open-admin') return openAdmin()
   if (act === 'deconnexion') {
@@ -1392,9 +1504,13 @@ export async function boot() {
   syncCarnet()
   // Numeros de rapport uniques dans l'equipe : un lot d'avance, des maintenant.
   reserverNumeros()
+  // L'agenda de l'equipe : a l'ouverture, au deverrouillage, au retour du reseau.
+  rafraichirAgenda()
+  window.addEventListener('online', () => rafraichirAgenda())
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
   window.addEventListener('af-deverrouille', () => {
     reserverNumeros()
+    rafraichirAgenda()
     syncCarnet()
     planifierSauvegarde()
   })
