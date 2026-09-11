@@ -14,9 +14,11 @@
 const MAISON = `
 <svg viewBox="22 18 94 94" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
+    <!-- Toit en tuiles de terre cuite : un petrole sur la tuile petrole se
+         confondait avec le fond. -->
     <linearGradient id="mai-toit" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2f95a4"/>
-      <stop offset="1" stop-color="#0f4d58"/>
+      <stop offset="0" stop-color="#dc8356"/>
+      <stop offset="1" stop-color="#8f4126"/>
     </linearGradient>
     <!-- Facades couchees par une matrice qui retourne la hauteur : le haut de
          la vitre est donc en y = 1. -->
@@ -70,18 +72,18 @@ const MAISON = `
   </g>
 
   <!-- tranche du toit cote pignon : le ^ de la couverture -->
-  <polygon points="88.52,48 104.1,60.6 104.1,63.6 88.52,51" fill="#0a3942"/>
-  <polygon points="88.52,48 72.93,78.6 72.93,81.6 88.52,51" fill="#0c444e"/>
+  <polygon points="88.52,48 104.1,60.6 104.1,63.6 88.52,51" fill="#5f2818"/>
+  <polygon points="88.52,48 72.93,78.6 72.93,81.6 88.52,51" fill="#73321e"/>
   <!-- pan avant, et sa tranche basse -->
   <polygon points="50.41,26 88.52,48 72.93,78.6 34.82,56.6" fill="url(#mai-toit)"/>
-  <polygon points="34.82,56.6 72.93,78.6 72.93,81.6 34.82,59.6" fill="#0a3a42"/>
+  <polygon points="34.82,56.6 72.93,78.6 72.93,81.6 34.82,59.6" fill="#5a2517"/>
   <!-- faitage, pris dans la lumiere -->
-  <line x1="50.41" y1="26" x2="88.52" y2="48" stroke="#6cc0cd" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="50.41" y1="26" x2="88.52" y2="48" stroke="#f6b590" stroke-width="1.4" stroke-linecap="round"/>
 
   <!-- cheminee -->
   <polygon points="66.87,37.5 71.2,40 71.2,55.6 66.87,53.1" fill="#ece2d2"/>
   <polygon points="71.2,40 74.66,38 74.66,48.8 71.2,55.6" fill="#c8bba5"/>
-  <polygon points="70.33,35.5 74.66,38 71.2,40 66.87,37.5" fill="#0f4d58"/>
+  <polygon points="70.33,35.5 74.66,38 71.2,40 66.87,37.5" fill="#5a2517"/>
 
   <!-- buissons, devant la maison -->
   <circle cx="33" cy="72" r="6" fill="url(#mai-buisson)"/>
