@@ -16,6 +16,7 @@ import { esc } from '../ui/dom.js'
 import { estAdmin, estInvite, identite } from '../lock.js'
 import { derniereSauvegarde } from '../sauvegarde.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
+import { ILLUSTRATIONS } from '../ui/illustrations.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -163,13 +164,17 @@ function enCoursHTML(reports) {
 // reviennent au moins aussi souvent qu'un particulier. Trois tuiles egales,
 // chacune pleine de sa couleur : petrole, ardoise, prune.
 function nouveauHTML() {
+  // L'illustration en 3D quand le type en a une, sinon son icone.
   const tuiles = TYPE_LIST.map(
     (t) => `
     <button type="button" class="type-tuile card-${t.id}" data-new="${t.id}">
-      <span class="type-tuile-icone">${ICONS[t.id] ?? ''}</span>
+      ${
+        ILLUSTRATIONS[t.id]
+          ? `<span class="type-tuile-illu">${ILLUSTRATIONS[t.id]}</span>`
+          : `<span class="type-tuile-icone">${ICONS[t.id] ?? ''}</span>`
+      }
       <span class="type-tuile-plus" aria-hidden="true">+</span>
       <span class="type-tuile-nom">${esc(t.choix)}</span>
-      <span class="type-tuile-hint">${esc(t.hint)}</span>
     </button>`
   ).join('')
 
