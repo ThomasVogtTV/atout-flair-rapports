@@ -40,12 +40,21 @@ export function identite() {
   }
 }
 export const estAdmin = () => identite()?.role === 'admin'
+
+// Invite dont la date de fin est passee : bloque meme sans reseau, grace a la
+// date retenue a la derniere verification. Avec du reseau, le serveur a le
+// dernier mot - une prolongation reouvre l'acces.
+const inviteExpire = () => {
+  const id = identite()
+  return id?.role === 'invite' && !!id.fin && Date.now() > id.fin
+}
+const MESSAGE_EXPIRE = 'Accès invité terminé.'
 const retenirIdentite = (ident) =>
   ident ? localStorage.setItem(ID_KEY, JSON.stringify(ident)) : localStorage.removeItem(ID_KEY)
 
 /** Date (ms) jusqu'a laquelle l'appareil est dispense du code, ou null. */
 export const souvenirJusqua = () => Number(localStorage.getItem(SOUVENIR_KEY)) || null
-const memorise = () => souvenirValide(souvenirJusqua()) && !!currentCode()
+const memorise = () => souvenirValide(souvenirJusqua()) && !!currentCode() && !inviteExpire()
 
 /** Oublie la personne sur cet appareil, et redemande le code tout de suite. */
 export function seDeconnecter() {
@@ -57,7 +66,12 @@ export function seDeconnecter() {
 
 async function verifierEnLigne(code) {
   const res = await fetch('/api/check-code', { method: 'POST', headers: { 'x-app-code': code } })
-  if (res.status === 401) return { etat: 'refuse' }
+  if (res.status === 401) {
+    // Le serveur dit parfois pourquoi : acces retire, invite arrive a sa date.
+    const data = await res.json().catch(() => ({}))
+    const motif = data.error && data.error !== "Code d'accès invalide" ? data.error : null
+    return { etat: 'refuse', message: motif }
+  }
   if (!res.ok) return { etat: 'indisponible' }
   const ident = res.status === 204 ? null : await res.json().catch(() => null)
   return { etat: 'ok', ident }
@@ -75,7 +89,7 @@ async function revalider(code) {
       setCode('')
       retenirIdentite(null)
       localStorage.removeItem(SOUVENIR_KEY)
-      verrouiller("Ce code n'est plus valable. Demandez-en un nouveau.")
+      verrouiller(r.message || "Ce code n'est plus valable. Demandez-en un nouveau.")
     }
   } catch {
     // Reseau capricieux : on reconfirmera a la prochaine ouverture.
@@ -84,11 +98,14 @@ async function revalider(code) {
 
 /** @returns {Promise<{ok: boolean, message?: string}>} */
 async function essayer(saisi) {
-  if (codeCorrespond(saisi, currentCode())) {
+  if (!inviteExpire() && codeCorrespond(saisi, currentCode())) {
     revalider(saisi)
     return { ok: true }
   }
   // Code inconnu sur cet appareil, ou change depuis : seul le serveur peut dire.
+  if (!navigator.onLine && inviteExpire()) {
+    return { ok: false, message: MESSAGE_EXPIRE + ' Avec du réseau, une prolongation éventuelle sera prise en compte.' }
+  }
   if (!navigator.onLine) {
     return {
       ok: false,
@@ -104,7 +121,7 @@ async function essayer(saisi) {
       retenirIdentite(r.ident)
       return { ok: true }
     }
-    if (r.etat === 'refuse') return { ok: false, message: 'Code incorrect.' }
+    if (r.etat === 'refuse') return { ok: false, message: r.message || 'Code incorrect.' }
     return { ok: false, message: 'Vérification impossible pour le moment. Réessayez dans un instant.' }
   } catch {
     return { ok: false, message: 'Pas de réseau pour vérifier le code.' }
@@ -164,7 +181,7 @@ export function installerVerrou() {
   // Appareil memorise : pas de code, mais le serveur est quand meme consulte des
   // que le reseau est la - c'est lui qui peut dire qu'un code a ete revoque.
   if (memorise()) revalider(currentCode())
-  else verrouiller()
+  else verrouiller(inviteExpire() ? MESSAGE_EXPIRE : '')
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       masqueDepuis = Date.now()

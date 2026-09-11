@@ -149,12 +149,19 @@ async function adminAction(action, id) {
   }
 }
 
+// Une date de fin choisie au calendrier vaut jusqu'au soir de ce jour-la.
+const finDeJournee = (jour) => {
+  const [a, m, j] = jour.split('-').map(Number)
+  return new Date(a, m - 1, j, 23, 59, 59, 999).getTime()
+}
+
 async function adminAjouter() {
   const nom = root.querySelector('[data-admin-nom]')?.value.trim()
   if (!nom) return toast("Indiquez le nom de l'employé")
+  const jour = root.querySelector('[data-admin-fin]')?.value
   try {
-    const r = await adminAppel('POST', { action: 'creer', nom })
-    view.adminCodeRevele = { nom: r.nom, code: r.code }
+    const r = await adminAppel('POST', { action: 'creer', nom, fin: jour ? finDeJournee(jour) : undefined })
+    view.adminCodeRevele = { nom: r.nom, code: r.code, fin: r.fin }
     await rechargerAdmin()
   } catch (err) {
     toast(err.message)
@@ -333,6 +340,18 @@ root.addEventListener('input', (ev) => {
 
 root.addEventListener('change', async (ev) => {
   const el = ev.target
+
+  // Date de fin d'un invite, changee directement dans la liste de l'equipe.
+  if (el.dataset.changerFin) {
+    if (!el.value) return
+    try {
+      await adminAppel('POST', { action: 'changer-fin', id: el.dataset.changerFin, fin: finDeJournee(el.value) })
+      toast('Date de fin enregistrée.')
+    } catch (err) {
+      toast(err.message)
+    }
+    return rechargerAdmin()
+  }
 
   if (el.dataset.sameAddr !== undefined) {
     view.report.lieu.sameAsMandant = el.checked

@@ -4,7 +4,7 @@
 // code revoque cesse de fonctionner (voir src/lock.js). Chaque appel note
 // l'activite de la personne dans l'onglet Administration.
 
-import { identifier, noterActivite } from './_lib/equipe.js'
+import { identifier, noterActivite, pourquoiRefuse } from './_lib/equipe.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -26,8 +26,9 @@ export default async function handler(req, res) {
     // Une demi-seconde par essai rate : sans effet sur quelqu'un qui se trompe
     // une fois, mais un essai en boucle de noms et de dates devient tres lent.
     await new Promise((r) => setTimeout(r, 500))
-    return res.status(401).json({ error: "Code d'accès invalide" })
+    const motif = await pourquoiRefuse(req.headers['x-app-code']).catch(() => null)
+    return res.status(401).json({ error: motif || "Code d'accès invalide" })
   }
   await noterActivite(ident).catch((err) => console.error('Activité non notée', err))
-  return res.status(200).json({ role: ident.role, nom: ident.nom })
+  return res.status(200).json({ role: ident.role, nom: ident.nom, ...(ident.fin ? { fin: ident.fin } : {}) })
 }

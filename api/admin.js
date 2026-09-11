@@ -10,6 +10,7 @@ import {
   nouveauCode,
   changerStatut,
   supprimerEmploye,
+  changerFin,
   Erreur400,
 } from './_lib/equipe.js'
 
@@ -34,8 +35,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ base: true, ...equipe, journal })
     }
     if (req.method === 'POST') {
-      const { action, id, nom } = req.body ?? {}
-      if (action === 'creer') return res.status(200).json(await creerEmploye(nom))
+      const { action, id, nom, fin } = req.body ?? {}
+      if (action === 'creer') return res.status(200).json(await creerEmploye(nom, { fin }))
+      if (action === 'changer-fin') {
+        await changerFin(id, fin)
+        return res.status(200).json({ ok: true })
+      }
       if (action === 'nouveau-code') return res.status(200).json(await nouveauCode(id))
       if (action === 'revoquer' || action === 'reactiver') {
         await changerStatut(id, action === 'reactiver')

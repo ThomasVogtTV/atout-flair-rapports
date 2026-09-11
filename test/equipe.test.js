@@ -102,3 +102,47 @@ test("sans base, seul le code administrateur fonctionne", async () => {
 test('un nom vide est refuse', async () => {
   await assert.rejects(E.creerEmploye('   '), E.Erreur400)
 })
+
+test("un invite passe jusqu'a sa date de fin, puis plus du tout", async () => {
+  const fin = Date.now() + 60_000
+  const { id, code } = await E.creerEmploye('Paul (sous-traitant)', { fin })
+  assert.deepEqual(await E.identifier(code), { role: 'invite', id, nom: 'Paul (sous-traitant)', fin })
+  const vrai = Date.now
+  Date.now = () => fin + 1
+  try {
+    assert.equal(await E.identifier(code), null)
+    assert.match(await E.pourquoiRefuse(code), /invité terminé/)
+    const fiche = (await E.listerEmployes()).employes.find((e) => e.id === id)
+    assert.equal(fiche.invite, true)
+    assert.equal(fiche.expire, true)
+  } finally {
+    Date.now = vrai
+  }
+})
+
+test("prolonger un invite lui rend l'acces", async () => {
+  const fin = Date.now() + 60_000
+  const { id, code } = await E.creerEmploye('Paul', { fin })
+  await E.changerFin(id, Date.now() + 10 * 86_400_000)
+  const vrai = Date.now
+  Date.now = () => fin + 1
+  try {
+    assert.equal((await E.identifier(code))?.role, 'invite')
+  } finally {
+    Date.now = vrai
+  }
+})
+
+test('une date de fin passee ou absurde est refusee', async () => {
+  await assert.rejects(E.creerEmploye('Paul', { fin: Date.now() - 1 }), E.Erreur400)
+  await assert.rejects(E.creerEmploye('Paul', { fin: 'demain' }), E.Erreur400)
+  const { id } = await E.creerEmploye('Marc')
+  await assert.rejects(E.changerFin(id, Date.now() + 1000), E.Erreur400)
+})
+
+test('un employe revoque recoit un motif clair, un inconnu aucun', async () => {
+  const { id, code } = await E.creerEmploye('Julie')
+  await E.changerStatut(id, false)
+  assert.match(await E.pourquoiRefuse(code), /retiré/)
+  assert.equal(await E.pourquoiRefuse('inconnu'), null)
+})

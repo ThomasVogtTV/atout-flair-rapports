@@ -86,7 +86,33 @@ export async function identifier(code) {
   if (!id) return null
   const emp = await lireEmploye(id)
   if (!emp || emp.actif !== '1') return null
+  // Invite : l'acces s'arrete tout seul a la date prevue.
+  if (emp.fin && Date.now() > Number(emp.fin)) return null
+  if (emp.invite === '1') return { role: 'invite', id, nom: emp.nom, fin: Number(emp.fin) || null }
   return { role: 'employe', id, nom: emp.nom }
+}
+
+/**
+ * Pour un code refuse, un motif plus parlant que "code invalide" quand on en a
+ * un : acces retire, ou invite arrive a sa date de fin. Sinon null.
+ */
+export async function pourquoiRefuse(code) {
+  const saisi = normaliser(code)
+  if (!saisi || !baseConfiguree()) return null
+  const id = await r('GET', cleCode(empreinte(saisi)))
+  if (!id) return null
+  const emp = await lireEmploye(id)
+  if (!emp) return null
+  if (emp.actif !== '1') return 'Accès retiré par l’administrateur.'
+  if (emp.fin && Date.now() > Number(emp.fin)) {
+    const jour = new Date(Number(emp.fin)).toLocaleDateString('fr-CH', {
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'Europe/Zurich',
+    })
+    return `Accès invité terminé le ${jour}.`
+  }
+  return null
 }
 
 /** Note une ouverture de l'app, et le cas echeant un rapport parti. */
@@ -130,6 +156,9 @@ export async function listerEmployes() {
         cree: Number(e.cree) || null,
         vu: Number(e.vu) || null,
         envois: Number(e.envois) || 0,
+        invite: e.invite === '1',
+        fin: Number(e.fin) || null,
+        expire: !!(Number(e.fin) && Date.now() > Number(e.fin)),
       }))
       .sort((a, b) => a.nom.localeCompare(b.nom)),
   }
@@ -159,13 +188,39 @@ async function exiger(id) {
 
 const nouvelId = () => Date.now().toString(36) + randomInt(36 ** 4).toString(36)
 
-export async function creerEmploye(nom) {
+// Date de fin d'un invite : dans le futur, et pas au-dela de deux ans.
+const DEUX_ANS = 2 * 365 * 24 * 60 * 60 * 1000
+function validerFin(fin) {
+  if (fin === undefined || fin === null || fin === '') return null
+  const n = Number(fin)
+  if (!Number.isFinite(n) || n <= Date.now()) throw new Erreur400('La date de fin doit être dans le futur')
+  if (n > Date.now() + DEUX_ANS) throw new Erreur400('Date de fin trop lointaine : deux ans au plus')
+  return n
+}
+
+/**
+ * Cree un employe, ou un invite quand une date de fin est donnee : sous-traitant,
+ * interimaire - son acces s'arrete tout seul ce jour-la.
+ */
+export async function creerEmploye(nom, { fin } = {}) {
   const propre = String(nom ?? '').trim().slice(0, 60)
   if (!propre) throw new Erreur400('Indiquez le nom de l’employé')
+  const finOk = validerFin(fin)
   const id = nouvelId()
-  await r('HSET', cleEmp(id), 'nom', propre, 'actif', '1', 'cree', Date.now())
+  const champs = ['nom', propre, 'actif', '1', 'cree', Date.now()]
+  if (finOk) champs.push('invite', '1', 'fin', finOk)
+  await r('HSET', cleEmp(id), ...champs)
   await r('SADD', EMPLOYES, id)
-  return { id, nom: propre, code: await poserCode(id) }
+  return { id, nom: propre, code: await poserCode(id), fin: finOk }
+}
+
+/** Prolonge (ou avance) la fin d'acces d'un invite. */
+export async function changerFin(id, fin) {
+  const e = await exiger(id)
+  if (e.invite !== '1') throw new Erreur400('Seul un invité a une date de fin')
+  const n = validerFin(fin)
+  if (!n) throw new Erreur400('Indiquez une date de fin')
+  await r('HSET', cleEmp(id), 'fin', n)
 }
 
 export async function nouveauCode(id) {

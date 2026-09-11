@@ -1771,3 +1771,24 @@ body.verrouille { overflow: hidden; }
 /* Le libelle de la case heritait des capitales et du centrage des intitules de
    champ : il sortait en majuscules sur deux lignes, la case isolee a gauche. */
 .lock-souvenir { justify-self: center; text-align: left; text-transform: none; }
+
+/* Invites (acces temporaire) dans l'onglet Administration. */
+.admin-ajout { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.admin-fin {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+.admin-fin input { flex: 1; min-width: 0; }
+.admin-aide { grid-column: 1 / -1; margin: 0; }
+.pill.invite { background: var(--amber-soft, #fbf0dd); color: var(--amber, #a66a13); }
+.hero-session.invite::before { background: #f1c27d; }
+/* Pastille invite plus longue (nom + date) : elle passe sur deux lignes
+   plutot que de couper la date sur un petit ecran. */
+.hero-session.invite { white-space: normal; border-radius: 10px; line-height: 1.35; }

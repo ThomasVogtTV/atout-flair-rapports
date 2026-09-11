@@ -290,8 +290,16 @@ function sessionHTML() {
   const ident = identite()
   if (!ident) return ''
   const admin = ident.role === 'admin'
-  const texte = admin ? 'Session administrateur' : `Session employé · ${ident.nom}`
-  return `<span class="hero-session${admin ? ' admin' : ''}">${esc(texte)}</span>`
+  const invite = ident.role === 'invite'
+  const jusqua = invite && ident.fin
+    ? ` · jusqu'au ${new Date(ident.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}`
+    : ''
+  const texte = admin
+    ? 'Session administrateur'
+    : invite
+      ? `Session invité · ${ident.nom}${jusqua}`
+      : `Session employé · ${ident.nom}`
+  return `<span class="hero-session${admin ? ' admin' : invite ? ' invite' : ''}">${esc(texte)}</span>`
 }
 
 function heroHTML(view) {
