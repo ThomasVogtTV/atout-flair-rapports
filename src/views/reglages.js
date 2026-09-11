@@ -11,7 +11,8 @@ import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
 import { currentCode } from '../mailer.js'
-import { identite } from '../lock.js'
+import { identite, souvenirJusqua } from '../lock.js'
+import { souvenirValide } from '../code.js'
 
 // Au-dela d'un mois, la sauvegarde est signalee comme en retard : c'est le
 // delai au bout duquel perdre le telephone couterait une tournee entiere.
@@ -74,6 +75,14 @@ export function reglagesView(view) {
         <p class="muted small reglage-note">Il ouvre l'application et autorise l'envoi des rapports depuis la boîte de
         l'entreprise. Majuscules et minuscules sont indifférentes.</p>
         ${identite()?.nom ? `<p class="muted small">Ce téléphone est au nom de <b>${esc(identite().nom)}</b>.</p>` : ''}
+        ${
+          souvenirValide(souvenirJusqua())
+            ? `<p class="muted small">Code mémorisé sur cet appareil jusqu'au ${esc(
+                new Date(souvenirJusqua()).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })
+              )}.</p>`
+            : ''
+        }
+        <button class="btn ghost wide" data-act="deconnexion">Se déconnecter de cet appareil</button>
       </div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>

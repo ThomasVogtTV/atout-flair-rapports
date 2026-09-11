@@ -20,7 +20,7 @@ import { adminView } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
-import { installerVerrou } from './lock.js'
+import { installerVerrou, seDeconnecter } from './lock.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -800,6 +800,10 @@ root.addEventListener('click', async (ev) => {
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-reglages') return openReglages()
   if (act === 'open-admin') return openAdmin()
+  if (act === 'deconnexion') {
+    if (!confirm('Se déconnecter ? Le code sera redemandé tout de suite, et à chaque ouverture tant que « Se souvenir de moi » ne sera pas coché.')) return
+    return seDeconnecter()
+  }
   if (act === 'admin-ajouter') return adminAjouter()
   if (act === 'admin-action') {
     const b = el.closest('[data-act]')

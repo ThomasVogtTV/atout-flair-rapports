@@ -1754,3 +1754,20 @@ body.verrouille { overflow: hidden; }
    aligne ses enfants sur toute sa largeur, ce qui l'etirait avec un vide a
    droite. */
 .hero-session { align-self: flex-start; justify-self: start; }
+
+/* Case "Se souvenir de moi" de l'ecran du code (src/lock.js). */
+.lock-souvenir {
+  flex-direction: row;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.lock-souvenir input { flex: none; width: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--accent); }
+/* Le libelle de la case heritait des capitales et du centrage des intitules de
+   champ : il sortait en majuscules sur deux lignes, la case isolee a gauche. */
+.lock-souvenir { justify-self: center; text-align: left; text-transform: none; }

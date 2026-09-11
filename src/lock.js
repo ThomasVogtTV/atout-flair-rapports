@@ -17,12 +17,18 @@
 // quelques minutes - l'appareil photo et la feuille de partage font passer l'app
 // en arriere-plan en pleine intervention, et la verrouiller alors la couperait en
 // plein geste. D'ou le delai de grace.
+//
+// "Se souvenir de moi" (coche par defaut) dispense de tout cela sur l'appareil :
+// l'app s'ouvre directement, a la reprise comme au demarrage. Le code n'est
+// redemande qu'au bout de trente jours, apres "Se deconnecter", ou si le
+// serveur le refuse - la revocation d'un employe reste donc effective.
 
 import { currentCode, setCode } from './mailer.js'
-import { codeCorrespond } from './code.js'
+import { codeCorrespond, souvenirValide, SOUVENIR_MS } from './code.js'
 
 const GRACE_MS = 5 * 60 * 1000
 const ID_KEY = 'af-identite'
+const SOUVENIR_KEY = 'af-souvenir'
 let masqueDepuis = null
 
 /** Qui utilise cet appareil, tel que le serveur l'a dit a la derniere verification. */
@@ -36,6 +42,18 @@ export function identite() {
 export const estAdmin = () => identite()?.role === 'admin'
 const retenirIdentite = (ident) =>
   ident ? localStorage.setItem(ID_KEY, JSON.stringify(ident)) : localStorage.removeItem(ID_KEY)
+
+/** Date (ms) jusqu'a laquelle l'appareil est dispense du code, ou null. */
+export const souvenirJusqua = () => Number(localStorage.getItem(SOUVENIR_KEY)) || null
+const memorise = () => souvenirValide(souvenirJusqua()) && !!currentCode()
+
+/** Oublie la personne sur cet appareil, et redemande le code tout de suite. */
+export function seDeconnecter() {
+  localStorage.removeItem(SOUVENIR_KEY)
+  setCode('')
+  retenirIdentite(null)
+  verrouiller()
+}
 
 async function verifierEnLigne(code) {
   const res = await fetch('/api/check-code', { method: 'POST', headers: { 'x-app-code': code } })
@@ -56,6 +74,7 @@ async function revalider(code) {
     if (r.etat === 'refuse') {
       setCode('')
       retenirIdentite(null)
+      localStorage.removeItem(SOUVENIR_KEY)
       verrouiller("Ce code n'est plus valable. Demandez-en un nouveau.")
     }
   } catch {
@@ -108,6 +127,7 @@ export function verrouiller(message = '') {
       <input class="lock-input" type="password" name="code" autocomplete="current-password"
              autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Code d'accès" />
       <p class="lock-error" aria-live="polite"></p>
+      <label class="lock-souvenir"><input type="checkbox" name="souvenir" checked /> Se souvenir de moi sur cet appareil</label>
       <button type="submit" class="btn primary wide">Déverrouiller</button>
     </form>`
   document.body.appendChild(el)
@@ -124,6 +144,11 @@ export function verrouiller(message = '') {
     const { ok, message: motif } = await essayer(champ.value)
     bouton.disabled = false
     if (ok) {
+      if (el.querySelector('[name="souvenir"]').checked) {
+        localStorage.setItem(SOUVENIR_KEY, String(Date.now() + SOUVENIR_MS))
+      } else {
+        localStorage.removeItem(SOUVENIR_KEY)
+      }
       el.remove()
       document.body.classList.remove('verrouille')
       return
@@ -136,13 +161,16 @@ export function verrouiller(message = '') {
 
 /** Verrouille tout de suite, puis a chaque retour apres le delai de grace. */
 export function installerVerrou() {
-  verrouiller()
+  // Appareil memorise : pas de code, mais le serveur est quand meme consulte des
+  // que le reseau est la - c'est lui qui peut dire qu'un code a ete revoque.
+  if (memorise()) revalider(currentCode())
+  else verrouiller()
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       masqueDepuis = Date.now()
       return
     }
-    if (masqueDepuis && Date.now() - masqueDepuis > GRACE_MS) verrouiller()
+    if (masqueDepuis && Date.now() - masqueDepuis > GRACE_MS && !memorise()) verrouiller()
     masqueDepuis = null
   })
 }
