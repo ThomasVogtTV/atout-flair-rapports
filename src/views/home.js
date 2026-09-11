@@ -17,6 +17,7 @@ import { estAdmin, estInvite, identite } from '../lock.js'
 import { derniereSauvegarde } from '../sauvegarde.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { ILLUSTRATIONS } from '../ui/illustrations.js'
+import { ICONES_3D } from '../ui/icones3d.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -373,9 +374,8 @@ function heroHTML(view) {
     }`
 }
 
-// Une icone 3D de l'en-tete : image de 96 px, affichee a 29 px - nette sur un
-// ecran a trois pixels par point. Voir public/icones/.
-const icone3d = (nom) => `<img src="/icones/${nom}.png" alt="" width="29" height="29" decoding="async" />`
+// Une icone de l'en-tete, dessinee pour l'app (voir ui/icones3d.js).
+const icone3d = (nom) => ICONES_3D[nom]
 
 export function homeView(view) {
   return `
@@ -384,8 +384,8 @@ export function homeView(view) {
       <div class="top-title">
         <h1>Atout Flair</h1>
       </div>
-      <!-- Icones 3D (3dicons.co, libres d'usage), dans l'ordre voulu par
-           Thomas : carnet, envois, administration, reglages. -->
+      <!-- Icones dessinees pour l'app, dans l'ordre voulu par Thomas :
+           carnet, envois, administration, reglages. -->
       <span class="top-actions">
         ${
           // Pas de carnet pour un invite : la liste des clients reste a l'entreprise.
