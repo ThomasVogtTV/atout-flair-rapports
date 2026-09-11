@@ -361,7 +361,8 @@ function render() {
     // seulement : un re-rendu (un filtre, une recherche) ne les rejoue pas.
     root.classList.add('entree')
     clearTimeout(entreeTimer)
-    entreeTimer = setTimeout(() => root.classList.remove('entree'), 900)
+    // Assez long pour laisser passer le reflet de la carte de l'accueil.
+    entreeTimer = setTimeout(() => root.classList.remove('entree'), 1500)
   }
   updatePendingBadge()
   if (view.screen === 'editor' && view.report) chargerVignettes(view.report.photos, root)

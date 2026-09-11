@@ -326,6 +326,8 @@ function sessionHTML() {
 function heroHTML(view) {
   const maintenant = new Date()
   const jour = maintenant.toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
+  const semaine = maintenant.toLocaleDateString('fr-CH', { weekday: 'long' })
+  const mois = maintenant.toLocaleDateString('fr-CH', { month: 'short' }).replace('.', '')
 
   // Trois chiffres, ceux qu'on vient chercher le matin : ce qui reste sur les
   // bras, et ce que le mois a deja produit.
@@ -356,9 +358,19 @@ function heroHTML(view) {
   const tuile = (n, libelle, classe = '') => `<div class="hero-stat${classe}"><b>${n}</b><span>${libelle}</span></div>`
   return `
     <div class="hero-caption reveal" style="--i:0">
-      <span class="hero-kicker">Détection canine professionnelle</span>
-      <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
-      ${sessionHTML()}
+      <!-- Une carte vitree posee sur la photo : la page du calendrier a
+           gauche, le metier, le jour et la session a droite. -->
+      <div class="hero-carte" title="${esc(jour[0].toUpperCase() + jour.slice(1))}">
+        <div class="hero-cal" aria-hidden="true">
+          <span class="hero-cal-mois">${esc(mois)}</span>
+          <span class="hero-cal-jour">${maintenant.getDate()}</span>
+        </div>
+        <div class="hero-infos">
+          <span class="hero-kicker">${PATTE}Détection canine professionnelle</span>
+          <h2>${esc(semaine[0].toUpperCase() + semaine.slice(1))}</h2>
+          ${sessionHTML()}
+        </div>
+      </div>
     </div>
     <div class="hero-stats reveal" style="--i:1">
       ${tuile(brouillons, 'en cours', brouillons ? ' vif' : '')}
@@ -373,6 +385,9 @@ function heroHTML(view) {
         : ''
     }`
 }
+
+// Une patte de chien, en or, devant le nom du metier.
+const PATTE = `<svg class="hero-patte" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="5.6" cy="10.4" rx="2.3" ry="2.9"/><ellipse cx="9.8" cy="5.9" rx="2.3" ry="3"/><ellipse cx="14.4" cy="5.9" rx="2.3" ry="3"/><ellipse cx="18.6" cy="10.4" rx="2.3" ry="2.9"/><path d="M12.1 11.6c-3.5 0-6.8 3.9-6.8 6.6 0 2 1.6 2.7 3.1 2.7 1.4 0 2.4-.8 3.7-.8s2.3.8 3.7.8c1.5 0 3.1-.7 3.1-2.7 0-2.7-3.3-6.6-6.8-6.6z"/></g></svg>`
 
 // Une icone de l'en-tete, dessinee pour l'app (voir ui/icones3d.js).
 const icone3d = (nom) => ICONES_3D[nom]

@@ -2148,3 +2148,98 @@ span.contact-etoile svg { width: 15px; height: 15px; }
   pointer-events: none;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
 }
+
+/* --- La carte vitree de l'accueil ---------------------------------------
+   Posee sur la photo, sous les chiens : la page d'un calendrier a gauche -
+   le mois sur un bandeau petrole, le jour en gros chiffre - et, a droite, la
+   patte doree du metier, le jour de la semaine et la session. Le verre est un
+   flou leger de ce qui passe dessous : la photo reste lisible au travers. */
+.hero-carte {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 4px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 22px;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.06) 70%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 14px 30px -16px rgba(0, 0, 0, 0.6);
+}
+/* Le reflet : un trait de lumiere qui traverse la carte une seule fois, a
+   l'arrivee sur l'accueil. */
+.hero-carte::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.34) 50%, transparent 65%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #app.entree .hero-carte::after { animation: hero-reflet 0.95s 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+}
+@keyframes hero-reflet { to { transform: translateX(130%); } }
+
+.hero-cal {
+  flex-shrink: 0;
+  width: 54px;
+  overflow: hidden;
+  border-radius: 14px;
+  text-align: center;
+  background: #fffdf8;
+  box-shadow: 0 7px 14px -7px rgba(0, 0, 0, 0.55), inset 0 -2px 0 rgba(0, 0, 0, 0.06);
+}
+.hero-cal-mois {
+  display: block;
+  padding: 3px 0 2px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-fill) 80%, white), var(--accent-fill));
+}
+.hero-cal-jour {
+  display: block;
+  padding: 1px 0 4px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: #1b1c1e;
+  font-variant-numeric: tabular-nums;
+}
+.hero-infos { position: relative; z-index: 1; display: grid; gap: 1px; min-width: 0; }
+.hero-carte .hero-kicker { gap: 5px; font-size: 9.5px; opacity: 0.95; }
+.hero-carte .hero-kicker::before { display: none; }
+.hero-patte { width: 13px; height: 13px; flex-shrink: 0; color: #f3c26b; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
+.hero-carte h2 {
+  margin: 1px 0 2px;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+/* La carte floute ce qui passe dessous : posee trop haut, elle brouillait la
+   tete et le poitrail des chiens. L'en-tete photo gagne donc de la hauteur,
+   et la carte se pose sous eux - ils restent nets, en entier. */
+.hero-caption { min-height: 244px; }
+.hero-carte { padding: 8px 15px 8px 8px; }
+.hero-cal { width: 50px; }
+.hero-cal-jour { font-size: 24px; }
+
+/* La pastille de session est deja sur du verre : pas de second flou. */
+.hero-carte .hero-session {
+  margin-top: 3px;
+  background: rgba(10, 12, 15, 0.34);
+  border-color: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
