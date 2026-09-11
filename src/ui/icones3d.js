@@ -67,29 +67,44 @@ const ENVOIS = `
   <path d="M33.3 33.5 H40.4 M37.6 30.5 L40.6 33.5 L37.6 36.5" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`
 
+// Le responsable : costume ardoise, cravate terre cuite, et l'etoile doree du
+// chef d'equipe sur la veste - c'est lui qui donne et retire les acces.
 const ADMIN = `
 <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <linearGradient id="ic-ad-bouclier" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="ic-ad-costume" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#7887bd"/>
       <stop offset="1" stop-color="#2a3354"/>
     </linearGradient>
+    <radialGradient id="ic-ad-peau" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#f8dcc0"/>
+      <stop offset="1" stop-color="#d69e76"/>
+    </radialGradient>
     <linearGradient id="ic-ad-or" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffdb8f"/>
       <stop offset="1" stop-color="#df9733"/>
     </linearGradient>
   </defs>
-  <ellipse cx="25" cy="44" rx="12" ry="2" fill="#000" opacity="0.22"/>
-  <!-- epaisseur, puis la face du bouclier -->
-  <path d="M25.5 6.6 L40 11.6 V23 C40 32.5 33.8 39.5 25.5 43.5 C17.2 39.5 11 32.5 11 23 V11.6 Z" fill="#1c2440"/>
-  <path d="M24 4.5 L38.5 9.5 V21.5 C38.5 31 32.3 38 24 42 C15.7 38 9.5 31 9.5 21.5 V9.5 Z" fill="url(#ic-ad-bouclier)"/>
-  <path d="M24 8.3 L35 12.1 V21.6 C35 29 30.3 34.6 24 37.9 C17.7 34.6 13 29 13 21.6 V12.1 Z" fill="none" stroke="#fff" stroke-opacity="0.28" stroke-width="1.3"/>
-  <path d="M11.5 10.6 L24 6.4 V18.5 C19 19 14.5 20.6 11.5 22.6 Z" fill="#fff" opacity="0.12"/>
-  <!-- la serrure doree : les codes d'acces -->
-  <circle cx="24" cy="19.6" r="4.7" fill="url(#ic-ad-or)"/>
-  <path d="M21.5 22.4 H26.5 L27.8 30.6 H20.2 Z" fill="url(#ic-ad-or)"/>
-  <circle cx="24" cy="19.6" r="1.8" fill="#2a3354"/>
-  <rect x="23.15" y="20.6" width="1.7" height="5.4" rx="0.85" fill="#2a3354"/>
+  <ellipse cx="24.5" cy="44" rx="14.5" ry="2" fill="#000" opacity="0.22"/>
+  <!-- le buste : epaisseur, puis le costume et son reflet d'epaule -->
+  <path d="M9.2 42.8 C9.2 32.8 15.7 28.3 25.2 28.3 C34.7 28.3 41.2 32.8 41.2 42.8 Q41.2 44.3 39.7 44.3 H10.7 Q9.2 44.3 9.2 42.8 Z" fill="#1c2440"/>
+  <path d="M8 41 C8 31 14.5 26.5 24 26.5 C33.5 26.5 40 31 40 41 Q40 42.5 38.5 42.5 H9.5 Q8 42.5 8 41 Z" fill="url(#ic-ad-costume)"/>
+  <path d="M11 34.5 C12.8 30.4 16.4 28.2 20.5 27.4 L19 29.8 C15.8 30.6 13.2 32.4 11 34.5 Z" fill="#fff" opacity="0.18"/>
+  <!-- la chemise, les revers et la cravate -->
+  <path d="M19 27.2 L24 35.5 L29 27.2 C27.5 26.8 25.8 26.5 24 26.5 C22.2 26.5 20.5 26.8 19 27.2 Z" fill="#fffaf2"/>
+  <path d="M19 27.2 L22.6 37.6 M29 27.2 L25.4 37.6" stroke="#222b48" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M22.7 28.2 H25.3 L24.9 30.2 H23.1 Z" fill="#b95f3b"/>
+  <path d="M23.1 30.2 H24.9 L25.7 37.2 L24 39 L22.3 37.2 Z" fill="#dc8356"/>
+  <!-- l'etoile du chef -->
+  <circle cx="32.2" cy="34.2" r="3.7" fill="url(#ic-ad-or)"/>
+  <polygon points="0,2.4 -0.588,0.809 -2.28,0.742 -0.951,-0.309 -1.41,-1.94 0,-1 1.41,-1.94 0.951,-0.309 2.28,0.742 0.588,0.809" transform="translate(32.2 34.4) scale(0.95 -0.95)" fill="#fffaf2"/>
+  <!-- le cou, le visage et les cheveux -->
+  <rect x="21.2" y="21.5" width="5.6" height="6" rx="2.2" fill="#d69e76"/>
+  <circle cx="24" cy="15.8" r="7.8" fill="url(#ic-ad-peau)"/>
+  <path d="M16.3 15.4 C15.9 9.8 19.5 6.9 24.2 6.9 C28.9 6.9 32.3 9.9 31.8 15 C30.6 12.3 27.9 11.3 24.5 11.5 C21.4 11.7 18.5 12.8 16.3 15.4 Z" fill="#3b2a22"/>
+  <circle cx="21.3" cy="16.4" r="0.95" fill="#2f2320"/>
+  <circle cx="26.7" cy="16.4" r="0.95" fill="#2f2320"/>
+  <path d="M21.7 19.3 Q24 21.1 26.3 19.3" stroke="#8a4a32" stroke-width="1" fill="none" stroke-linecap="round"/>
 </svg>`
 
 // Contour d'un engrenage : dents trapezoidales, arcs entre elles.
