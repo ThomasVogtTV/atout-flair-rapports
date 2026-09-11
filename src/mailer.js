@@ -18,6 +18,7 @@
 // disparaitre sans que personne ne s'en apercoive.
 
 import * as db from './db.js'
+import { ecrireRapport } from './state.js'
 import { uid } from './state.js'
 import { askAppCode } from './ui/dialogs.js'
 import { hideLoading } from './ui/dom.js'
@@ -154,7 +155,7 @@ export async function sendReport(report, payload, blob) {
   if (!navigator.onLine) {
     job.etat = 'attente'
     job.motif = 'Hors ligne au moment de l’envoi.'
-    await db.put('queue', job)
+    await ecrireJob(job)
     return { etat: 'attente' }
   }
 
@@ -172,7 +173,7 @@ export async function sendReport(report, payload, blob) {
     // et garder l'envoi de cote pour qu'il puisse etre repris a la main.
     const bloquant = err instanceof ServerRefusedError || err instanceof BadCodeError
     job.etat = bloquant ? 'echec' : 'attente'
-    await db.put('queue', job)
+    await ecrireJob(job)
     return { etat: job.etat, motif: err.message }
   }
 }
@@ -182,22 +183,48 @@ export async function sendReport(report, payload, blob) {
 export const listQueue = async () =>
   (await db.all('queue')).sort((a, b) => b.createdAt - a.createdAt)
 
-export const pendingCount = async () =>
-  (await db.all('queue')).filter((j) => j.etat !== 'echec').length
+// Les deux nombres de la pastille des envois sont relus a chaque rendu d'ecran.
+// La file porte les PDF entiers : la relire a chaque tap chargeait des
+// megaoctets pour deux chiffres. Le compte reste donc en memoire, et n'est
+// refait que lorsque la file change.
+let comptes = null
+const fileChangee = () => {
+  comptes = null
+}
+async function compter() {
+  if (!comptes) {
+    const jobs = await db.all('queue')
+    comptes = {
+      attente: jobs.filter((j) => j.etat !== 'echec').length,
+      echec: jobs.filter((j) => j.etat === 'echec').length,
+    }
+  }
+  return comptes
+}
 
-export const failedCount = async () =>
-  (await db.all('queue')).filter((j) => j.etat === 'echec').length
+async function ecrireJob(job) {
+  await db.put('queue', job)
+  fileChangee()
+}
 
-export const deleteJob = (id) => db.del('queue', id)
+export const pendingCount = async () => (await compter()).attente
+
+export const failedCount = async () => (await compter()).echec
+
+export async function deleteJob(id) {
+  await db.del('queue', id)
+  fileChangee()
+}
 
 /** Marque le rapport correspondant comme envoye, et retire l'envoi de la file. */
 async function marquerEnvoye(job) {
-  await db.del('queue', job.id)
+  await deleteJob(job.id)
   const report = await db.get('reports', job.reportId)
   if (report) {
     report.status = 'sent'
     report.sentAt = Date.now()
-    await db.put('reports', report)
+    // Rapport et resume ensemble : sinon la liste le dirait encore en attente.
+    await ecrireRapport(report)
   }
 }
 
@@ -220,7 +247,7 @@ export async function retryJob(id) {
     job.dernierEssai = Date.now()
     job.motif = err instanceof NotConfiguredError ? 'Boîte mail non configurée côté serveur.' : err.message
     job.etat = err instanceof ServerRefusedError || err instanceof BadCodeError || err instanceof NotConfiguredError ? 'echec' : 'attente'
-    await db.put('queue', job)
+    await ecrireJob(job)
     return { ok: false, motif: job.motif }
   }
 }
@@ -251,7 +278,7 @@ export async function flushQueue() {
       const bloquant =
         err instanceof ServerRefusedError || err instanceof BadCodeError || err instanceof NotConfiguredError
       job.etat = bloquant ? 'echec' : 'attente'
-      await db.put('queue', job)
+      await ecrireJob(job)
       if (bloquant) echecs++
       // Un refus du serveur vaudra pour tous les envois suivants : inutile de
       // les enchainer. Une panne de reseau, elle, arrete aussi la boucle.

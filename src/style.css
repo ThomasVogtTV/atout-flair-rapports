@@ -1526,9 +1526,10 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   display: flex;
   gap: 10px;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  background: var(--bar-bg);
+  /* Fond plein plutot que flou : la barre reste fixe pendant qu'on fait defiler
+     tout le formulaire, et le flou se recalculait a chaque image. */
+  background: linear-gradient(var(--bar-bg), var(--bar-bg)) var(--card-solid);
   border-top: 1px solid var(--line);
-  backdrop-filter: blur(12px);
 }
 /* Trois sorties au lieu de deux : a 375 px chaque bouton ne dispose plus que
    de 72 px de texte avec la marge d'origine, et "Aperçu PDF" - qui en demande
@@ -1792,6 +1793,17 @@ body.verrouille { overflow: hidden; }
 /* Pastille invite plus longue (nom + date) : elle passe sur deux lignes
    plutot que de couper la date sur un petit ecran. */
 .hero-session.invite { white-space: normal; border-radius: 10px; line-height: 1.35; }
+
+/* --- Performance du defilement -------------------------------------------
+   Le flou de l'en-tete se recalcule a chaque image du defilement, sur tout ce
+   qui passe dessous. Hors de l'accueil, ce qui passe dessous est le fond uni
+   de l'ecran : flou ou pas, l'oeil voit la meme chose. On pose donc la meme
+   couleur translucide sur le fond uni, sans flou - meme rendu, sans le calcul. */
+body:not([data-screen="home"]) .top {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: linear-gradient(var(--header-bg), var(--header-bg)) var(--bg-solid);
+}
 
 /* --- Carnet : liste des clients, fiche, choix depuis un rapport ---------- */
 .contact-avatar {

@@ -6,6 +6,7 @@ import * as S from '../state.js'
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { mandantPicker } from '../ui/chips.js'
+import { srcVignette } from '../ui/vignettes.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
 // pour le rapport de detection, deux champs separes (comme le mandant)
@@ -60,7 +61,7 @@ function photoStrip(photos) {
   return `<div class="photos">${photos
     .map(
       (p, i) => `<div class="thumb" data-photo-id="${p.id}">
-        <img src="${p.dataUrl}" alt="" />
+        <img src="${srcVignette(p)}" data-vignette="${p.id}" alt="" decoding="async" />
         <button class="thumb-del" data-del-photo="${p.id}">✕</button>
         ${
           n > 1

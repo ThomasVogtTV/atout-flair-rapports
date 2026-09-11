@@ -102,6 +102,10 @@ class Magasin {
   getAll() {
     return new Requete([...this.#donnees.values()].map((v) => structuredClone(v)))
   }
+
+  getAllKeys() {
+    return new Requete([...this.#donnees.keys()])
+  }
 }
 
 class Transaction {

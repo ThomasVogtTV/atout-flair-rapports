@@ -1,14 +1,15 @@
-// Petit wrapper IndexedDB (aucune dependance). Quatre magasins :
-//   reports  : les rapports, brouillons compris
+// Petit wrapper IndexedDB (aucune dependance). Cinq magasins :
+//   reports  : les rapports, brouillons compris, photos et signatures incluses
+//   resumes  : la meme chose sans photos ni signatures, pour les listes
 //   contacts : carnet d'adresses des mandants / regies
 //   queue    : envois en attente de reseau
 //   settings : reglages de l'appareil (technicien par defaut et sa signature)
 
 const DB_NAME = 'atout-flair'
-// v2 : ajout du magasin "settings". onupgradeneeded ne cree que ce qui manque,
-// les rapports deja saisis sur l'appareil sont conserves.
-const DB_VERSION = 2
-const STORES = ['reports', 'contacts', 'queue', 'settings']
+// v2 : ajout du magasin "settings". v3 : ajout de "resumes". onupgradeneeded
+// ne cree que ce qui manque, les rapports deja saisis sont conserves.
+const DB_VERSION = 3
+const STORES = ['reports', 'resumes', 'contacts', 'queue', 'settings']
 
 let dbPromise = null
 
@@ -45,3 +46,5 @@ export const put = (store, value) => tx(store, 'readwrite', (s) => s.put(value))
 export const get = (store, id) => tx(store, 'readonly', (s) => s.get(id))
 export const del = (store, id) => tx(store, 'readwrite', (s) => s.delete(id))
 export const all = (store) => tx(store, 'readonly', (s) => s.getAll())
+// Les seuls identifiants : de quoi comparer deux magasins sans rien charger.
+export const keys = (store) => tx(store, 'readonly', (s) => s.getAllKeys())

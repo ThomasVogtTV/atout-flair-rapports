@@ -22,6 +22,7 @@ import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 import { installerVerrou, seDeconnecter, estInvite } from './lock.js'
+import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
@@ -41,11 +42,29 @@ let view = {
   enEchec: 0,
 }
 let saveTimer = null
+let aEnregistrer = null
 
+// Le rapport a enregistrer est retenu au moment de la frappe. Le delai lisait
+// `view.report` a son echeance : quitter l'ecran juste apres avoir tape, et il
+// n'y avait plus de rapport - la derniere saisie ne s'enregistrait pas.
 function scheduleSave() {
+  aEnregistrer = view.report
   clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => S.saveReport(view.report), 400)
+  saveTimer = setTimeout(flushSave, 600)
 }
+
+// Enregistre tout de suite ce qui attend : avant de changer d'ecran, et quand
+// l'app passe en arriere-plan (appel entrant, ecran verrouille).
+function flushSave() {
+  clearTimeout(saveTimer)
+  const r = aEnregistrer
+  aEnregistrer = null
+  return r ? S.saveReport(r) : Promise.resolve(true)
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) flushSave()
+})
+window.addEventListener('pagehide', () => flushSave())
 
 function get(path) {
   return path.split('.').reduce((o, k) => o?.[k], view.report)
@@ -59,6 +78,8 @@ function set(path, value) {
 // --- navigation ------------------------------------------------------------
 
 async function goHome() {
+  await flushSave()
+  viderVignettes()
   // La recherche ne survit pas a la sortie de l'accueil : revenir sur une liste
   // filtree par des mots tapes une heure plus tot donne un carnet a moitie vide
   // sans qu'on comprenne pourquoi.
@@ -186,6 +207,8 @@ async function adminAjouter() {
 }
 
 async function openReport(id) {
+  await flushSave()
+  if (view.report?.id !== id) viderVignettes()
   const report = await S.loadReport(id)
   if (!report) return goHome()
   // Rapport cree avant l'arrivee de la rubrique "Le technicien" : il reprend le
@@ -199,7 +222,7 @@ async function openReport(id) {
   // creer pour la remplir.
   view.repliees = new Set(report.rows.map((r) => r.id))
   view.sectionsRepliees = sectionsParDefaut(report)
-  view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
+  view.children = await S.enfantsDe(report.id)
   view.contacts = await contactsVisibles()
   view.partenaires = await S.listPartenaires()
   view.screen = 'editor'
@@ -317,6 +340,7 @@ function render() {
     root.classList.add('view-enter')
   }
   updatePendingBadge()
+  if (view.screen === 'editor' && view.report) chargerVignettes(view.report.photos, root)
 }
 
 // --- interactions ----------------------------------------------------------
@@ -1279,6 +1303,9 @@ export async function boot() {
   syncCarnet()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.
-  loadPdfEngine().catch(() => {})
+  // Une fois l'app au repos seulement : lire 450 Ko de moteur PDF des le
+  // demarrage disputait le processeur a l'affichage de l'accueil.
+  const auRepos = window.requestIdleCallback ?? ((fn) => setTimeout(fn, 2500))
+  auRepos(() => loadPdfEngine().catch(() => {}), { timeout: 8000 })
   if (navigator.onLine) flushQueue().then(() => updatePendingBadge())
 }

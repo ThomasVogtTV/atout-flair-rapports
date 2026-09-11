@@ -80,7 +80,9 @@ function nextRef() {
  * @returns {Promise<{compteur: number, plusHaut: number, repris: boolean}>}
  */
 export async function repriseCompteur() {
-  const reports = await db.all('reports')
+  // Les resumes portent le numero : pas besoin des photos pour le lire.
+  await synchroniserResumes()
+  const reports = await db.all('resumes')
   const plusHaut = reports.reduce((max, r) => Math.max(max, numeroDeRef(r.ref)), 0)
   const enregistre = Number(localStorage.getItem(REF_KEY) ?? '0')
   const compteur = Math.max(enregistre, compteurMemoire)
@@ -260,9 +262,15 @@ const memoirePleine = (err) =>
 
 /** @returns {Promise<boolean>} vrai si le rapport est bien dans l'appareil */
 export const saveReport = async (report) => {
+  // Un resume n'a ni photos ni signatures : l'enregistrer a la place du
+  // rapport les effacerait. Les listes ne portent que des resumes.
+  if (report?.resume) {
+    console.error('Enregistrement refusé : ceci est un résumé de liste, pas un rapport')
+    return false
+  }
   report.updatedAt = Date.now()
   try {
-    await db.put('reports', report)
+    await ecrireRapport(report)
     return true
   } catch (err) {
     console.error('Enregistrement du rapport impossible', err)
@@ -271,6 +279,61 @@ export const saveReport = async (report) => {
   }
 }
 export const loadReport = (id) => db.get('reports', id)
+
+// --- resumes : ce que les listes lisent ------------------------------------
+//
+// L'accueil, le carnet et les envois relisaient tous les rapports en entier a
+// chaque passage - photos comprises, deux copies de chacune en texte base64.
+// Une vingtaine de rapports photographies, et chaque retour a l'accueil
+// chargeait des centaines de megaoctets pour afficher des noms et des dates.
+//
+// Chaque rapport a donc son resume : les memes champs, sans photos, lignes ni
+// signatures. Les listes ne lisent que lui ; le rapport entier ne se charge
+// qu'a l'ouverture.
+
+/** Le rapport sans ce qui pese. Marque, pour ne jamais etre enregistre a sa place. */
+export function resumeDe(report) {
+  const { photos, signature, rows, technicien, partenaire, ...reste } = report
+  return {
+    ...reste,
+    resume: true,
+    rows: [],
+    nPhotos: photos?.length ?? 0,
+    technicien: { nom: technicien?.nom ?? '' },
+    partenaire: { nom: partenaire?.nom ?? '' },
+  }
+}
+
+/** Ecrit un rapport et son resume. Seule porte d'entree du magasin des rapports. */
+export async function ecrireRapport(report) {
+  await db.put('reports', report)
+  await db.put('resumes', resumeDe(report))
+}
+
+/**
+ * Remet les resumes en phase avec les rapports : un resume par rapport, aucun
+ * resume orphelin. Ne compare que les identifiants - c'est quasi gratuit - et
+ * ne charge que les rapports qui n'ont pas encore de resume (le premier
+ * demarrage apres la mise a jour, une ecriture interrompue).
+ */
+export async function synchroniserResumes() {
+  const [rapports, resumes] = await Promise.all([db.keys('reports'), db.keys('resumes')])
+  const connus = new Set(resumes)
+  const presents = new Set(rapports)
+  for (const id of rapports) {
+    if (connus.has(id)) continue
+    const r = await db.get('reports', id)
+    if (r) await db.put('resumes', resumeDe(r))
+  }
+  for (const id of resumes) if (!presents.has(id)) await db.del('resumes', id)
+}
+
+/** Les sous-rapports d'un immeuble, en entier : le PDF fusionne en a besoin. */
+export async function enfantsDe(parentId) {
+  const ids = (await db.all('resumes')).filter((r) => r.parentId === parentId).map((r) => r.id)
+  const enfants = await Promise.all(ids.map((id) => db.get('reports', id)))
+  return enfants.filter(Boolean).sort((a, b) => b.updatedAt - a.updatedAt)
+}
 
 /**
  * Efface un rapport, et avec lui tout ce qui n'aurait plus de sens sans lui.
@@ -288,26 +351,32 @@ export const loadReport = (id) => db.get('reports', id)
  * @returns {Promise<{enfants: number}>} ce qui est parti avec lui
  */
 export async function deleteReport(id) {
-  const tous = await db.all('reports')
+  // Les liens de parente se lisent dans les resumes : inutile de charger les
+  // photos de tout l'appareil pour savoir qui depend de qui.
+  const tous = await db.all('resumes')
   const cible = tous.find((r) => r.id === id)
 
   const enfants = tous.filter((r) => r.parentId === id)
   for (const enfant of enfants) await db.del('reports', enfant.id)
+  for (const enfant of enfants) await db.del('resumes', enfant.id)
 
   if (cible?.parentId) {
-    const parent = tous.find((r) => r.id === cible.parentId)
+    const parent = await db.get('reports', cible.parentId)
     const ligne = parent?.rows?.find((x) => x.sousRapportId === id)
     if (ligne) {
       ligne.sousRapportId = null
-      await db.put('reports', parent)
+      await ecrireRapport(parent)
     }
   }
 
   await db.del('reports', id)
+  await db.del('resumes', id)
   return { enfants: enfants.length }
 }
+
+/** Les resumes de tous les rapports, du plus recent au plus ancien. */
 export const listReports = async () =>
-  (await db.all('reports')).sort((a, b) => b.updatedAt - a.updatedAt)
+  (await db.all('resumes')).sort((a, b) => b.updatedAt - a.updatedAt)
 
 /**
  * Un rapport correspond-il a ce qui est tape dans la recherche ?
@@ -569,7 +638,8 @@ const CARNET_KEY = 'af-carnet-repris'
 
 export async function reprendreClients() {
   if (localStorage.getItem(CARNET_KEY)) return 0
-  const nouveaux = clientsDesRapports(await db.all('reports'), await db.all('contacts'))
+  await synchroniserResumes()
+  const nouveaux = clientsDesRapports(await db.all('resumes'), await db.all('contacts'))
   for (const c of nouveaux) await db.put('contacts', marque({ id: uid(), ...c }))
   localStorage.setItem(CARNET_KEY, '1')
   if (nouveaux.length) signalCarnet?.()
@@ -667,7 +737,7 @@ export async function importBackup(data) {
   // Fusion, jamais remplacement : restaurer une sauvegarde ne doit pas effacer
   // ce qui a ete saisi depuis. Un enregistrement de meme identifiant est repris
   // du fichier, les autres restent en place.
-  for (const r of data.reports ?? []) await db.put('reports', r)
+  for (const r of data.reports ?? []) await ecrireRapport(r)
   // Les contacts restaures partent aussi au carnet de l'equipe.
   for (const c of data.contacts ?? []) await db.put('contacts', marque(c))
   if ((data.contacts ?? []).length) signalCarnet?.()
