@@ -42,9 +42,10 @@ export function newRow(type) {
   return row
 }
 
-// Reference imprimee sur le rapport (ex. AF-00001). Compteur local a
-// l'appareil : suffisant pour un usage a un seul technicien, et sans
-// dependance a un serveur pour rester utilisable hors ligne.
+// Reference imprimee sur le rapport (ex. AF-00001). Les numeros viennent de
+// lots reserves aupres du serveur, uniques dans toute l'equipe (voir plus bas).
+// Ce compteur local retient le plus haut numero utilise sur l'appareil, et
+// numerote en secours quand le lot est epuise sans reseau.
 const REF_KEY = 'af-ref-seq'
 
 /** Le numero contenu dans une reference, ou 0 si elle n'en porte pas. */
