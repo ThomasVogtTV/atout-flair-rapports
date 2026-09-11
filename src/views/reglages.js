@@ -70,8 +70,8 @@ export function reglagesView(view) {
       <div class="card">
         <input data-app-code type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
                value="${esc(currentCode())}" placeholder="Non renseigné sur cet appareil" />
-        <p class="muted small reglage-note">Il autorise l'envoi des rapports depuis la boîte de l'entreprise, et
-        s'écrit avec ses majuscules. Chaque téléphone a le sien à saisir une fois.</p>
+        <p class="muted small reglage-note">Il autorise l'envoi des rapports depuis la boîte de l'entreprise. Majuscules et
+        minuscules sont indifférentes. À saisir une fois sur chaque téléphone.</p>
       </div>
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>

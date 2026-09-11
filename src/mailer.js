@@ -102,7 +102,7 @@ async function post(job, { code = storedCode(), retried = false, demander = true
     }
     throw new BadCodeError(
       demander
-        ? "Code d'accès refusé. Vérifiez les majuscules, ou demandez-le à Thomas."
+        ? "Code d'accès refusé. Vérifiez l'orthographe, ou demandez-le à Thomas."
         : "Code d'envoi refusé. Corrigez-le dans « Carnet et réglages », puis réessayez ici."
     )
   }

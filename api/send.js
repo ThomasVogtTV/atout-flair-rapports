@@ -50,8 +50,14 @@ export default async function handler(req, res) {
   // plus aucun appareil ne peut alors correspondre. L'envoi est refuse pour tout le
   // monde, definitivement, et l'app ne sait dire que "code refuse". Meme chose pour
   // l'espace que le clavier du telephone ajoute apres un mot.
-  const codeRecu = String(req.headers['x-app-code'] ?? '').trim()
-  const codeAttendu = String(process.env.APP_CODE).trim()
+  //
+  // Et sans tenir compte de la casse : le champ du telephone coupe la majuscule
+  // automatique (sinon le clavier en mettait une a chaque debut de mot), si bien
+  // que "StessyOberly" demandait deux appuis sur Maj et arrivait presque toujours
+  // en minuscules - refuse. Pour un code partage qui barre l'acces a la boite
+  // mail, et non un mot de passe, la casse ne protegeait rien et bloquait tout.
+  const codeRecu = String(req.headers['x-app-code'] ?? '').trim().toLowerCase()
+  const codeAttendu = String(process.env.APP_CODE).trim().toLowerCase()
   if (!codeRecu || codeRecu !== codeAttendu) {
     return res.status(401).json({ error: "Code d'accès invalide" })
   }

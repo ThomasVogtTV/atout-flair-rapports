@@ -112,7 +112,7 @@ export function askAppCode({ refuse = false } = {}) {
     <h2>${refuse ? "Code d'accès refusé" : "Code d'accès"}</h2>
     <p class="muted small">${
       refuse
-        ? "Ce code ne correspond pas. Attention aux majuscules : il s'écrit exactement comme il a été défini."
+        ? "Ce code ne correspond pas. Vérifiez l'orthographe - majuscules et minuscules sont indifférentes."
         : "Ce code autorise l'envoi des rapports depuis la boîte de l'entreprise. Il n'est demandé qu'une fois sur cet appareil."
     }</p>
     <label>Code<input id="app-code" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Demandez-le à Thomas" /></label>
