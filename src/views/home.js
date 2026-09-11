@@ -13,7 +13,7 @@ import { TYPE_LIST, typeOf } from '../templates.js'
 import * as S from '../state.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
-import { estAdmin } from '../lock.js'
+import { estAdmin, identite } from '../lock.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
@@ -282,6 +282,18 @@ export function listeRapportsHTML(view) {
  * jour, et ce qui reste sur les bras. La photo et la signature de la maison
  * restent - c'est l'identite - mais elles tiennent en moins de place.
  */
+// Qui tient le telephone : l'administrateur ou un employe, et lequel. Discret,
+// mais visible a chaque ouverture - un telephone prete ou echange entre deux
+// techniciens ne doit pas envoyer des rapports au nom du mauvais. Rien tant que
+// le serveur n'a pas encore dit qui est connecte.
+function sessionHTML() {
+  const ident = identite()
+  if (!ident) return ''
+  const admin = ident.role === 'admin'
+  const texte = admin ? 'Session administrateur' : `Session employé · ${ident.nom}`
+  return `<span class="hero-session${admin ? ' admin' : ''}">${esc(texte)}</span>`
+}
+
 function heroHTML(view) {
   const jour = new Date().toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
   const brouillons = view.reports.filter(S.enCours).length
@@ -312,6 +324,7 @@ function heroHTML(view) {
           ? bilan.map((m) => (m.alerte ? `<b class="hero-alerte">${esc(m.t)}</b>` : esc(m.t))).join(' · ')
           : 'Tout est à jour'
       }</p>
+      ${sessionHTML()}
     </div>`
 }
 

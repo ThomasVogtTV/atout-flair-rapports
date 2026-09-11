@@ -1719,3 +1719,38 @@ body.verrouille { overflow: hidden; }
 @media (max-width: 399px) {
   .top:has(.top-actions > :nth-child(4)) .top-title { display: none; }
 }
+
+/* Indicateur de session sous la date de l'accueil : qui tient le telephone. */
+.hero-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 9px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-session::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #a8d8b9;
+}
+.hero-session.admin::before { background: var(--accent); }
+/* La pastille de session se cale sur son texte : la legende de l'accueil
+   aligne ses enfants sur toute sa largeur, ce qui l'etirait avec un vide a
+   droite. */
+.hero-session { align-self: flex-start; justify-self: start; }
