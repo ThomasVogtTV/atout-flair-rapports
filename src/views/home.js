@@ -373,6 +373,10 @@ function heroHTML(view) {
     }`
 }
 
+// Une icone 3D de l'en-tete : image de 96 px, affichee a 29 px - nette sur un
+// ecran a trois pixels par point. Voir public/icones/.
+const icone3d = (nom) => `<img src="/icones/${nom}.png" alt="" width="29" height="29" decoding="async" />`
+
 export function homeView(view) {
   return `
     <header class="top">
@@ -380,19 +384,23 @@ export function homeView(view) {
       <div class="top-title">
         <h1>Atout Flair</h1>
       </div>
+      <!-- Icones 3D (3dicons.co, libres d'usage), dans l'ordre voulu par
+           Thomas : carnet, envois, administration, reglages. -->
       <span class="top-actions">
-        <button class="icon-btn envois-toggle${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
-                data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${ICONS.mail}</button>
         ${
           // Pas de carnet pour un invite : la liste des clients reste a l'entreprise.
-          estInvite() ? '' : `<button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet">${ICONS.contacts}</button>`
+          estInvite()
+            ? ''
+            : `<button class="icon-btn contacts-toggle icone-3d" data-act="open-contacts" title="Carnet">${icone3d('carnet')}</button>`
         }
+        <button class="icon-btn envois-toggle icone-3d${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
+                data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${icone3d('envois')}</button>
         ${
           estAdmin()
-            ? `<button class="icon-btn contacts-toggle" data-act="open-admin" title="Administration">${ICONS.collab}</button>`
+            ? `<button class="icon-btn contacts-toggle icone-3d" data-act="open-admin" title="Administration">${icone3d('admin')}</button>`
             : ''
         }
-        <button class="icon-btn contacts-toggle" data-act="open-reglages" title="Réglages">${ICONS.reglages}</button>
+        <button class="icon-btn contacts-toggle icone-3d" data-act="open-reglages" title="Réglages">${icone3d('reglages')}</button>
       </span>
     </header>
     ${heroHTML(view)}
