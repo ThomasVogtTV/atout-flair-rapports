@@ -358,9 +358,14 @@ export async function rememberContact(mandant) {
   if (!nom) return
   // Comparaison sur nom + prenom : deux personnes du meme nom de famille sont
   // deux contacts differents, pas une mise a jour de la premiere.
-  const key = fullName(mandant).toLowerCase()
-  const existing = (await listContacts()).find((c) => fullName(c).toLowerCase() === key)
-  await db.put('contacts', { id: existing?.id ?? uid(), ...mandant, nom })
+  const key = cleNom(fullName(mandant))
+  const existing = (await listContacts()).find((c) => cleNom(fullName(c)) === key)
+  // Fusion : un champ laisse vide dans ce rapport n'efface pas ce que le carnet
+  // savait deja. Un mail tape une fois pour la regie reste, meme si le rapport
+  // suivant ne le reprend pas.
+  const fusion = { ...(existing ?? {}) }
+  for (const [k, v] of Object.entries(mandant)) if (String(v ?? '').trim()) fusion[k] = v
+  await db.put('contacts', { ...fusion, id: existing?.id ?? uid(), nom })
 }
 
 /**
@@ -433,6 +438,113 @@ export function mandantEnTexte(mandant) {
 }
 
 export const deleteContact = (id) => db.del('contacts', id)
+
+// Un nom compare sans accents, sans casse et sans espaces en trop : "Régie
+// Duval" et "regie  duval" sont le meme client.
+const cleNom = (s) => sansAccent(s).replace(/\s+/g, ' ').trim()
+
+/** Le bloc mandant d'un rapport, rempli depuis une fiche du carnet. */
+export const contactVersMandant = (c) => ({
+  type: c.type ?? '',
+  nom: c.nom ?? '',
+  prenom: c.prenom ?? '',
+  adresse: c.adresse ?? '',
+  npaLieu: c.npaLieu ?? '',
+  email: c.email ?? '',
+  tel: c.tel ?? '',
+})
+
+/**
+ * Un contact correspond-il a la recherche du carnet ? Memes regles que pour
+ * les rapports : mots dans n'importe quel ordre, sans accents. Le telephone
+ * compte aussi - on retrouve souvent un client par le numero qui a appele.
+ */
+export function matchContact(contact, recherche) {
+  const mots = sansAccent(recherche).split(/\s+/).filter(Boolean)
+  if (!mots.length) return true
+  const foin = sansAccent(
+    [contact.nom, contact.prenom, contact.adresse, contact.npaLieu, contact.email, contact.tel, (contact.tel || '').replace(/\D/g, '')]
+      .filter(Boolean)
+      .join(' ')
+  )
+  return mots.every((m) => foin.includes(m))
+}
+
+/**
+ * Les rapports d'un client : ceux dont il est le mandant, ou le locataire.
+ * Les sous-rapports d'immeuble sont comptes avec leur immeuble.
+ */
+export function rapportsDuContact(contact, reports) {
+  const cle = cleNom(fullName(contact))
+  if (!cle) return []
+  return reports
+    .filter((r) => !r.parentId && (cleNom(fullName(r.mandant)) === cle || cleNom(r.lieu?.locataire) === cle))
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+}
+
+/**
+ * Nombre de rapports et date du dernier, pour tout le carnet d'un coup : la
+ * liste le montre a chaque ligne, et la recalculer contact par contact
+ * reparcourrait tous les rapports autant de fois qu'il y a de clients.
+ *
+ * @returns {Map<string, {n: number, dernier: number}>} par nom compare
+ */
+export function activiteParNom(reports) {
+  const index = new Map()
+  for (const r of reports) {
+    if (r.parentId) continue
+    const cles = new Set([cleNom(fullName(r.mandant)), cleNom(r.lieu?.locataire)].filter(Boolean))
+    for (const k of cles) {
+      const a = index.get(k) ?? { n: 0, dernier: 0 }
+      a.n++
+      a.dernier = Math.max(a.dernier, r.updatedAt || 0)
+      index.set(k, a)
+    }
+  }
+  return index
+}
+
+export const activiteDe = (contact, index) => index.get(cleNom(fullName(contact))) ?? { n: 0, dernier: 0 }
+
+/**
+ * Les mandants des rapports deja faits qui manquent au carnet, un par nom.
+ * Le rapport le plus recent donne les coordonnees les plus fraiches ; un champ
+ * qu'il laisse vide se reprend d'un rapport plus ancien - le telephone saisi
+ * au premier passage, et oublie au second.
+ */
+export function clientsDesRapports(reports, contacts) {
+  const connus = new Set(contacts.map((c) => cleNom(fullName(c))))
+  const clients = new Map()
+  for (const r of [...reports].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))) {
+    if (r.parentId || !(r.mandant?.nom || '').trim()) continue
+    const cle = cleNom(fullName(r.mandant))
+    if (connus.has(cle)) continue
+    const ici = { ...contactVersMandant(r.mandant), nom: r.mandant.nom.trim() }
+    const deja = clients.get(cle)
+    if (!deja) clients.set(cle, ici)
+    else for (const [k, v] of Object.entries(ici)) if (!String(deja[k] ?? '').trim()) deja[k] = v
+  }
+  return [...clients.values()]
+}
+
+/**
+ * Le carnet ne se remplissait qu'a l'envoi automatique : les clients des
+ * rapports remis a la main n'y entraient jamais. Une seule fois par appareil,
+ * les mandants des rapports existants y sont verses - ensuite, le carnet se
+ * tient a jour a chaque envoi et a chaque rapport termine, et un contact
+ * supprime ne revient pas tout seul.
+ *
+ * @returns {Promise<number>} nombre de clients ajoutes
+ */
+const CARNET_KEY = 'af-carnet-repris'
+
+export async function reprendreClients() {
+  if (localStorage.getItem(CARNET_KEY)) return 0
+  const nouveaux = clientsDesRapports(await db.all('reports'), await db.all('contacts'))
+  for (const c of nouveaux) await db.put('contacts', { id: uid(), ...c })
+  localStorage.setItem(CARNET_KEY, '1')
+  return nouveaux.length
+}
 
 // --- technicien par defaut -------------------------------------------------
 

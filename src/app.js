@@ -13,12 +13,13 @@ import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
 import { homeView, listeRapportsHTML } from './views/home.js'
-import { contactsView } from './views/contacts.js'
+import { contactsView, ficheContactView, listeContactsHTML } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
 import { adminView } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
+import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 import { installerVerrou, seDeconnecter } from './lock.js'
 
@@ -60,7 +61,7 @@ async function goHome() {
   // La recherche ne survit pas a la sortie de l'accueil : revenir sur une liste
   // filtree par des mots tapes une heure plus tot donne un carnet a moitie vide
   // sans qu'on comprenne pourquoi.
-  view = { ...view, screen: 'home', report: null, children: [], recherche: '' }
+  view = { ...view, screen: 'home', report: null, children: [], recherche: '', retour: null }
   view.reports = (await S.listReports()).filter((r) => !r.parentId)
   view.stockage = await S.stockage()
   await majCompteurs()
@@ -84,8 +85,20 @@ async function majCompteurs() {
 }
 
 async function openContacts() {
-  view = { ...view, screen: 'contacts', report: null }
+  view = { ...view, screen: 'contacts', report: null, fiche: null, retour: null }
   view.contacts = await S.listContacts()
+  // Le carnet compte les rapports de chaque client : il lui faut la liste.
+  view.reports = (await S.listReports()).filter((r) => !r.parentId)
+  render()
+}
+
+// Fiche d'un client : ses coordonnees, ses rapports, et de quoi en commencer un.
+async function openFiche(id) {
+  view.contacts = await S.listContacts()
+  const fiche = view.contacts.find((c) => c.id === id)
+  if (!fiche) return openContacts()
+  view = { ...view, screen: 'fiche', report: null, fiche, retour: null }
+  view.reports = (await S.listReports()).filter((r) => !r.parentId)
   render()
 }
 
@@ -208,9 +221,21 @@ function sectionsParDefaut(report) {
   return repliees
 }
 
-async function createReport(type) {
+async function createReport(type, contact = null) {
   const report = S.newReport(type)
   report.technicien = await S.loadTechnicien()
+  if (contact) {
+    report.mandant = S.contactVersMandant(contact)
+    // Un particulier ou un locataire fait venir le chien chez lui : le lieu
+    // est son adresse, et c'est lui qu'on trouve sur place. Les deux cases
+    // restent decochables dans le rapport.
+    if (typeOf(report).layout === 'pieces' && ['particulier', 'locataire'].includes(contact.type) && contact.adresse) {
+      report.lieu.sameAsMandant = true
+      report.lieu.sameNameAsMandant = true
+      applySameAddress(report)
+      applySameName(report)
+    }
+  }
   await S.saveReport(report)
   openReport(report.id)
 }
@@ -239,6 +264,8 @@ function render() {
       ? homeView(view)
       : view.screen === 'contacts'
         ? contactsView(view)
+        : view.screen === 'fiche'
+          ? ficheContactView(view)
         : view.screen === 'reglages'
           ? reglagesView(view)
           : view.screen === 'envois'
@@ -305,6 +332,13 @@ root.addEventListener('input', (ev) => {
   if (el.dataset.recherche !== undefined) {
     view.recherche = el.value
     return rafraichirListeRapports()
+  }
+  // Recherche du carnet : seule la liste se redessine, le champ garde le curseur.
+  if (el.dataset.rechercheContact !== undefined) {
+    view.carnetRecherche = el.value
+    const zone = root.querySelector('.carnet-liste')
+    if (zone) zone.outerHTML = listeContactsHTML(view)
+    return
   }
   if (el.dataset.path) {
     set(el.dataset.path, el.value)
@@ -539,23 +573,25 @@ root.addEventListener('click', async (ev) => {
   }
 
   const openId = el.closest('[data-open]')?.dataset.open
-  if (openId) return openReport(openId)
-
-  const delContactId = el.closest('[data-del-contact]')?.dataset.delContact
-  if (delContactId) {
-    ev.stopPropagation()
-    if (confirm('Supprimer ce contact ?')) {
-      await S.deleteContact(delContactId)
-      await refreshContacts()
-    }
-    return
+  if (openId) {
+    // Un rapport ouvert depuis la fiche d'un client y ramene au retour.
+    if (view.screen === 'fiche') view.retour = view.fiche.id
+    return openReport(openId)
   }
 
-  const editContactId = el.closest('[data-edit-contact]')?.dataset.editContact
-  if (editContactId) {
-    const c = view.contacts.find((x) => x.id === editContactId)
-    if (c) openContactDialog(c, refreshContacts)
-    return
+  const ficheId = el.closest('[data-fiche]')?.dataset.fiche
+  if (ficheId) return openFiche(ficheId)
+
+  const carnetFiltre = el.closest('[data-carnet-filtre]')?.dataset.carnetFiltre
+  if (carnetFiltre) {
+    view.carnetFiltre = carnetFiltre
+    return render()
+  }
+
+  const nouveauPour = el.closest('[data-new-pour]')?.dataset.newPour
+  if (nouveauPour && view.fiche) {
+    view.retour = view.fiche.id
+    return createReport(nouveauPour, view.fiche)
   }
 
   const chip = el.closest('.chip')
@@ -585,22 +621,7 @@ root.addEventListener('click', async (ev) => {
   const fillId = el.closest('[data-fill-contact]')?.dataset.fillContact
   if (fillId) {
     const c = view.contacts.find((x) => x.id === fillId)
-    if (c) {
-      view.report.mandant = {
-        type: c.type ?? '',
-        nom: c.nom ?? '',
-        prenom: c.prenom ?? '',
-        adresse: c.adresse ?? '',
-        npaLieu: c.npaLieu ?? '',
-        email: c.email ?? '',
-        tel: c.tel ?? '',
-      }
-      if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
-      if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
-      await S.saveReport(view.report)
-      toast('Mandant repris du carnet')
-      render()
-    }
+    if (c) await remplirMandant(c)
     return
   }
 
@@ -770,25 +791,18 @@ root.addEventListener('click', async (ev) => {
 
   const act = el.closest('[data-act]')?.dataset.act
   if (!act) return
-  if (act === 'copier-mandant') {
-    const texte = S.mandantEnTexte(view.report.mandant)
+  if (act === 'copier-mandant' || act === 'copier-contact') {
+    const texte = S.mandantEnTexte((act === 'copier-mandant' ? view.report?.mandant : view.fiche) ?? {})
     if (!texte) return toast('Aucune coordonnée à copier')
-    try {
-      await navigator.clipboard.writeText(texte)
-      toast('Coordonnées copiées')
-    } catch {
-      // Le presse-papiers est refuse hors contexte securise, ou sans geste
-      // reconnu : on retombe sur la vieille methode, qui marche partout.
-      const zone = document.createElement('textarea')
-      zone.value = texte
-      zone.style.position = 'fixed'
-      zone.style.opacity = '0'
-      document.body.appendChild(zone)
-      zone.select()
-      document.execCommand('copy')
-      zone.remove()
-      toast('Coordonnées copiées')
-    }
+    return copier(texte)
+  }
+  if (act === 'modifier-contact') {
+    const id = view.fiche?.id
+    return openContactDialog(view.fiche, () => openFiche(id))
+  }
+  if (act === 'choisir-contact') {
+    const c = await choisirContact(view.contacts ?? [], view.reports ?? [])
+    if (c) await remplirMandant(c)
     return
   }
   if (act === 'drop-partenaire') {
@@ -805,6 +819,9 @@ root.addEventListener('click', async (ev) => {
     return openReport(copie.id)
   }
   if (act === 'terminer') {
+    // Un rapport remis a la main fait entrer son client au carnet, comme un
+    // rapport parti par mail.
+    await S.rememberContact(view.report.mandant)
     await S.terminerReport(view.report)
     toast('Rapport terminé. Il reste dans « Mes rapports ».')
     return goHome()
@@ -847,7 +864,9 @@ root.addEventListener('click', async (ev) => {
       if (choice === 'cancel') return
       if (choice === 'delete') await S.deleteReport(view.report.id)
     }
-    return view.screen === 'editor' && view.report?.parentId ? openReport(view.report.parentId) : goHome()
+    if (view.screen === 'editor' && view.report?.parentId) return openReport(view.report.parentId)
+    if (view.screen === 'editor' && view.retour) return openFiche(view.retour)
+    return goHome()
   }
   if (act === 'add-row') return insertNewRow()
   if (act === 'residents-carnet') return residentsAuCarnet()
@@ -949,6 +968,34 @@ root.addEventListener('click', async (ev) => {
     return openSendDialog(view.report, view.children, goHome)
   }
 })
+
+// Un client du carnet remplit tout le bloc mandant d'un coup.
+async function remplirMandant(c) {
+  view.report.mandant = S.contactVersMandant(c)
+  if (view.report.lieu.sameAsMandant) applySameAddress(view.report)
+  if (view.report.lieu.sameNameAsMandant) applySameName(view.report)
+  await S.saveReport(view.report)
+  toast('Mandant repris du carnet')
+  render()
+}
+
+async function copier(texte) {
+  try {
+    await navigator.clipboard.writeText(texte)
+  } catch {
+    // Le presse-papiers est refuse hors contexte securise, ou sans geste
+    // reconnu : on retombe sur la vieille methode, qui marche partout.
+    const zone = document.createElement('textarea')
+    zone.value = texte
+    zone.style.position = 'fixed'
+    zone.style.opacity = '0'
+    document.body.appendChild(zone)
+    zone.select()
+    document.execCommand('copy')
+    zone.remove()
+  }
+  toast('Coordonnées copiées')
+}
 
 // --- photos ----------------------------------------------------------------
 
@@ -1181,6 +1228,8 @@ export async function boot() {
   // dans localStorage, les rapports dans IndexedDB, et le navigateur peut vider
   // le premier sans toucher au second.
   await S.repriseCompteur()
+  // Une fois par appareil : les clients des rapports deja faits entrent au carnet.
+  await S.reprendreClients().catch((err) => console.error('Reprise du carnet impossible', err))
   majReseau()
   await goHome()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour

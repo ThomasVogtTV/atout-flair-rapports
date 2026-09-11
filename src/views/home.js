@@ -90,7 +90,7 @@ const etatPill = (r) =>
  * lise ; le titre prend la premiere chose reellement identifiante - le
  * locataire, le mandant, l'adresse, et le numero de rapport en dernier recours.
  */
-function reportRowHTML(r) {
+export function reportRowHTML(r, { suppr = true } = {}) {
   const t = typeOf(r)
   const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
   const qui = r.lieu?.locataire || fullName(r.mandant) || ou || `Rapport ${r.ref}`
@@ -103,7 +103,7 @@ function reportRowHTML(r) {
         <span class="rapport-detail">${esc(detail)}</span>
       </span>
       ${etatPill(r)}
-      <button class="icon-btn rapport-suppr" data-del="${r.id}" title="Supprimer">✕</button>
+      ${suppr ? `<button class="icon-btn rapport-suppr" data-del="${r.id}" title="Supprimer">✕</button>` : ''}
     </li>`
 }
 

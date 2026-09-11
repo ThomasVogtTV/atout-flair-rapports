@@ -437,6 +437,13 @@ function mandantSection(view, r, contacts, replie) {
     replie,
     contenu: `
     <div class="card grid2">
+      ${
+        // Le client deja connu se choisit d'un tap, sans se souvenir de
+        // l'orthographe de son nom.
+        contacts.length
+          ? `<button type="button" class="btn ghost wide full carnet-choisir" data-act="choisir-contact">Choisir un client du carnet</button>`
+          : ''
+      }
       <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
       <label class="${societe ? 'full' : ''}">Nom
         <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
