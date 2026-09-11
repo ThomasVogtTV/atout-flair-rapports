@@ -17,7 +17,11 @@ const MAX = 60
 export function choisirContact(contacts, reports) {
   const index = S.activiteParNom(reports)
   const tries = [...contacts].sort(
-    (a, b) => S.activiteDe(b, index).dernier - S.activiteDe(a, index).dernier || S.fullName(a).localeCompare(S.fullName(b))
+    (a, b) =>
+      // Les favoris d'abord, puis les clients servis le plus recemment.
+      (b.favori ? 1 : 0) - (a.favori ? 1 : 0) ||
+      S.activiteDe(b, index).dernier - S.activiteDe(a, index).dernier ||
+      S.fullName(a).localeCompare(S.fullName(b))
   )
 
   // Pas de focus sur la recherche : sur un telephone, le clavier cacherait la
@@ -41,7 +45,7 @@ export function choisirContact(contacts, reports) {
     liste.innerHTML = vus.length
       ? vus
           .slice(0, MAX)
-          .map((c) => contactLigneHTML(c, S.activiteDe(c, index), { attr: 'data-pick' }))
+          .map((c) => contactLigneHTML(c, S.activiteDe(c, index), { attr: 'data-pick', etoile: false }))
           .join('')
       : '<li class="empty">Aucun client ne correspond.</li>'
   }

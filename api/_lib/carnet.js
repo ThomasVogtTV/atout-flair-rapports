@@ -36,6 +36,8 @@ export function nettoyerContact(brut, maintenant = Date.now()) {
   const c = { id: brut.id }
   for (const k of CHAMPS) c[k] = String(brut[k] ?? '').trim().slice(0, LONGUEUR_MAX)
   if (!TYPES.has(c.type)) c.type = ''
+  // Un client habituel, marque d'une etoile : la meme pour toute l'equipe.
+  c.favori = brut.favori === true
   if (!c.nom) return null
   // Une horloge de telephone en avance ne doit pas rendre une fiche
   // impossible a corriger pour tous les autres.
@@ -86,6 +88,8 @@ export function fusionnerCarnet(carnet, entrants = [], supprimes = [], maintenan
       const recent = c.maj >= (jumeau.maj ?? 0)
       const fusion = { ...jumeau }
       for (const k of CHAMPS) if (c[k] && (recent || !jumeau[k])) fusion[k] = c[k]
+      // Deux fiches du meme client : l'etoile posee sur l'une vaut pour les deux.
+      fusion.favori = !!(jumeau.favori || c.favori)
       fusion.maj = Math.max(c.maj, jumeau.maj ?? 0)
       poser(fusion)
       continue

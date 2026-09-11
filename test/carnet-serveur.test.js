@@ -97,3 +97,18 @@ describe('/api/carnet', () => {
     assert.equal((await appel('pas-un-code')).statut, 401)
   })
 })
+
+describe('les favoris du carnet commun', () => {
+  test('voyagent avec la fiche et survivent a la fusion de deux jumeaux', () => {
+    const carnet = new Map()
+    fusionnerCarnet(carnet, [{ id: 'a1', nom: 'Favre', favori: true, maj: T }], [], T)
+    assert.equal(carnet.get('a1').favori, true)
+    // Le meme client cree sans etoile sur un autre telephone : l'etoile reste.
+    fusionnerCarnet(carnet, [{ id: 'b2', nom: 'favre', tel: '079', maj: T + 1 }], [], T + 2)
+    assert.equal(contactsVivants(carnet)[0].favori, true)
+    // Decochee plus tard sur la fiche elle-meme : elle part.
+    fusionnerCarnet(carnet, [{ id: 'a1', nom: 'Favre', favori: false, maj: T + 5 }], [], T + 6)
+    assert.equal(carnet.get('a1').favori, false)
+    assert.equal(nettoyerContact({ id: 'x', nom: 'X', favori: 'oui' }, T).favori, false)
+  })
+})

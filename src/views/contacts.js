@@ -37,10 +37,17 @@ const leJour = (ts) => new Date(ts).toLocaleDateString('fr-CH')
  *
  * @param {object} c le contact
  * @param {{n: number}} activite voir activiteDe
- * @param {{attr?: string}} opts attribut porte par la ligne (fiche ou choix)
+ * @param {{attr?: string, etoile?: boolean}} opts attribut porte par la ligne
+ *   (fiche ou choix), et etoile a toucher (carnet) ou seulement affichee (choix)
  */
-export function contactLigneHTML(c, activite, { attr = 'data-fiche' } = {}) {
+export function contactLigneHTML(c, activite, { attr = 'data-fiche', etoile = true } = {}) {
   const detail = [mandantTypeLabel(c.type), c.npaLieu || c.adresse].filter(Boolean).join(' · ') || 'Coordonnées à compléter'
+  // Dans le carnet, l'etoile se touche sans ouvrir la fiche : marquer un
+  // client habituel se fait en passant. Elle prend la place du chevron.
+  const bout = etoile
+    ? `<button type="button" class="contact-etoile${c.favori ? ' on' : ''}" data-favori="${c.id}"
+               title="${c.favori ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${ICONS.etoile}</button>`
+    : `${c.favori ? `<span class="contact-etoile on">${ICONS.etoile}</span>` : ''}<span class="contact-go">${ICONS.chevron}</span>`
   return `
     <li class="rapport-ligne contact-ligne" ${attr}="${c.id}">
       <span class="contact-avatar t-${c.type || 'aucun'}">${esc(initiales(c))}</span>
@@ -49,7 +56,7 @@ export function contactLigneHTML(c, activite, { attr = 'data-fiche' } = {}) {
         <span class="rapport-detail">${esc(detail)}</span>
       </span>
       ${activite.n ? `<span class="contact-activite">${activite.n} rapport${activite.n > 1 ? 's' : ''}</span>` : ''}
-      <span class="contact-go">${ICONS.chevron}</span>
+      ${bout}
     </li>`
 }
 
@@ -60,18 +67,28 @@ function typesPresents(contacts) {
 }
 
 function filtreActif(view) {
-  const presents = typesPresents(view.contacts ?? [])
-  return presents.some((t) => t.key === view.carnetFiltre) ? view.carnetFiltre : 'tous'
+  const contacts = view.contacts ?? []
+  const f = view.carnetFiltre
+  if (f === 'favoris') return contacts.some((c) => c.favori) ? 'favoris' : 'tous'
+  return typesPresents(contacts).some((t) => t.key === f) ? f : 'tous'
 }
+
+const garde = (filtre) => (c) => filtre === 'tous' || (filtre === 'favoris' ? !!c.favori : c.type === filtre)
 
 function filtresHTML(view) {
   const contacts = view.contacts ?? []
   const presents = typesPresents(contacts)
-  if (presents.length < 2) return ''
+  const favoris = contacts.filter((c) => c.favori).length
+  const choix = [
+    { key: 'tous', label: 'Tous' },
+    ...(favoris ? [{ key: 'favoris', label: '★ Favoris' }] : []),
+    ...(presents.length > 1 ? presents : []),
+  ]
+  if (choix.length < 2) return ''
   const actif = filtreActif(view)
-  return `<div class="report-filters">${[{ key: 'tous', label: 'Tous' }, ...presents]
+  return `<div class="report-filters">${choix
     .map((f) => {
-      const n = f.key === 'tous' ? contacts.length : contacts.filter((c) => c.type === f.key).length
+      const n = contacts.filter(garde(f.key)).length
       return `<button type="button" class="chip chip-sm${f.key === actif ? ' on' : ''}" data-carnet-filtre="${f.key}">
         ${esc(f.label)}<span class="chip-count">${n}</span>
       </button>`
@@ -87,7 +104,7 @@ export function listeContactsHTML(view) {
   const contacts = view.contacts ?? []
   const recherche = (view.carnetRecherche ?? '').trim()
   const filtre = filtreActif(view)
-  const liste = contacts.filter((c) => (filtre === 'tous' || c.type === filtre) && matchContact(c, recherche))
+  const liste = contacts.filter((c) => garde(filtre)(c) && matchContact(c, recherche))
 
   if (!liste.length) {
     const vide = !contacts.length
@@ -99,8 +116,16 @@ export function listeContactsHTML(view) {
   }
 
   const index = activiteParNom(view.reports ?? [])
+  // Sans recherche ni filtre, les favoris ouvrent la liste : les clients
+  // habituels sous le pouce, sans derouler l'alphabet. Ils n'y reviennent pas
+  // une seconde fois a leur lettre.
+  const favoris = filtre === 'tous' && !recherche ? liste.filter((c) => c.favori) : []
+  const reste = favoris.length ? liste.filter((c) => !c.favori) : liste
+  const enTete = favoris.length
+    ? `<li class="carnet-lettre carnet-favoris">Favoris</li>${favoris.map((c) => contactLigneHTML(c, activiteDe(c, index))).join('')}`
+    : ''
   let lettre = ''
-  const items = liste
+  const items = reste
     .map((c) => {
       const l = lettreDe(c)
       const tete = l !== lettre ? `<li class="carnet-lettre">${l}</li>` : ''
@@ -108,7 +133,7 @@ export function listeContactsHTML(view) {
       return tete + contactLigneHTML(c, activiteDe(c, index))
     })
     .join('')
-  return `<ul class="report-list carnet-liste">${items}</ul>`
+  return `<ul class="report-list carnet-liste">${enTete}${items}</ul>`
 }
 
 export function contactsView(view) {
@@ -187,6 +212,8 @@ export function ficheContactView(view) {
           <strong class="fiche-nom">${esc(fullName(c) || 'Sans nom')}</strong>
           <span class="muted small">${esc(bilan)}</span>
         </div>
+        <button type="button" class="contact-etoile fiche-etoile${c.favori ? ' on' : ''}" data-act="favori-fiche"
+                title="${c.favori ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${ICONS.etoile}</button>
       </div>
       <div class="fiche-actions">${boutons}</div>
 
@@ -220,5 +247,7 @@ export function ficheContactView(view) {
           ? rapports.map((r) => reportRowHTML(r, { suppr: false })).join('')
           : '<li class="empty">Les rapports faits pour ce client apparaîtront ici.</li>'
       }</ul>
+
+      <button type="button" class="btn ghost danger wide fiche-suppr" data-act="supprimer-contact">Supprimer ce contact</button>
     </section>`
 }

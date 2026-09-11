@@ -24,6 +24,8 @@ export const ICONS = {
   // Deux anneaux enlaces : deux entreprises cote a cote sur un meme rapport.
   collab: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle ${ICON_FILL} cx="9.2" cy="12" r="5"/><circle cx="9.2" cy="12" r="5"/><circle cx="14.8" cy="12" r="5"/></svg>`,
   phone: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path ${ICON_FILL} d="M6 4h3l1.5 4-2 1.3a10 10 0 0 0 6.2 6.2l1.3-2 4 1.5v3a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 4.5 5.5 1.5 1.5 0 0 1 6 4Z"/><path d="M6 4h3l1.5 4-2 1.3a10 10 0 0 0 6.2 6.2l1.3-2 4 1.5v3a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 4.5 5.5 1.5 1.5 0 0 1 6 4Z"/></svg>`,
+  // Etoile des favoris : pleine quand le client est coche (voir .contact-etoile.on).
+  etoile: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
 }
 

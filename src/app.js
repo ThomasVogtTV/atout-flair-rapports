@@ -658,6 +658,16 @@ root.addEventListener('click', async (ev) => {
     return openReport(openId)
   }
 
+  // L'etoile d'une ligne du carnet : marque un client habituel sans ouvrir sa
+  // fiche. Teste avant la ligne, qui la contient.
+  const favoriId = el.closest('[data-favori]')?.dataset.favori
+  if (favoriId) {
+    const c = await S.basculerFavori(favoriId)
+    view.contacts = await contactsVisibles()
+    if (c) toast(c.favori ? 'Ajouté aux favoris' : 'Retiré des favoris')
+    return render()
+  }
+
   const ficheId = el.closest('[data-fiche]')?.dataset.fiche
   if (ficheId) return openFiche(ficheId)
 
@@ -878,6 +888,23 @@ root.addEventListener('click', async (ev) => {
   if (act === 'modifier-contact') {
     const id = view.fiche?.id
     return openContactDialog(view.fiche, () => openFiche(id))
+  }
+  if (act === 'favori-fiche') {
+    const c = await S.basculerFavori(view.fiche?.id)
+    if (!c) return
+    view.fiche = c
+    view.contacts = await contactsVisibles()
+    toast(c.favori ? 'Ajouté aux favoris' : 'Retiré des favoris')
+    return render()
+  }
+  if (act === 'supprimer-contact') {
+    const c = view.fiche
+    if (!c) return
+    const nom = S.fullName(c) || 'ce contact'
+    if (!confirm(`Supprimer « ${nom} » du carnet ?\nIl disparaîtra aussi du carnet de l’équipe. Ses rapports, eux, restent.`)) return
+    await S.deleteContact(c.id)
+    toast('Contact supprimé')
+    return openContacts()
   }
   if (act === 'choisir-contact') {
     const c = await choisirContact(view.contacts ?? [], view.reports ?? [])

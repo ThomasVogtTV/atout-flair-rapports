@@ -546,6 +546,8 @@ export function matchContacts(saisi, contacts, max = 4) {
     // la suggestion doit disparaitre une fois la saisie faite, pas rester
     // affichee sous le champ qu'elle a servi a remplir.
     .filter((c) => fullName(c).toLowerCase() !== exact)
+    // Les clients habituels d'abord : ce sont eux qu'on tape le plus souvent.
+    .sort((a, b) => (b.favori ? 1 : 0) - (a.favori ? 1 : 0))
     .slice(0, max)
 }
 
@@ -761,8 +763,26 @@ export async function deletePartenaire(id) {
 export async function saveContact(contact) {
   const nom = (contact.nom || '').trim()
   if (!nom) return
-  await db.put('contacts', marque({ ...contact, id: contact.id ?? uid(), nom }))
+  // Le formulaire ne connait que les coordonnees : ce que la fiche porte
+  // d'autre (l'etoile des favoris) reste tel quel.
+  const avant = contact.id ? await db.get('contacts', contact.id) : null
+  await db.put('contacts', marque({ ...(avant ?? {}), ...contact, id: contact.id ?? uid(), nom }))
   signalCarnet?.()
+}
+
+/**
+ * Coche ou decoche l'etoile d'un client habituel. Elle part au carnet de
+ * l'equipe comme n'importe quelle modification de la fiche.
+ * @returns {Promise<object|null>} la fiche a jour
+ */
+export async function basculerFavori(id) {
+  if (!id) return null
+  const c = await db.get('contacts', id)
+  if (!c) return null
+  const maj = marque({ ...c, favori: !c.favori })
+  await db.put('contacts', maj)
+  signalCarnet?.()
+  return maj
 }
 
 // --- sauvegarde exportable --------------------------------------------------

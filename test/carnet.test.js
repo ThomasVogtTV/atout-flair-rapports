@@ -83,3 +83,31 @@ describe('le carnet', () => {
     S.onCarnetModifie(null)
   })
 })
+
+describe('les favoris', () => {
+  test("se cochent et se decochent, et partent au carnet de l'equipe", async () => {
+    await S.saveContact({ nom: 'Régie Duval', type: 'gerance' })
+    const [c] = contenu('contacts')
+    assert.equal((await S.basculerFavori(c.id)).favori, true)
+    assert.equal(contenu('contacts')[0].favori, true)
+    assert.equal(contenu('contacts')[0].aEnvoyer, true)
+    assert.equal((await S.basculerFavori(c.id)).favori, false)
+    assert.equal(await S.basculerFavori(undefined), null)
+  })
+
+  // Le formulaire ne connait que les coordonnees : l'enregistrer ne doit pas
+  // faire tomber l'etoile.
+  test('survivent a une modification de la fiche', async () => {
+    await S.saveContact({ nom: 'Favre' })
+    const [c] = contenu('contacts')
+    await S.basculerFavori(c.id)
+    await S.saveContact({ id: c.id, type: '', nom: 'Favre', prenom: 'Élise', adresse: '', npaLieu: '', tel: '', email: '' })
+    assert.equal(contenu('contacts')[0].favori, true)
+    assert.equal(contenu('contacts')[0].prenom, 'Élise')
+  })
+
+  test('passent en tete des propositions pendant la frappe', () => {
+    const contacts = [{ id: 'a', nom: 'Favre Anne' }, { id: 'b', nom: 'Favre Bruno', favori: true }]
+    assert.deepEqual(S.matchContacts('favre', contacts).map((c) => c.id), ['b', 'a'])
+  })
+})
