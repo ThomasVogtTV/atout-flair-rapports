@@ -159,34 +159,23 @@ function enCoursHTML(reports) {
 
 // --- je commence ? ---------------------------------------------------------
 
-// Neuf fois sur dix, on ouvre l'app devant une porte d'appartement : ce type-la
-// devient le grand bouton de l'ecran, plein de la couleur de la maison. Les
-// deux autres restent a portee, juste dessous, sans lui disputer l'oeil.
+// Les trois types pesent autant les uns que les autres - immeubles et hotels
+// reviennent au moins aussi souvent qu'un particulier. Trois tuiles egales,
+// chacune pleine de sa couleur : petrole, ardoise, prune.
 function nouveauHTML() {
-  const [principal, ...autres] = TYPE_LIST
-  const secondaire = (t) => `
-    <button type="button" class="type-chip card-${t.id}" data-new="${t.id}">
-      <span class="type-chip-icon icon-${t.id}">${ICONS[t.id] ?? ''}</span>
-      <span class="type-chip-texte">
-        <span class="type-chip-name">${esc(t.choix)}</span>
-        <span class="type-chip-hint">${esc(t.hint)}</span>
-      </span>
+  const tuiles = TYPE_LIST.map(
+    (t) => `
+    <button type="button" class="type-tuile card-${t.id}" data-new="${t.id}">
+      <span class="type-tuile-icone">${ICONS[t.id] ?? ''}</span>
+      <span class="type-tuile-plus" aria-hidden="true">+</span>
+      <span class="type-tuile-nom">${esc(t.choix)}</span>
+      <span class="type-tuile-hint">${esc(t.hint)}</span>
     </button>`
+  ).join('')
 
   return `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon('plus', 'accent')}Nouveau rapport</span></h2>
-    <div class="nouveau">
-      <button type="button" class="cta-principal" data-new="${principal.id}">
-        <span class="cta-icone">${ICONS[principal.id] ?? ''}</span>
-        <span class="cta-texte">
-          <span class="cta-sur">Le plus courant</span>
-          <span class="cta-titre">${esc(principal.choix)}</span>
-          <span class="cta-sous">${esc(principal.hint)}</span>
-        </span>
-        <span class="cta-go">${ICONS.chevron}</span>
-      </button>
-      <div class="types-secondaires">${autres.map(secondaire).join('')}</div>
-    </div>`
+    <div class="types-pleins">${tuiles}</div>`
 }
 
 // --- je cherche ? ----------------------------------------------------------
@@ -331,8 +320,6 @@ function sessionHTML() {
 function heroHTML(view) {
   const maintenant = new Date()
   const jour = maintenant.toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
-  const heure = maintenant.getHours()
-  const salut = heure >= 5 && heure < 18 ? 'Bonjour' : 'Bonsoir'
 
   // Trois chiffres, ceux qu'on vient chercher le matin : ce qui reste sur les
   // bras, et ce que le mois a deja produit.
@@ -364,8 +351,7 @@ function heroHTML(view) {
   return `
     <div class="hero-caption reveal" style="--i:0">
       <span class="hero-kicker">Détection canine professionnelle</span>
-      <h2>${salut}</h2>
-      <p class="hero-date">${esc(jour[0].toUpperCase() + jour.slice(1))}</p>
+      <h2>${esc(jour[0].toUpperCase() + jour.slice(1))}</h2>
       ${sessionHTML()}
     </div>
     <div class="hero-stats reveal" style="--i:1">
