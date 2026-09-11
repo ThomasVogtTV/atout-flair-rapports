@@ -58,7 +58,41 @@ export const numeroDeRef = (ref) => {
 // session, celle-ci continue de numeroter juste.
 let compteurMemoire = 0
 
+// Lots de numeros reserves aupres du serveur (voir api/numeros.js et
+// src/numeros.js) : uniques dans toute l'equipe, et utilisables hors ligne.
+const LOTS_KEY = 'af-ref-lots'
+
+function lireLots() {
+  try {
+    const lots = JSON.parse(localStorage.getItem(LOTS_KEY) ?? '[]')
+    return Array.isArray(lots) ? lots.filter((l) => l.prochain <= l.fin) : []
+  } catch {
+    return []
+  }
+}
+const ecrireLots = (lots) => localStorage.setItem(LOTS_KEY, JSON.stringify(lots))
+
+export const numerosRestants = () => lireLots().reduce((n, l) => n + (l.fin - l.prochain + 1), 0)
+
+export function ajouterNumeros(debut, fin) {
+  ecrireLots([...lireLots(), { prochain: debut, fin }])
+}
+
+/** Le plus haut numero deja utilise sur ce telephone. */
+export const numeroLocalMax = () => Math.max(Number(localStorage.getItem(REF_KEY) ?? '0'), compteurMemoire)
+
 function nextRef() {
+  // Un numero du lot reserve d'abord : lui seul est garanti unique dans
+  // l'equipe. Le compteur local ne sert plus que de secours - un telephone
+  // reste sans reseau assez longtemps pour epuiser son lot.
+  const lots = lireLots()
+  if (lots.length) {
+    const n = lots[0].prochain++
+    ecrireLots(lots)
+    compteurMemoire = Math.max(compteurMemoire, n)
+    if (n > Number(localStorage.getItem(REF_KEY) ?? '0')) localStorage.setItem(REF_KEY, String(n))
+    return `AF-${String(n).padStart(5, '0')}`
+  }
   const n = Math.max(Number(localStorage.getItem(REF_KEY) ?? '0'), compteurMemoire) + 1
   compteurMemoire = n
   localStorage.setItem(REF_KEY, String(n))

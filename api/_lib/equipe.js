@@ -233,6 +233,31 @@ export async function changerStatut(id, actif) {
   await r('HSET', cleEmp(id), 'actif', actif ? '1' : '0')
 }
 
+// --- numeros de rapport ------------------------------------------------------
+// Chaque telephone numerotait de son cote : deux techniciens sortaient chacun
+// leur AF-00012. Le serveur tient maintenant le compteur de toute l'equipe et
+// distribue les numeros par lots ; un telephone garde son lot d'avance et
+// numerote hors ligne sans rien demander.
+const COMPTEUR_REF = 'af:ref'
+export const LOT_NUMEROS = 10
+
+// En une seule operation atomique : le compteur remonte d'abord au plus haut
+// numero deja utilise sur le telephone qui demande (les numeros d'avant le
+// compteur commun ne doivent jamais ressortir), puis avance d'un lot. Deux
+// telephones qui demandent au meme instant recoivent deux lots distincts.
+const SCRIPT_LOT =
+  "local c = tonumber(redis.call('GET', KEYS[1]) or '0') " +
+  'local m = tonumber(ARGV[1]) ' +
+  "if m > c then redis.call('SET', KEYS[1], m) end " +
+  "return redis.call('INCRBY', KEYS[1], ARGV[2])"
+
+/** @returns {Promise<{debut: number, fin: number}>} un lot de numeros propre a ce telephone */
+export async function reserverNumeros(plusHaut) {
+  const m = Math.max(0, Math.min(99_000, Math.floor(Number(plusHaut) || 0)))
+  const fin = Number(await r('EVAL', SCRIPT_LOT, 1, COMPTEUR_REF, m, LOT_NUMEROS))
+  return { debut: fin - LOT_NUMEROS + 1, fin }
+}
+
 // --- carnet commun -----------------------------------------------------------
 // Un seul hash : id du contact -> contact en JSON. Un contact supprime y reste
 // sous forme de pierre tombale ({id, supprime, maj}) : sans elle, le telephone

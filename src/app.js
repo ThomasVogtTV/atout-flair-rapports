@@ -24,6 +24,7 @@ import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './se
 import { installerVerrou, seDeconnecter, estInvite } from './lock.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
+import { reserverNumeros } from './numeros.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -264,6 +265,8 @@ async function createReport(type, contact = null) {
     }
   }
   await S.saveReport(report)
+  // Un numero vient d'etre pris : le lot se recharge s'il s'amenuise.
+  reserverNumeros()
   openReport(report.id)
 }
 
@@ -876,6 +879,7 @@ root.addEventListener('click', async (ev) => {
   if (act === 'dupliquer') {
     const copie = S.duplicateReport(view.report)
     await S.saveReport(copie)
+    reserverNumeros()
     toast('Rapport dupliqué : le lieu et les pièces sont repris, les constats sont à refaire.')
     return openReport(copie.id)
   }
@@ -1193,6 +1197,7 @@ async function createChild(rowId) {
   const parent = view.report
   const row = parent.rows.find((r) => r.id === rowId)
   const child = S.newReport('detection')
+  reserverNumeros()
   child.parentId = parent.id
   // mandant copie tel quel : la Regie du sous-rapport en derive automatiquement (voir templates.js)
   child.mandant = { ...parent.mandant }
@@ -1235,8 +1240,10 @@ window.addEventListener('offline', majReseau)
 window.addEventListener('online', majReseau)
 
 window.addEventListener('online', async () => {
-  // Les fiches creees hors ligne rejoignent le carnet de l'equipe.
+  // Les fiches creees hors ligne rejoignent le carnet de l'equipe, et le lot
+  // de numeros se recharge s'il a ete entame sans reseau.
   syncCarnet()
+  reserverNumeros()
   const { envoyes, echecs } = await flushQueue()
   if (!envoyes && !echecs) return
   if (envoyes) toast(`${envoyes} rapport${envoyes > 1 ? "s" : ""} envoyé${envoyes > 1 ? "s" : ""}.`)
@@ -1301,6 +1308,13 @@ export async function boot() {
   // le telephone reprend a l'ouverture ce que les collegues ont ajoute.
   S.onCarnetModifie(planifierSyncCarnet)
   syncCarnet()
+  // Numeros de rapport uniques dans l'equipe : un lot d'avance, des maintenant.
+  reserverNumeros()
+  // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
+  window.addEventListener('af-deverrouille', () => {
+    reserverNumeros()
+    syncCarnet()
+  })
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.
   // Une fois l'app au repos seulement : lire 450 Ko de moteur PDF des le

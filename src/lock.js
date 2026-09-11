@@ -169,6 +169,9 @@ export function verrouiller(message = '') {
       }
       el.remove()
       document.body.classList.remove('verrouille')
+      // Le code vient d'etre accepte : l'app peut maintenant parler au serveur
+      // (numeros de rapport, carnet commun).
+      window.dispatchEvent(new Event('af-deverrouille'))
       return
     }
     erreur.textContent = motif
