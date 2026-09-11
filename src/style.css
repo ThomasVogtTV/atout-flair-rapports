@@ -1712,3 +1712,10 @@ body.verrouille { overflow: hidden; }
 .admin-emp .row-actions .btn { flex: 1; }
 .pill.off { background: var(--red-soft); color: var(--red); }
 .admin-filtres { margin: 0 0 8px; }
+
+/* Quatre boutons dans l'en-tete (administrateur) : sur un ecran etroit, le
+   titre cede sa place. Le logo porte deja le nom, et un "Atou..." coupe
+   faisait neglige. */
+@media (max-width: 399px) {
+  .top:has(.top-actions > :nth-child(4)) .top-title { display: none; }
+}
