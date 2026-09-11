@@ -258,6 +258,28 @@ export async function reserverNumeros(plusHaut) {
   return { debut: fin - LOT_NUMEROS + 1, fin }
 }
 
+// --- sauvegarde en ligne : l'index ---------------------------------------------
+// Les fichiers vivent dans Vercel Blob (voir stockage.js) ; l'index, lui, dit
+// quels rapports sont sauvegardes, a qui ils appartiennent et quels fichiers
+// les composent. Il se lit en une commande, sans parcourir le stockage.
+const SAUVEGARDES = 'af:sauvegardes'
+
+const lireJson = (json) => {
+  try {
+    return json ? JSON.parse(json) : null
+  } catch {
+    return null
+  }
+}
+
+export async function lireSauvegardes() {
+  return Object.values(enObjet(await r('HGETALL', SAUVEGARDES))).map(lireJson).filter(Boolean)
+}
+
+export const lireSauvegarde = async (id) => lireJson(await r('HGET', SAUVEGARDES, id))
+export const indexerSauvegarde = (entree) => r('HSET', SAUVEGARDES, entree.id, JSON.stringify(entree))
+export const retirerSauvegarde = (id) => r('HDEL', SAUVEGARDES, id)
+
 // --- carnet commun -----------------------------------------------------------
 // Un seul hash : id du contact -> contact en JSON. Un contact supprime y reste
 // sous forme de pierre tombale ({id, supprime, maj}) : sans elle, le telephone

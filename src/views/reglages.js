@@ -13,6 +13,17 @@ import { THEMES, themeChoice } from '../ui/theme.js'
 import { currentCode } from '../mailer.js'
 import { identite, souvenirJusqua } from '../lock.js'
 import { souvenirValide } from '../code.js'
+import { derniereSauvegarde, rapportsSauvegardes } from '../sauvegarde.js'
+
+function etatEnLigne() {
+  const t = derniereSauvegarde()
+  if (!t) return 'Pas encore faite : elle part toute seule dès qu’il y a du réseau.'
+  const d = new Date(t)
+  const jour = d.toDateString() === new Date().toDateString() ? 'aujourd’hui' : `le ${d.toLocaleDateString('fr-CH')}`
+  const heure = d.toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' })
+  const n = rapportsSauvegardes()
+  return `Dernière sauvegarde ${jour} à ${heure} · ${n} rapport${n > 1 ? 's' : ''} en ligne.`
+}
 
 // Au-dela d'un mois, la sauvegarde est signalee comme en retard : c'est le
 // delai au bout duquel perdre le telephone couterait une tournee entiere.
@@ -85,11 +96,22 @@ export function reglagesView(view) {
         <button class="btn ghost wide" data-act="deconnexion">Se déconnecter de cet appareil</button>
       </div>
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'accent')}Sauvegarde en ligne</span></h2>
+      <div class="card">
+        <p class="etat-sauvegarde">${esc(etatEnLigne())}</p>
+        <p class="muted small">Automatique : chaque rapport, photos comprises, part dans l'espace privé de
+        l'entreprise dès qu'il y a du réseau. Téléphone perdu ou changé : « Récupérer » ramène les rapports.</p>
+        <div class="row-actions">
+          <button class="btn ghost" data-act="sauvegarder-en-ligne">Sauvegarder maintenant</button>
+          <button class="btn ghost" data-act="restaurer-en-ligne">Récupérer</button>
+        </div>
+      </div>
+
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Fichier de sauvegarde</span></h2>
       <div class="card">
         <p class="etat-sauvegarde${sauvegarde.tard ? ' tard' : ''}">${esc(sauvegarde.texte)}</p>
-        <p class="muted small">Rapports, carnet et signature n'existent que dans cet appareil. Le fichier de
-        sauvegarde les rassemble : envoyez-le-vous par mail, il vous rendra tout sur un téléphone neuf.</p>
+        <p class="muted small">Un fichier qui rassemble tout ce que contient cet appareil : rapports, carnet,
+        signature et réglages. Utile pour changer de téléphone sans réseau, ou garder une copie à part.</p>
         ${jaugeHTML(place)}
         <div class="row-actions">
           <button class="btn ghost" data-act="export-backup">Exporter</button>

@@ -400,13 +400,37 @@ export async function deleteReport(id) {
     const ligne = parent?.rows?.find((x) => x.sousRapportId === id)
     if (ligne) {
       ligne.sousRapportId = null
+      // Date touchee : la sauvegarde en ligne doit reprendre l'immeuble modifie.
+      parent.updatedAt = Date.now()
       await ecrireRapport(parent)
     }
   }
 
   await db.del('reports', id)
   await db.del('resumes', id)
+  noterSuppressionSauvegarde([id, ...enfants.map((e) => e.id)])
   return { enfants: enfants.length }
+}
+
+// Rapports effaces sur l'appareil, que la sauvegarde en ligne doit effacer a
+// son tour au prochain passage avec du reseau (voir sauvegarde.js).
+const SAUV_SUPPR_KEY = 'af-sauvegarde-suppr'
+
+export function sauvegardesASupprimer() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(SAUV_SUPPR_KEY) ?? '[]')
+    return Array.isArray(ids) ? ids : []
+  } catch {
+    return []
+  }
+}
+
+function noterSuppressionSauvegarde(ids) {
+  localStorage.setItem(SAUV_SUPPR_KEY, JSON.stringify([...new Set([...sauvegardesASupprimer(), ...ids])]))
+}
+
+export function oublierSuppressionsSauvegarde(ids) {
+  localStorage.setItem(SAUV_SUPPR_KEY, JSON.stringify(sauvegardesASupprimer().filter((id) => !ids.includes(id))))
 }
 
 /** Les resumes de tous les rapports, du plus recent au plus ancien. */

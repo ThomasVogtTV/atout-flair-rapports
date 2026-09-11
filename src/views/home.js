@@ -14,6 +14,7 @@ import * as S from '../state.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { estAdmin, estInvite, identite } from '../lock.js'
+import { derniereSauvegarde } from '../sauvegarde.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
@@ -309,7 +310,10 @@ function heroHTML(view) {
   // perdre - et il doit apparaitre la ou l'on passe, pas seulement dans les
   // reglages, ou l'on ne va justement jamais.
   const jours = S.backupAge()
-  const sauvegardeEnRetard = view.reports.length > 0 && (jours === null || jours > 30)
+  // La sauvegarde en ligne, recente, suffit : le rappel ne sonne plus que si
+  // elle n'a pas pu passer depuis une semaine.
+  const enLigneRecente = Date.now() - derniereSauvegarde() < 7 * 86_400_000
+  const sauvegardeEnRetard = view.reports.length > 0 && !enLigneRecente && (jours === null || jours > 30)
   // Seul ce qui reclame un geste porte la couleur d'alerte. La ligne entiere y
   // passait des qu'un seul de ses morceaux alertait : "10 rapports en cours"
   // devenait rouge parce que la sauvegarde datait.

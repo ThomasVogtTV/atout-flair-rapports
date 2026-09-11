@@ -12,7 +12,8 @@
     "test:mutations": "node test/mutations.mjs"
   },
   "dependencies": {
-    "nodemailer": "^9.0.5",
+    "@vercel/blob": "^2.8.0",
+    "nodemailer": "^9.1.1",
     "pdf-lib": "^1.17.1"
   },
   "devDependencies": {

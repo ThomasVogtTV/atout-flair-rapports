@@ -25,6 +25,8 @@ import { installerVerrou, seDeconnecter, estInvite } from './lock.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
+import { sauvegarder, listerSauvegardes, restaurer } from './sauvegarde.js'
+import { choisirRestauration } from './restauration.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -89,6 +91,8 @@ async function goHome() {
   view.stockage = await S.stockage()
   await majCompteurs()
   render()
+  // Retour a l'accueil : le rapport qu'on vient de quitter part en ligne.
+  planifierSauvegarde()
 }
 
 async function openEnvois() {
@@ -301,6 +305,17 @@ let syncTimer = null
 function planifierSyncCarnet() {
   clearTimeout(syncTimer)
   syncTimer = setTimeout(syncCarnet, 1500)
+}
+
+// Sauvegarde en ligne : quelques secondes apres le dernier geste, pour ne pas
+// disputer le reseau et le processeur a l'ecran qui s'affiche.
+let sauvegardeTimer = null
+function planifierSauvegarde() {
+  clearTimeout(sauvegardeTimer)
+  sauvegardeTimer = setTimeout(async () => {
+    const r = await sauvegarder()
+    if (r === true && view.screen === 'reglages') render()
+  }, 4000)
 }
 
 async function refreshContacts() {
@@ -981,6 +996,38 @@ root.addEventListener('click', async (ev) => {
     toast('Technicien enregistré par défaut')
     return
   }
+  if (act === 'sauvegarder-en-ligne') {
+    showLoading('Sauvegarde en ligne…')
+    const r = await sauvegarder()
+    hideLoading()
+    toast(r === true ? 'Sauvegarde en ligne à jour.' : r)
+    return render()
+  }
+  if (act === 'restaurer-en-ligne') {
+    if (!navigator.onLine) return toast('Il faut du réseau pour récupérer la sauvegarde.')
+    showLoading('Recherche des sauvegardes…')
+    let liste
+    try {
+      liste = await listerSauvegardes()
+    } catch (err) {
+      hideLoading()
+      return toast(err.message)
+    }
+    hideLoading()
+    if (!liste.length) return toast('Rien à récupérer : tout ce qui est sauvegardé est déjà sur ce téléphone.')
+    const ids = await choisirRestauration(liste)
+    if (!ids?.length) return
+    showLoading('Récupération des rapports et des photos…')
+    try {
+      const n = await restaurer(ids)
+      hideLoading()
+      toast(`${n} rapport${n > 1 ? 's' : ''} récupéré${n > 1 ? 's' : ''}.`)
+    } catch (err) {
+      hideLoading()
+      toast(`Récupération interrompue : ${err.message}`)
+    }
+    return goHome()
+  }
   if (act === 'export-backup') {
     showLoading('Préparation de la sauvegarde…')
     try {
@@ -1244,6 +1291,7 @@ window.addEventListener('online', async () => {
   // de numeros se recharge s'il a ete entame sans reseau.
   syncCarnet()
   reserverNumeros()
+  planifierSauvegarde()
   const { envoyes, echecs } = await flushQueue()
   if (!envoyes && !echecs) return
   if (envoyes) toast(`${envoyes} rapport${envoyes > 1 ? "s" : ""} envoyé${envoyes > 1 ? "s" : ""}.`)
@@ -1314,6 +1362,7 @@ export async function boot() {
   window.addEventListener('af-deverrouille', () => {
     reserverNumeros()
     syncCarnet()
+    planifierSauvegarde()
   })
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.
