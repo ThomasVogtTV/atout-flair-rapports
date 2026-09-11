@@ -233,6 +233,30 @@ export async function changerStatut(id, actif) {
   await r('HSET', cleEmp(id), 'actif', actif ? '1' : '0')
 }
 
+// --- carnet commun -----------------------------------------------------------
+// Un seul hash : id du contact -> contact en JSON. Un contact supprime y reste
+// sous forme de pierre tombale ({id, supprime, maj}) : sans elle, le telephone
+// d'un collegue qui l'avait encore le renverrait au prochain passage.
+const CARNET = 'af:carnet'
+
+export async function lireCarnet() {
+  const o = enObjet(await r('HGETALL', CARNET))
+  const carnet = new Map()
+  for (const [id, json] of Object.entries(o)) {
+    try {
+      carnet.set(id, JSON.parse(json))
+    } catch {
+      // Une entree illisible est ignoree plutot que de bloquer tout le carnet.
+    }
+  }
+  return carnet
+}
+
+export async function ecrireCarnet(contacts) {
+  if (!contacts.length) return
+  await r('HSET', CARNET, ...contacts.flatMap((c) => [c.id, JSON.stringify(c)]))
+}
+
 // Le journal garde le nom : supprimer un employe n'efface pas ce qu'il a envoye.
 export async function supprimerEmploye(id) {
   const e = await exiger(id)

@@ -365,7 +365,8 @@ export async function rememberContact(mandant) {
   // suivant ne le reprend pas.
   const fusion = { ...(existing ?? {}) }
   for (const [k, v] of Object.entries(mandant)) if (String(v ?? '').trim()) fusion[k] = v
-  await db.put('contacts', { ...fusion, id: existing?.id ?? uid(), nom })
+  await db.put('contacts', marque({ ...fusion, id: existing?.id ?? uid(), nom }))
+  signalCarnet?.()
 }
 
 /**
@@ -388,9 +389,10 @@ export async function ajouterContacts(nouveaux) {
       continue
     }
     vus.add(cle(c))
-    await db.put('contacts', { id: uid(), ...c })
+    await db.put('contacts', marque({ id: uid(), ...c }))
     ajoutes++
   }
+  if (ajoutes) signalCarnet?.()
   return { ajoutes, connus }
 }
 
@@ -437,7 +439,34 @@ export function mandantEnTexte(mandant) {
     .join('\n')
 }
 
-export const deleteContact = (id) => db.del('contacts', id)
+// --- carnet commun : ce qui reste a envoyer ----------------------------------
+//
+// Le carnet du telephone est la copie de celui de l'equipe (voir
+// carnet-sync.js). Chaque fiche ecrite ici est datee et marquee a envoyer ;
+// chaque suppression attend dans une liste. Ce fichier ne sait rien du
+// reseau : il previent seulement qui veut l'entendre qu'il y a du nouveau.
+let signalCarnet = null
+export const onCarnetModifie = (fn) => {
+  signalCarnet = fn
+}
+
+const marque = (c) => ({ ...c, maj: Date.now(), aEnvoyer: true })
+
+const SUPPR_KEY = 'af-carnet-suppr'
+export function suppressionsEnAttente() {
+  try {
+    return JSON.parse(localStorage.getItem(SUPPR_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+export const ecrireSuppressions = (ids) => localStorage.setItem(SUPPR_KEY, JSON.stringify(ids))
+
+export async function deleteContact(id) {
+  await db.del('contacts', id)
+  ecrireSuppressions([...new Set([...suppressionsEnAttente(), id])])
+  signalCarnet?.()
+}
 
 // Un nom compare sans accents, sans casse et sans espaces en trop : "Régie
 // Duval" et "regie  duval" sont le meme client.
@@ -541,8 +570,9 @@ const CARNET_KEY = 'af-carnet-repris'
 export async function reprendreClients() {
   if (localStorage.getItem(CARNET_KEY)) return 0
   const nouveaux = clientsDesRapports(await db.all('reports'), await db.all('contacts'))
-  for (const c of nouveaux) await db.put('contacts', { id: uid(), ...c })
+  for (const c of nouveaux) await db.put('contacts', marque({ id: uid(), ...c }))
   localStorage.setItem(CARNET_KEY, '1')
+  if (nouveaux.length) signalCarnet?.()
   return nouveaux.length
 }
 
@@ -602,7 +632,8 @@ export async function deletePartenaire(id) {
 export async function saveContact(contact) {
   const nom = (contact.nom || '').trim()
   if (!nom) return
-  await db.put('contacts', { ...contact, id: contact.id ?? uid(), nom })
+  await db.put('contacts', marque({ ...contact, id: contact.id ?? uid(), nom }))
+  signalCarnet?.()
 }
 
 // --- sauvegarde exportable --------------------------------------------------
@@ -637,7 +668,9 @@ export async function importBackup(data) {
   // ce qui a ete saisi depuis. Un enregistrement de meme identifiant est repris
   // du fichier, les autres restent en place.
   for (const r of data.reports ?? []) await db.put('reports', r)
-  for (const c of data.contacts ?? []) await db.put('contacts', c)
+  // Les contacts restaures partent aussi au carnet de l'equipe.
+  for (const c of data.contacts ?? []) await db.put('contacts', marque(c))
+  if ((data.contacts ?? []).length) signalCarnet?.()
   for (const s of data.settings ?? []) await db.put('settings', s)
   // Le compteur de numeros repart au plus haut des deux : sans cela, un rapport
   // restaure sur un appareil neuf reattribuerait un numero deja imprime. Les

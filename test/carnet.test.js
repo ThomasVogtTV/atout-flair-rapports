@@ -67,4 +67,19 @@ describe('le carnet', () => {
     assert.equal(await S.reprendreClients(), 0)
     assert.equal(contenu('contacts').length, 1)
   })
+
+  // Le carnet commun ne recoit que ce qui a change : chaque ecriture est datee
+  // et marquee a envoyer, chaque suppression attend son tour.
+  test('note ce qui reste a envoyer au carnet de l’équipe', async () => {
+    let signaux = 0
+    S.onCarnetModifie(() => signaux++)
+    await S.saveContact({ nom: 'Rochat' })
+    const [c] = contenu('contacts')
+    assert.equal(c.aEnvoyer, true)
+    assert.ok(c.maj > 0)
+    await S.deleteContact(c.id)
+    assert.deepEqual(S.suppressionsEnAttente(), [c.id])
+    assert.equal(signaux, 2)
+    S.onCarnetModifie(null)
+  })
 })

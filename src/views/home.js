@@ -13,7 +13,7 @@ import { TYPE_LIST, typeOf } from '../templates.js'
 import * as S from '../state.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
-import { estAdmin, identite } from '../lock.js'
+import { estAdmin, estInvite, identite } from '../lock.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
@@ -346,7 +346,10 @@ export function homeView(view) {
       <span class="top-actions">
         <button class="icon-btn envois-toggle${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
                 data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${ICONS.mail}</button>
-        <button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet">${ICONS.contacts}</button>
+        ${
+          // Pas de carnet pour un invite : la liste des clients reste a l'entreprise.
+          estInvite() ? '' : `<button class="icon-btn contacts-toggle" data-act="open-contacts" title="Carnet">${ICONS.contacts}</button>`
+        }
         ${
           estAdmin()
             ? `<button class="icon-btn contacts-toggle" data-act="open-admin" title="Administration">${ICONS.collab}</button>`

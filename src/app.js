@@ -21,7 +21,8 @@ import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName,
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
-import { installerVerrou, seDeconnecter } from './lock.js'
+import { installerVerrou, seDeconnecter, estInvite } from './lock.js'
+import { synchroniserCarnet } from './carnet-sync.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -85,16 +86,19 @@ async function majCompteurs() {
 }
 
 async function openContacts() {
+  if (estInvite()) return toast('Le carnet n’est pas disponible en session invité.')
   view = { ...view, screen: 'contacts', report: null, fiche: null, retour: null }
-  view.contacts = await S.listContacts()
+  view.contacts = await contactsVisibles()
   // Le carnet compte les rapports de chaque client : il lui faut la liste.
   view.reports = (await S.listReports()).filter((r) => !r.parentId)
   render()
+  // Le carnet local s'affiche tout de suite ; celui de l'equipe suit.
+  syncCarnet()
 }
 
 // Fiche d'un client : ses coordonnees, ses rapports, et de quoi en commencer un.
 async function openFiche(id) {
-  view.contacts = await S.listContacts()
+  view.contacts = await contactsVisibles()
   const fiche = view.contacts.find((c) => c.id === id)
   if (!fiche) return openContacts()
   view = { ...view, screen: 'fiche', report: null, fiche, retour: null }
@@ -196,7 +200,7 @@ async function openReport(id) {
   view.repliees = new Set(report.rows.map((r) => r.id))
   view.sectionsRepliees = sectionsParDefaut(report)
   view.children = (await S.listReports()).filter((r) => r.parentId === report.id)
-  view.contacts = await S.listContacts()
+  view.contacts = await contactsVisibles()
   view.partenaires = await S.listPartenaires()
   view.screen = 'editor'
   render()
@@ -240,8 +244,41 @@ async function createReport(type, contact = null) {
   openReport(report.id)
 }
 
+// Le carnet n'est pas montre aux invites : sous-traitants et interimaires
+// n'ont pas a emporter la liste des clients. Pour eux, ni liste, ni choix,
+// ni propositions pendant la frappe.
+const contactsVisibles = async () => (estInvite() ? [] : S.listContacts())
+
+// Apres une synchronisation : l'ecran ouvert se remet a jour sans perdre ce
+// qu'on est en train de faire.
+async function carnetSynchronise() {
+  view.contacts = await contactsVisibles()
+  if (view.screen === 'contacts') {
+    const zone = root.querySelector('.carnet-liste')
+    // Recherche en cours : seule la liste change, le champ garde son curseur.
+    if (zone && document.activeElement?.matches?.('[data-recherche-contact]')) zone.outerHTML = listeContactsHTML(view)
+    else render()
+  } else if (view.screen === 'fiche' && view.fiche) {
+    const fiche = view.contacts.find((c) => c.id === view.fiche.id)
+    if (fiche) {
+      view.fiche = fiche
+      render()
+    }
+  }
+}
+
+const syncCarnet = () => synchroniserCarnet().then((ok) => ok && carnetSynchronise())
+
+// Une rafale d'ecritures (residents d'un immeuble, restauration) ne fait
+// qu'un seul envoi.
+let syncTimer = null
+function planifierSyncCarnet() {
+  clearTimeout(syncTimer)
+  syncTimer = setTimeout(syncCarnet, 1500)
+}
+
 async function refreshContacts() {
-  view.contacts = await S.listContacts()
+  view.contacts = await contactsVisibles()
   render()
 }
 
@@ -821,7 +858,7 @@ root.addEventListener('click', async (ev) => {
   if (act === 'terminer') {
     // Un rapport remis a la main fait entrer son client au carnet, comme un
     // rapport parti par mail.
-    await S.rememberContact(view.report.mandant)
+    if (!estInvite()) await S.rememberContact(view.report.mandant)
     await S.terminerReport(view.report)
     toast('Rapport terminé. Il reste dans « Mes rapports ».')
     return goHome()
@@ -871,8 +908,9 @@ root.addEventListener('click', async (ev) => {
   if (act === 'add-row') return insertNewRow()
   if (act === 'residents-carnet') return residentsAuCarnet()
   if (act === 'save-contact') {
+    if (estInvite()) return
     await S.rememberContact(view.report.mandant)
-    view.contacts = await S.listContacts()
+    view.contacts = await contactsVisibles()
     toast('Mandant ajouté au carnet')
     return
   }
@@ -963,8 +1001,8 @@ root.addEventListener('click', async (ev) => {
     // complet et verifie. L'enregistrer a la frappe creerait un contact par
     // lettre tapee ; ne jamais l'enregistrer oblige a le ressaisir a chaque
     // intervention pour la meme regie.
-    await S.rememberContact(view.report.mandant)
-    view.contacts = await S.listContacts()
+    if (!estInvite()) await S.rememberContact(view.report.mandant)
+    view.contacts = await contactsVisibles()
     return openSendDialog(view.report, view.children, goHome)
   }
 })
@@ -1105,6 +1143,7 @@ async function movePhoto(id, dir) {
  * intervention dans le meme batiment.
  */
 async function residentsAuCarnet() {
+  if (estInvite()) return toast('Le carnet n’est pas disponible en session invité.')
   const r = view.report
   const nouveaux = r.rows
     .filter((row) => (row.resident || '').trim())
@@ -1118,7 +1157,7 @@ async function residentsAuCarnet() {
       tel: '',
     }))
   const { ajoutes, connus } = await S.ajouterContacts(nouveaux)
-  view.contacts = await S.listContacts()
+  view.contacts = await contactsVisibles()
   toast(
     ajoutes
       ? `${ajoutes} résident${ajoutes > 1 ? 's' : ''} ajouté${ajoutes > 1 ? 's' : ''} au carnet${connus ? `, ${connus} déjà connu${connus > 1 ? 's' : ''}` : ''}`
@@ -1172,6 +1211,8 @@ window.addEventListener('offline', majReseau)
 window.addEventListener('online', majReseau)
 
 window.addEventListener('online', async () => {
+  // Les fiches creees hors ligne rejoignent le carnet de l'equipe.
+  syncCarnet()
   const { envoyes, echecs } = await flushQueue()
   if (!envoyes && !echecs) return
   if (envoyes) toast(`${envoyes} rapport${envoyes > 1 ? "s" : ""} envoyé${envoyes > 1 ? "s" : ""}.`)
@@ -1232,6 +1273,10 @@ export async function boot() {
   await S.reprendreClients().catch((err) => console.error('Reprise du carnet impossible', err))
   majReseau()
   await goHome()
+  // Carnet commun : chaque changement local part au carnet de l'equipe, et
+  // le telephone reprend a l'ouverture ce que les collegues ont ajoute.
+  S.onCarnetModifie(planifierSyncCarnet)
+  syncCarnet()
   // L'accueil est affiche : on va chercher le moteur PDF en tache de fond, pour
   // qu'il soit en cache (et donc disponible hors ligne) avant le premier rapport.
   loadPdfEngine().catch(() => {})

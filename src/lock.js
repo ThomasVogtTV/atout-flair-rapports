@@ -40,6 +40,7 @@ export function identite() {
   }
 }
 export const estAdmin = () => identite()?.role === 'admin'
+export const estInvite = () => identite()?.role === 'invite'
 
 // Invite dont la date de fin est passee : bloque meme sans reseau, grace a la
 // date retenue a la derniere verification. Avec du reseau, le serveur a le
