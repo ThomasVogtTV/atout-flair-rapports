@@ -1,9 +1,10 @@
-// Fonction serveur (Vercel) : dit si un code d'acces est le bon, sans rien
-// envoyer. Sert au verrou de l'app, a la premiere ouverture sur un appareil :
-// ensuite le code est retenu sur le telephone et la verification se fait hors
-// ligne (voir src/lock.js).
-//
-// Meme regle que api/send.js : valeurs nettoyees, casse indifferente.
+// Fonction serveur (Vercel) : dit si un code d'acces est valable, et a qui il
+// appartient, sans rien envoyer. Sert au verrou de l'app : a la premiere
+// ouverture sur un appareil, puis a chaque ouverture avec du reseau, pour qu'un
+// code revoque cesse de fonctionner (voir src/lock.js). Chaque appel note
+// l'activite de la personne dans l'onglet Administration.
+
+import { identifier, noterActivite } from './_lib/equipe.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,13 +14,20 @@ export default async function handler(req, res) {
   if (!process.env.APP_CODE) {
     return res.status(503).json({ error: "Code d'accès non configuré" })
   }
-  const recu = String(req.headers['x-app-code'] ?? '').trim().toLowerCase()
-  const attendu = String(process.env.APP_CODE).trim().toLowerCase()
-  if (!recu || recu !== attendu) {
+  let ident = null
+  try {
+    ident = await identifier(req.headers['x-app-code'])
+  } catch (err) {
+    // Base injoignable : ce n'est pas un mauvais code, on ne le traite pas comme tel.
+    console.error('Identification impossible', err)
+    return res.status(503).json({ error: 'Vérification impossible pour le moment' })
+  }
+  if (!ident) {
     // Une demi-seconde par essai rate : sans effet sur quelqu'un qui se trompe
     // une fois, mais un essai en boucle de noms et de dates devient tres lent.
     await new Promise((r) => setTimeout(r, 500))
     return res.status(401).json({ error: "Code d'accès invalide" })
   }
-  return res.status(204).end()
+  await noterActivite(ident).catch((err) => console.error('Activité non notée', err))
+  return res.status(200).json({ role: ident.role, nom: ident.nom })
 }

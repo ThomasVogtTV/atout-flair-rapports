@@ -137,7 +137,18 @@ export async function sendReport(report, payload, blob) {
     essais: 0,
     dernierEssai: null,
     motif: null,
-    payload: { ...payload, pdfBase64: await blobToBase64(blob) },
+    // meta : ce que le journal de l'onglet Administration retient de ce rapport.
+    payload: {
+      ...payload,
+      pdfBase64: await blobToBase64(blob),
+      meta: {
+        ref: report.ref,
+        type: report.type,
+        adresse:
+          report.lieu?.adresseIntervention ||
+          [report.lieu?.adresse, report.lieu?.npaLieu].filter(Boolean).join(', '),
+      },
+    },
   }
 
   if (!navigator.onLine) {

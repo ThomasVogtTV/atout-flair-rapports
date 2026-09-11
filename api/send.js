@@ -19,6 +19,8 @@
 // reduit les photos pour rester sous cette limite et bascule sur le partage
 // manuel si un rapport reste trop lourd (voir PDF_MAX dans src/send.js).
 
+import { identifier, noterActivite, journaliser } from './_lib/equipe.js'
+
 const MAILBOX = 'info@atout-flair.ch'
 // APP_CODE est obligatoire : sans lui, l'URL du site suffirait a n'importe qui
 // pour envoyer des mails depuis la boite de l'entreprise.
@@ -56,13 +58,23 @@ export default async function handler(req, res) {
   // que "StessyOberly" demandait deux appuis sur Maj et arrivait presque toujours
   // en minuscules - refuse. Pour un code partage qui barre l'acces a la boite
   // mail, et non un mot de passe, la casse ne protegeait rien et bloquait tout.
-  const codeRecu = String(req.headers['x-app-code'] ?? '').trim().toLowerCase()
-  const codeAttendu = String(process.env.APP_CODE).trim().toLowerCase()
-  if (!codeRecu || codeRecu !== codeAttendu) {
+  // La comparaison elle-meme vit dans _lib/equipe.js : code administrateur
+  // (APP_CODE), ou code d'un employe actif. Le code dit aussi QUI envoie, ce que
+  // le journal de l'onglet Administration retient.
+  let ident = null
+  try {
+    ident = await identifier(req.headers['x-app-code'])
+  } catch (err) {
+    // Base injoignable : ce n'est pas un mauvais code. Un 401 ferait oublier son
+    // code au telephone et redemander une saisie pour rien.
+    console.error('Identification impossible', err)
+    return res.status(503).json({ error: 'Vérification du code impossible pour le moment' })
+  }
+  if (!ident) {
     return res.status(401).json({ error: "Code d'accès invalide" })
   }
 
-  const { to, cc, subject, body, filename, pdfBase64 } = req.body ?? {}
+  const { to, cc, subject, body, filename, pdfBase64, meta } = req.body ?? {}
   if (!to || !pdfBase64) return res.status(400).json({ error: 'Destinataire ou PDF manquant' })
 
   try {
@@ -91,9 +103,35 @@ export default async function handler(req, res) {
       ],
     })
 
+    await consigner(ident, req.body, 'envoye')
     return res.status(200).json({ ok: true, messageId: info.messageId })
   } catch (err) {
     console.error('Envoi impossible', err)
+    await consigner(ident, req.body, 'echec', String(err?.message ?? err))
     return res.status(502).json({ error: String(err?.message ?? err) })
+  }
+}
+
+// Ligne du journal de l'onglet Administration. Un journal en panne ne doit jamais
+// faire echouer un envoi reussi : l'erreur est notee, le rapport part quand meme.
+async function consigner(ident, corps, statut, erreur) {
+  const court = (v, n = 200) => String(v ?? '').slice(0, n)
+  const m = corps?.meta ?? {}
+  try {
+    await journaliser({
+      qui: ident.nom,
+      role: ident.role,
+      statut,
+      ref: court(m.ref, 40),
+      type: court(m.type, 20),
+      adresse: court(m.adresse),
+      destinataire: court(corps?.to),
+      cc: court(corps?.cc),
+      fichier: court(corps?.filename),
+      ...(erreur ? { erreur: court(erreur, 300) } : {}),
+    })
+    if (statut === 'envoye') await noterActivite(ident, { envoi: true })
+  } catch (e) {
+    console.error('Journal non ecrit', e)
   }
 }

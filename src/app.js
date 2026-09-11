@@ -7,7 +7,7 @@ import { typeOf, accordE, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, fileToLogo, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
-import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode } from './mailer.js'
+import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode, currentCode } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
@@ -16,6 +16,7 @@ import { homeView, listeRapportsHTML } from './views/home.js'
 import { contactsView } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
+import { adminView } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
@@ -94,6 +95,72 @@ async function openReglages() {
   render()
 }
 
+// --- administration -------------------------------------------------------
+
+async function adminAppel(methode, corps) {
+  const res = await fetch('/api/admin', {
+    method: methode,
+    headers: { 'x-app-code': currentCode(), ...(corps ? { 'Content-Type': 'application/json' } : {}) },
+    body: corps ? JSON.stringify(corps) : undefined,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw Object.assign(new Error(data.error || `Erreur ${res.status}`), { base: data.base })
+  return data
+}
+
+// Le code revele a la creation d'un employe ne survit pas a une sortie de
+// l'onglet : il ne doit s'afficher qu'une fois.
+async function openAdmin() {
+  view = { ...view, screen: 'admin', report: null, admin: { chargement: true }, adminCodeRevele: null }
+  render()
+  await rechargerAdmin()
+}
+
+async function rechargerAdmin() {
+  if (!navigator.onLine) {
+    view.admin = { erreur: "Hors ligne : l'administration a besoin du réseau." }
+  } else {
+    try {
+      view.admin = await adminAppel('GET')
+    } catch (err) {
+      view.admin = { erreur: err.message, base: err.base }
+    }
+  }
+  if (view.screen === 'admin') render()
+}
+
+const CONFIRMATIONS = {
+  revoquer: 'Révoquer cet employé ? Son code cessera de fonctionner à sa prochaine ouverture avec du réseau.',
+  supprimer: 'Supprimer cet employé ? Son code cessera de fonctionner. Ses envois restent dans le journal.',
+  'nouveau-code': "Donner un nouveau code à cet employé ? L'ancien cessera de fonctionner.",
+}
+
+async function adminAction(action, id) {
+  if (CONFIRMATIONS[action] && !confirm(CONFIRMATIONS[action])) return
+  try {
+    const r = await adminAppel('POST', { action, id })
+    if (r.code) {
+      const e = view.admin?.employes?.find((x) => x.id === id)
+      view.adminCodeRevele = { nom: e?.nom ?? '', code: r.code }
+    }
+    await rechargerAdmin()
+  } catch (err) {
+    toast(err.message)
+  }
+}
+
+async function adminAjouter() {
+  const nom = root.querySelector('[data-admin-nom]')?.value.trim()
+  if (!nom) return toast("Indiquez le nom de l'employé")
+  try {
+    const r = await adminAppel('POST', { action: 'creer', nom })
+    view.adminCodeRevele = { nom: r.nom, code: r.code }
+    await rechargerAdmin()
+  } catch (err) {
+    toast(err.message)
+  }
+}
+
 async function openReport(id) {
   const report = await S.loadReport(id)
   if (!report) return goHome()
@@ -169,7 +236,9 @@ function render() {
           ? reglagesView(view)
           : view.screen === 'envois'
             ? envoisView(view)
-            : editorView(view)
+            : view.screen === 'admin'
+              ? adminView(view)
+              : editorView(view)
   if (navigated) {
     document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
@@ -730,6 +799,20 @@ root.addEventListener('click', async (ev) => {
   }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-reglages') return openReglages()
+  if (act === 'open-admin') return openAdmin()
+  if (act === 'admin-ajouter') return adminAjouter()
+  if (act === 'admin-action') {
+    const b = el.closest('[data-act]')
+    return adminAction(b.dataset.action, b.dataset.id)
+  }
+  if (act === 'admin-filtre') {
+    view.adminFiltre = el.closest('[data-act]').dataset.val
+    return render()
+  }
+  if (act === 'admin-masquer-code') {
+    view.adminCodeRevele = null
+    return render()
+  }
   if (act === 'open-envois') return openEnvois()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
   if (act === 'home') {

@@ -10,7 +10,7 @@ import { sectionIcon } from '../ui/icons.js'
 
 // "il y a 3 minutes" plutot qu'une heure exacte : ce qu'on veut savoir d'un
 // envoi, c'est s'il vient de partir ou s'il traine depuis hier.
-function ilYA(ts) {
+export function ilYA(ts) {
   if (!ts) return ''
   const s = Math.round((Date.now() - ts) / 1000)
   if (s < 60) return "à l'instant"

@@ -11,6 +11,7 @@ import { esc } from '../ui/dom.js'
 import { sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
 import { currentCode } from '../mailer.js'
+import { identite, estAdmin } from '../lock.js'
 
 // Au-dela d'un mois, la sauvegarde est signalee comme en retard : c'est le
 // delai au bout duquel perdre le telephone couterait une tournee entiere.
@@ -72,7 +73,18 @@ export function reglagesView(view) {
                value="${esc(currentCode())}" placeholder="Non renseigné sur cet appareil" />
         <p class="muted small reglage-note">Il ouvre l'application et autorise l'envoi des rapports depuis la boîte de
         l'entreprise. Majuscules et minuscules sont indifférentes.</p>
+        ${identite()?.nom ? `<p class="muted small">Ce téléphone est au nom de <b>${esc(identite().nom)}</b>.</p>` : ''}
       </div>
+
+      ${
+        estAdmin()
+          ? `<h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'accent')}Administration</span></h2>
+      <div class="card">
+        <p class="muted small">Équipe, codes d'accès des employés et journal des envois.</p>
+        <button class="btn primary wide" data-act="open-admin">Ouvrir l'administration</button>
+      </div>`
+          : ''
+      }
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Sauvegarde</span></h2>
       <div class="card">

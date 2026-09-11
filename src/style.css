@@ -1696,3 +1696,19 @@ body.verrouille { overflow: hidden; }
 .lock-card p { margin: 0; }
 .lock-input { width: 100%; text-align: center; letter-spacing: 0.06em; }
 .lock-error { min-height: 16px; font-size: 12.5px; font-weight: 600; color: var(--red); }
+
+/* --- onglet Administration (src/views/admin.js) --- */
+.admin-ajout { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.admin-ajout input { flex: 1; min-width: 0; }
+.admin-code { display: grid; gap: 8px; text-align: center; margin-bottom: 6px; }
+.admin-code strong {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  user-select: all;
+}
+.admin-emp { flex-direction: column; align-items: stretch; gap: 8px; }
+.admin-emp .row-actions .btn { flex: 1; }
+.pill.off { background: var(--red-soft); color: var(--red); }
+.admin-filtres { margin: 0 0 8px; }
