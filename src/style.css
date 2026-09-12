@@ -2357,3 +2357,203 @@ span.contact-etoile svg { width: 15px; height: 15px; }
 .cal-auj { display: block; margin: 8px auto 0; }
 .calendrier + .agenda-jour { margin-top: 16px; }
 .agenda-ajouter { margin-top: 10px; }
+
+/* --- Le semainier ----------------------------------------------------------
+   Le mois dit "quand suis-je pris ?", la semaine dit "qui fait quoi jeudi
+   matin ?". Sept colonnes, les heures en hauteur, un bloc a sa place et a sa
+   taille : la journee se lit d'un coup d'oeil, et deux rendez-vous qui se
+   chevauchent se partagent la colonne au lieu de se cacher l'un l'autre.
+
+   La couleur d'un bloc est celle de la PERSONNE, pas du type : dans une equipe,
+   la question est toujours "qui". Le type reste lisible dans la fiche. */
+.ton-accent { --ton: var(--accent-fill); }
+.ton-ardoise { --ton: var(--ardoise-fill); }
+.ton-prune { --ton: var(--prune-fill); }
+.ton-green { --ton: var(--green); }
+.ton-amber { --ton: var(--amber); }
+.ton-red { --ton: var(--red); }
+
+.agenda-vues { display: flex; gap: 6px; margin-bottom: 10px; }
+.agenda-vues .chip { flex: 1 1 0; }
+.agenda-qui { margin-bottom: 10px; }
+.agenda-qui .chip[class*='ton-']::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--ton);
+  vertical-align: -1px;
+}
+
+.semainier { --sem-h: 46px; padding: 10px 8px 8px; }
+/* Sur un telephone etroit, la grille defile lateralement plutot que d'ecraser
+   les colonnes a l'illisible. */
+.sem-defile { overflow-x: auto; scrollbar-width: none; margin: 0 -2px; }
+.sem-defile::-webkit-scrollbar { display: none; }
+.sem-grille {
+  display: grid;
+  grid-template-columns: 34px repeat(7, minmax(42px, 1fr));
+  min-width: 100%;
+}
+
+.sem-coin, .sem-lab-jour { grid-column: 1; }
+.sem-lab-jour {
+  align-self: center;
+  padding-right: 4px;
+  text-align: right;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--muted-soft);
+}
+
+.sem-jour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 0 6px;
+  border: 0;
+  border-radius: 10px 10px 0 0;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+}
+.sem-jour i { font-style: normal; font-size: 10px; font-weight: 700; color: var(--muted); }
+.sem-jour b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sem-jour.aujourdhui b {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent-fill);
+}
+.sem-jour.choisi { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sem-jour.choisi i { color: var(--accent-ink); }
+
+/* La bande des rendez-vous sans heure, au-dessus de la grille. */
+.sem-entier { display: flex; flex-direction: column; gap: 2px; padding: 0 1px 4px; min-width: 0; }
+.sem-puce {
+  border: 0;
+  border-radius: 5px;
+  padding: 2px 4px;
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ton);
+  background: color-mix(in srgb, var(--ton) 18%, var(--card-solid));
+  cursor: pointer;
+}
+
+.sem-heures { position: relative; height: calc(var(--n) * var(--sem-h)); }
+.sem-heure {
+  position: absolute;
+  right: 4px;
+  transform: translateY(-50%);
+  font-size: 9.5px;
+  font-weight: 650;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.sem-col {
+  position: relative;
+  height: calc(var(--n) * var(--sem-h));
+  border-left: 1px solid var(--line);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--sem-h) - 1px),
+    var(--line) calc(var(--sem-h) - 1px),
+    var(--line) var(--sem-h)
+  );
+}
+.sem-col:last-child { border-right: 1px solid var(--line); }
+.sem-col.aujourdhui { background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
+.sem-col.choisi { background-color: color-mix(in srgb, var(--accent) 9%, transparent); }
+
+/* Une case vide se touche pour poser un rendez-vous a cette heure-la. */
+.sem-creneau { position: absolute; left: 0; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.sem-creneau:active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+.sem-bloc {
+  /* Le bloc se mesure lui-meme : sept colonnes sur un telephone laissent
+     parfois vingt pixels de large, ou un nom coupe en deux lettres n'apprend
+     rien. Le texte s'efface alors, la couleur et la place suffisent - le reste
+     se lit dans la fiche, a une pression de la. */
+  container: bloc / size;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  min-height: 15px;
+  padding: 2px 3px;
+  border: 0;
+  border-left: 3px solid var(--ton);
+  border-radius: 5px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ton) 20%, var(--card-solid));
+  box-shadow: 0 1px 2px rgba(28, 28, 30, 0.08);
+  cursor: pointer;
+  transition: transform 0.08s;
+}
+.sem-bloc:active { transform: scale(0.97); }
+.sem-bloc b { font-size: 9.5px; font-weight: 800; line-height: 1.15; color: var(--ton); font-variant-numeric: tabular-nums; }
+.sem-bloc span {
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* Un rapport deja commence : le bloc se raye legerement, comme une ligne faite. */
+.sem-bloc.fait { opacity: 0.72; }
+.sem-bloc.fait b::after { content: ' ✓'; }
+
+.sem-legende { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 2px 0; }
+.sem-nom { display: inline-flex; align-items: center; font-size: 11px; font-weight: 650; color: var(--muted); }
+.sem-nom::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--ton);
+}
+.semainier + .agenda-jour, .sem-legende + .agenda-jour { margin-top: 16px; }
+
+/* L'heure d'une ligne de rendez-vous porte maintenant sa duree dessous. */
+.rdv-heure { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.rdv-heure b { font-weight: 800; }
+.rdv-heure i { font-style: normal; font-size: 9.5px; font-weight: 650; color: var(--muted-soft); letter-spacing: 0; }
+
+/* Un bloc qui partage sa colonne, ou tres court, ne garde que son heure : deux
+   lettres d'un nom coupe n'apprennent rien, la couleur et l'heure si. */
+.sem-bloc.serre { border-left-width: 2px; padding: 2px 1px; }
+@container bloc (max-width: 26px) {
+  .sem-bloc .sem-n { display: none; }
+}
+@container bloc (max-width: 24px) {
+  .sem-bloc .sem-h { display: none; }
+}
+.sem-bloc.court { flex-direction: row; align-items: baseline; gap: 3px; padding-top: 1px; }
+.sem-bloc.court b, .sem-bloc.court span { line-height: 1.05; }
+.sem-bloc.court span { -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis; }
+/* Sans les requetes de conteneur (vieux navigateur), le texte deborde plutot
+   que de disparaitre : il est simplement rogne, jamais ce qui casse la page. */
+@supports not (container-type: size) {
+  .sem-bloc.serre .sem-n { display: none; }
+}

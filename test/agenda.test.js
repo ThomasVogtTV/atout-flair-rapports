@@ -5,7 +5,30 @@ import assert from 'node:assert/strict'
 import { nettoyerRdv, visiblesPour, peutModifier } from '../api/_lib/agenda.js'
 import * as E from '../api/_lib/equipe.js'
 import handler from '../api/agenda.js'
-import { fichierIcs, lienGoogleAgenda, trierRdv, libelleJour, plusJours, aVenir, grilleMois, decalerMois, libelleMois } from '../src/agenda-outils.js'
+import {
+  fichierIcs,
+  lienGoogleAgenda,
+  trierRdv,
+  libelleJour,
+  plusJours,
+  aVenir,
+  grilleMois,
+  decalerMois,
+  libelleMois,
+  enHeure,
+  finDe,
+  libelleDuree,
+  seChevauchent,
+  conflitsDe,
+  lundiDe,
+  decalerSemaine,
+  grilleSemaine,
+  libelleSemaine,
+  plageJournee,
+  disposerJour,
+  tonPersonne,
+  personnesDe,
+} from '../src/agenda-outils.js'
 
 const rdvBrut = (x = {}) => ({ id: 'r1', date: '2026-09-14', heure: '14:30', type: 'immeuble', client: { type: 'gerance', nom: 'Régie Duval' }, ...x })
 
@@ -157,5 +180,96 @@ describe('le calendrier du mois', () => {
     assert.equal(decalerMois('2026-12', 1), '2027-01')
     assert.equal(decalerMois('2026-01', -1), '2025-12')
     assert.equal(libelleMois('2026-09'), 'Septembre 2026')
+  })
+})
+
+describe('les durees', () => {
+  test('une heure par defaut, et une valeur absurde ne passe pas', () => {
+    assert.equal(nettoyerRdv(rdvBrut(), 1).duree, 60)
+    assert.equal(nettoyerRdv(rdvBrut({ duree: 9999 }), 1).duree, 60)
+    assert.equal(nettoyerRdv(rdvBrut({ duree: 'deux heures' }), 1).duree, 60)
+    assert.equal(nettoyerRdv(rdvBrut({ duree: 92 }), 1).duree, 90)
+    assert.equal(nettoyerRdv(rdvBrut({ duree: 480 }), 1).duree, 480)
+  })
+
+  test("un rendez-vous sans heure n'a pas de duree", () => {
+    assert.equal(nettoyerRdv(rdvBrut({ heure: '', duree: 120 }), 1).duree, 0)
+  })
+
+  test('la fin du rendez-vous suit la duree, jusque dans le fichier .ics', () => {
+    const r = nettoyerRdv(rdvBrut({ duree: 150 }), 1)
+    assert.equal(enHeure(finDe(r)), '17:00')
+    assert.match(fichierIcs(r), /DTEND:20260914T170000/)
+    assert.equal(libelleDuree(150), '2 h 30')
+    assert.equal(libelleDuree(45), '45 min')
+  })
+})
+
+describe('la double reservation', () => {
+  const marc = { id: 'e1', nom: 'Marc' }
+  const julie = { id: 'e2', nom: 'Julie' }
+  const a = { id: 'a', date: '2026-09-14', heure: '09:00', duree: 90, pour: marc }
+
+  test('se voit quand la meme personne est prise, pas quand c est une collegue', () => {
+    const b = { id: 'b', date: '2026-09-14', heure: '10:00', duree: 60, pour: marc }
+    assert.equal(seChevauchent(a, b), true)
+    assert.deepEqual(conflitsDe(a, [a, b]).map((r) => r.id), ['b'])
+    assert.equal(conflitsDe(a, [a, { ...b, pour: julie }]).length, 0)
+  })
+
+  test('deux rendez-vous qui se suivent ne se chevauchent pas', () => {
+    assert.equal(seChevauchent(a, { id: 'c', date: '2026-09-14', heure: '10:30', duree: 60, pour: marc }), false)
+    assert.equal(seChevauchent(a, { id: 'd', date: '2026-09-15', heure: '09:00', duree: 60, pour: marc }), false)
+    assert.equal(seChevauchent(a, { id: 'e', date: '2026-09-14', heure: '', pour: marc }), false)
+  })
+})
+
+describe('le semainier', () => {
+  test('part du lundi et le dit en toutes lettres', () => {
+    assert.equal(lundiDe('2026-09-12'), '2026-09-07')
+    assert.equal(lundiDe('2026-09-07'), '2026-09-07')
+    assert.equal(decalerSemaine('2026-09-07', 1), '2026-09-14')
+    assert.deepEqual(grilleSemaine('2026-09-07').map((j) => j.jour), [7, 8, 9, 10, 11, 12, 13])
+    assert.equal(libelleSemaine('2026-09-07'), '7 – 13 septembre 2026')
+    assert.match(libelleSemaine('2026-09-28'), /^28 sept\. – 4 oct\. 2026$/)
+    assert.match(libelleSemaine('2026-12-28'), /2026 – 3 janv\. 2027$/)
+  })
+
+  test('la journee montree va de 7 h a 19 h, et s elargit pour un rendez-vous matinal', () => {
+    assert.deepEqual(plageJournee([]), { debut: 420, fin: 1140 })
+    const tot = plageJournee([{ heure: '06:30', duree: 60 }])
+    assert.equal(tot.debut, 360)
+    const tard = plageJournee([{ heure: '19:00', duree: 180 }])
+    assert.equal(tard.fin, 22 * 60)
+  })
+
+  test('deux rendez-vous qui se chevauchent se partagent la colonne', () => {
+    const places = disposerJour([
+      { id: 'a', heure: '09:00', duree: 60 },
+      { id: 'b', heure: '09:30', duree: 60 },
+      { id: 'c', heure: '14:00', duree: 30 },
+      { id: 'd', heure: '', duree: 0 },
+    ])
+    assert.deepEqual(
+      places.map((p) => [p.rdv.id, p.colonne, p.colonnes]),
+      [['a', 0, 2], ['b', 1, 2], ['c', 0, 1]]
+    )
+    assert.equal(places[0].fin, 600)
+  })
+
+  test('chacun garde sa couleur, le patron celle de la marque', () => {
+    assert.equal(tonPersonne('admin'), 'accent')
+    assert.equal(tonPersonne('e1'), tonPersonne('e1'))
+    assert.notEqual(tonPersonne('e1'), 'accent')
+  })
+
+  test('les personnes de l agenda sortent par ordre alphabetique, sans doublon', () => {
+    const gens = personnesDe([
+      { pour: { id: 'e2', nom: 'Marc' } },
+      { pour: { id: 'e1', nom: 'Julie' } },
+      { pour: { id: 'e2', nom: 'Marc' } },
+      { pour: null },
+    ])
+    assert.deepEqual(gens, [{ id: 'e1', nom: 'Julie' }, { id: 'e2', nom: 'Marc' }])
   })
 })

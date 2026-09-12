@@ -25,7 +25,7 @@ import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
-import { nomClient, decalerMois } from './agenda-outils.js'
+import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe } from './agenda-outils.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
@@ -332,13 +332,17 @@ async function refreshContacts() {
 
 // --- agenda de l'equipe ----------------------------------------------------
 
+const VUE_AGENDA = 'af-agenda-vue'
+
 async function openAgenda() {
   await flushSave()
   view = { ...view, screen: 'agenda', report: null, retour: null }
   view.agenda ??= agendaEnCache()
-  // Le calendrier s'ouvre sur aujourd'hui.
+  // Le calendrier s'ouvre sur aujourd'hui, dans la vue choisie la derniere fois.
   view.agendaJour = S.todayISO()
   view.agendaMois = view.agendaJour.slice(0, 7)
+  view.agendaSemaine = lundiDe(view.agendaJour)
+  view.agendaVue = localStorage.getItem(VUE_AGENDA) === 'semaine' ? 'semaine' : 'mois'
   render()
   rafraichirAgenda()
 }
@@ -369,12 +373,28 @@ async function equipePourAgenda() {
   }
 }
 
-async function editerRdv(rdv = null) {
+// Qui est deja pris a cette heure-la ? Un rendez-vous sans "pour" est le mien :
+// c'est le serveur qui me l'attribuera.
+function conflitsPour(saisi) {
+  const pour = saisi.pour ?? view.agenda?.moi ?? null
+  return conflitsDe({ ...saisi, pour }, view.agenda?.rdvs ?? [])
+}
+
+async function editerRdv(rdv = null, creneau = {}) {
   if (!navigator.onLine) return toast("Pas de réseau : l'agenda de l'équipe se modifie avec du réseau.")
   const admin = estAdmin()
   const [contacts, equipe] = await Promise.all([contactsVisibles(), admin ? equipePourAgenda() : null])
-  const date = view.screen === 'agenda' ? view.agendaJour : undefined
-  const saisi = await formulaireRdv(rdv, { contacts, reports: view.reports ?? [], equipe, admin, choisirContact, date })
+  const date = creneau.date ?? (view.screen === 'agenda' ? view.agendaJour : undefined)
+  const saisi = await formulaireRdv(rdv, {
+    contacts,
+    reports: view.reports ?? [],
+    equipe,
+    admin,
+    choisirContact,
+    date,
+    heure: creneau.heure,
+    conflits: conflitsPour,
+  })
   if (!saisi) return
   try {
     await enregistrerRdv(saisi)
@@ -382,6 +402,7 @@ async function editerRdv(rdv = null) {
     // Le calendrier se place sur le jour du rendez-vous, pour le montrer.
     view.agendaJour = saisi.date
     view.agendaMois = saisi.date.slice(0, 7)
+    view.agendaSemaine = lundiDe(saisi.date)
   } catch (err) {
     return toast(err.message)
   }
@@ -780,11 +801,36 @@ root.addEventListener('click', async (ev) => {
   if (jourAgenda) {
     view.agendaJour = jourAgenda
     view.agendaMois = jourAgenda.slice(0, 7)
+    view.agendaSemaine = lundiDe(jourAgenda)
     return render()
   }
   const pasMois = el.closest('[data-agenda-mois]')?.dataset.agendaMois
   if (pasMois) {
     view.agendaMois = decalerMois(view.agendaMois ?? S.todayISO().slice(0, 7), Number(pasMois))
+    return render()
+  }
+  const pasSemaine = el.closest('[data-agenda-semaine]')?.dataset.agendaSemaine
+  if (pasSemaine) {
+    view.agendaSemaine = decalerSemaine(view.agendaSemaine ?? lundiDe(view.agendaJour ?? S.todayISO()), Number(pasSemaine))
+    return render()
+  }
+  // Mois ou semaine : le choix se retient d'une ouverture a l'autre.
+  const vueAgenda = el.closest('[data-agenda-vue]')?.dataset.agendaVue
+  if (vueAgenda) {
+    view.agendaVue = vueAgenda
+    view.agendaSemaine = lundiDe(view.agendaJour ?? S.todayISO())
+    try {
+      localStorage.setItem(VUE_AGENDA, vueAgenda)
+    } catch {
+      // Pas de place : la vue repartira du mois a la prochaine ouverture.
+    }
+    return render()
+  }
+  // Le filtre "qui" : "Tout le monde" porte une valeur vide, d'ou le test sur
+  // le bouton lui-meme plutot que sur sa valeur.
+  const btnQui = el.closest('[data-agenda-qui]')
+  if (btnQui) {
+    view.agendaQui = btnQui.dataset.agendaQui
     return render()
   }
 
@@ -794,6 +840,15 @@ root.addEventListener('click', async (ev) => {
     const rdv = view.agenda?.rdvs?.find((r) => r.id === rdvId)
     if (rdv) montrerRdv(rdv)
     return
+  }
+
+  // Une case vide du semainier : on y pose un rendez-vous a cette heure-la.
+  const creneau = el.closest('[data-agenda-creneau]')?.dataset.agendaCreneau
+  if (creneau) {
+    const [date, heure] = creneau.split('|')
+    view.agendaJour = date
+    view.agendaSemaine = lundiDe(date)
+    return editerRdv(null, { date, heure })
   }
 
   // L'etoile d'une ligne du carnet : marque un client habituel sans ouvrir sa

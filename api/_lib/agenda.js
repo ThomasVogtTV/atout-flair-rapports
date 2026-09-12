@@ -16,6 +16,17 @@ const HEURE_OK = /^([01]\d|2[0-3]):[0-5]\d$/
 const CHAMPS_CLIENT = ['type', 'nom', 'prenom', 'adresse', 'npaLieu', 'email', 'tel']
 const texte = (v, max = 200) => String(v ?? '').trim().slice(0, max)
 
+// Combien de temps l'on reste sur place. Une heure par defaut ; au plus douze,
+// et par pas de cinq minutes - de quoi couvrir un immeuble entier sans laisser
+// passer une valeur fantaisiste.
+export const DUREE_DEFAUT = 60
+const DUREE_MINI = 15
+const DUREE_MAXI = 720
+export function nettoyerDuree(v) {
+  const n = Math.round(Number(v) / 5) * 5
+  return Number.isFinite(n) && n >= DUREE_MINI && n <= DUREE_MAXI ? n : DUREE_DEFAUT
+}
+
 export const idValable = (id) => typeof id === 'string' && ID_OK.test(id)
 
 /** Qui est derriere un code, sous la forme que l'agenda retient. */
@@ -34,11 +45,14 @@ export function nettoyerRdv(brut, maintenant = Date.now()) {
   const client = {}
   for (const k of CHAMPS_CLIENT) client[k] = texte(brut.client?.[k])
   if (!client.nom) return null
+  // Sans heure, c'est un rendez-vous "dans la journee" : sa duree n'a alors
+  // plus de sens, et vaut zero.
+  const heure = HEURE_OK.test(String(brut.heure ?? '')) ? brut.heure : ''
   return {
     id: brut.id,
     date: brut.date,
-    // Sans heure, c'est un rendez-vous "dans la journee".
-    heure: HEURE_OK.test(String(brut.heure ?? '')) ? brut.heure : '',
+    heure,
+    duree: heure ? nettoyerDuree(brut.duree) : 0,
     type: TYPES.has(brut.type) ? brut.type : 'detection',
     client,
     lieu: { adresse: texte(brut.lieu?.adresse), npaLieu: texte(brut.lieu?.npaLieu) },

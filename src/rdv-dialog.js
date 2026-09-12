@@ -7,7 +7,11 @@ import { openOverlay } from './ui/dialogs.js'
 import { ICONS } from './ui/icons.js'
 import { TYPE_LIST } from './templates.js'
 import { uid, todayISO, contactVersMandant } from './state.js'
-import { typeRdv, nomClient, adresseRdv, libelleJour } from './agenda-outils.js'
+import { typeRdv, nomClient, adresseRdv, libelleJour, plageRdv, libelleDuree, enHeure, finDe, DUREE_DEFAUT } from './agenda-outils.js'
+
+// Les durees proposees. Une detection courante tient en une heure ; un immeuble
+// ou un hotel se compte en demi-journees.
+const DUREES = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480]
 
 const clientVide = () => ({ type: '', nom: '', prenom: '', adresse: '', npaLieu: '', email: '', tel: '' })
 
@@ -19,7 +23,7 @@ export function ouvrirRdv(rdv, { modifiable }) {
   const t = typeRdv(rdv.type)
   const adresse = adresseRdv(rdv)
   const tel = (rdv.client?.tel || '').replace(/[^\d+]/g, '')
-  const quand = [libelleJour(rdv.date, todayISO()), rdv.heure || 'dans la journée', t.choix].join(' · ')
+  const quand = [libelleJour(rdv.date, todayISO()), plageRdv(rdv), t.choix].join(' · ')
 
   const overlay = openOverlay(`
     <div class="rdv-tete">
@@ -76,11 +80,21 @@ export function ouvrirRdv(rdv, { modifiable }) {
  * @param {{contacts: object[], reports: object[], equipe: object[]|null, admin: boolean, choisirContact: Function}} ctx
  * @returns {Promise<object|null>} le rendez-vous saisi, ou null si l'on renonce
  */
-export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date }) {
+export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date, heure, conflits }) {
   // Un nouveau rendez-vous prend le jour touche dans le calendrier.
   const r = rdv
     ? structuredClone(rdv)
-    : { id: uid(), date: date || todayISO(), heure: '', type: 'detection', client: clientVide(), lieu: { adresse: '', npaLieu: '' }, note: '', pour: null }
+    : {
+        id: uid(),
+        date: date || todayISO(),
+        heure: heure || '',
+        duree: DUREE_DEFAUT,
+        type: 'detection',
+        client: clientVide(),
+        lieu: { adresse: '', npaLieu: '' },
+        note: '',
+        pour: null,
+      }
 
   const choixPour = admin
     ? `<label class="full">Pour
@@ -98,6 +112,11 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
     <div class="grid2 rdv-form">
       <label>Date<input type="date" data-f="date" value="${esc(r.date)}" /></label>
       <label>Heure<input type="time" data-f="heure" value="${esc(r.heure)}" /></label>
+      <label class="full">Durée
+        <select data-f="duree">
+          ${DUREES.map((d) => `<option value="${d}"${d === (r.duree || DUREE_DEFAUT) ? ' selected' : ''}>${libelleDuree(d)}</option>`).join('')}
+        </select>
+      </label>
       <div class="full">
         <span class="field-label">Type de rapport</span>
         <div class="quick-rooms" data-rdv-type>${TYPE_LIST.map(
@@ -152,11 +171,32 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
         if (nom !== nomClient(r.client)) r.client = { ...clientVide(), nom }
         r.date = champ('date').value
         r.heure = champ('heure').value
+        r.duree = Number(champ('duree').value) || DUREE_DEFAUT
         r.note = champ('note').value.trim()
         r.lieu = { adresse: champ('adresse').value.trim(), npaLieu: champ('npaLieu').value.trim() }
         if (admin) {
           const v = champ('pour').value
           r.pour = v === 'admin' ? { id: 'admin', nom: 'Administrateur' } : { id: v, nom: (equipe ?? []).find((e) => e.id === v)?.nom ?? '' }
+        }
+        // La double reservation se voit ici, pas le jour meme sur le pas de la
+        // porte. On previent, on n'interdit pas : deux passages au meme moment
+        // arrivent, et c'est a celui qui organise d'en decider.
+        if (conflits) {
+          const choc = conflits(r)[0]
+          const qui = choc?.pour?.nom ? ` (${choc.pour.nom})` : ''
+          if (
+            choc &&
+            !confirm(
+              `Ce créneau est déjà pris :
+
+${choc.heure} – ${enHeure(finDe(choc))} · ${nomClient(choc.client) || 'client'}${qui}` +
+                `
+
+Enregistrer quand même ?`
+            )
+          ) {
+            return
+          }
         }
         overlay.remove()
         resolve(r)
