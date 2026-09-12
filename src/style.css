@@ -2589,3 +2589,22 @@ span.contact-etoile svg { width: 15px; height: 15px; }
 }
 .sem-bloc.annule .sem-n, .sem-bloc.annule .sem-h { text-decoration: line-through; }
 .sem-puce.annule { opacity: 0.6; text-decoration: line-through; }
+
+/* --- La couleur du type sur les pastilles de choix --------------------------
+   Maison, Immeuble, Hotel ont chacun leur teinte depuis toujours - sur les
+   tuiles de l'accueil, sur l'icone d'une ligne, sur les points du calendrier.
+   Les pastilles de choix, elles, s'allumaient toutes du meme petrole : on
+   lisait le mot pour savoir ou l'on etait. Elles prennent maintenant la
+   couleur de ce qu'elles designent, et le choix se voit avant de se lire. */
+.chip.type-immeuble.on {
+  background: color-mix(in srgb, var(--ardoise) var(--voile-fort), transparent);
+  color: var(--ardoise);
+  border-color: color-mix(in srgb, var(--ardoise) var(--liseret), transparent);
+}
+.chip.type-hotel.on {
+  background: color-mix(in srgb, var(--prune) var(--voile-fort), transparent);
+  color: var(--prune);
+  border-color: color-mix(in srgb, var(--prune) var(--liseret), transparent);
+}
+/* Le compte garde le ton de sa pastille plutot que le petrole general. */
+.chip.type-immeuble.on .chip-count, .chip.type-hotel.on .chip-count { color: inherit; }

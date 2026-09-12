@@ -2,7 +2,7 @@
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
 
-const CACHE = 'atout-flair-v13'
+const CACHE = 'atout-flair-v14'
 const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {

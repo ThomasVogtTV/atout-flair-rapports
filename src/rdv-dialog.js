@@ -155,7 +155,10 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
       <div class="full">
         <span class="field-label">Type de rapport</span>
         <div class="quick-rooms" data-rdv-type>${TYPE_LIST.map(
-          (t) => `<button type="button" class="chip chip-sm${t.id === r.type ? ' on' : ''}" data-val="${t.id}">${esc(t.choix)}</button>`
+          (t) =>
+            `<button type="button" class="chip chip-sm type-${t.id}${t.id === r.type ? ' on' : ''}" data-val="${t.id}">${esc(
+              t.choix
+            )}</button>`
         ).join('')}</div>
       </div>
       ${contacts.length ? '<button type="button" class="btn ghost wide full" data-choisir>Choisir un client du carnet</button>' : ''}

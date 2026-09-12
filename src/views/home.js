@@ -194,7 +194,7 @@ function filterBarHTML(reports, active) {
   if (shown.length < 3) return ''
   return `<div class="report-filters">${shown
     .map(
-      (f) => `<button type="button" class="chip chip-sm${f.key === active ? ' on' : ''}" data-filter="${f.key}">
+      (f) => `<button type="button" class="chip chip-sm type-${f.key}${f.key === active ? ' on' : ''}" data-filter="${f.key}">
         ${esc(f.label)}<span class="chip-count">${reports.filter(f.match).length}</span>
       </button>`
     )
