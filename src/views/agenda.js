@@ -30,6 +30,9 @@ import {
   tonPersonne,
   LETTRES_JOURS,
   enHeure,
+  estAnnule,
+  estFait,
+  libelleStatut,
 } from '../agenda-outils.js'
 
 /**
@@ -40,8 +43,16 @@ import {
 export function rdvLigneHTML(r, { montrerQui = false } = {}) {
   const t = typeRdv(r.type)
   const detail = [adresseRdv(r) || t.choix, montrerQui && r.pour?.nom ? `pour ${r.pour.nom}` : ''].filter(Boolean).join(' · ')
+  // L'etat prime sur le reste : un rendez-vous annule ou fait n'appelle plus
+  // aucun geste, la pastille le dit et la ligne s'efface un peu.
+  const etat = libelleStatut(r)
+  const marque = etat
+    ? `<span class="pill ${estFait(r) ? 'fait' : 'annule'}">${etat}</span>`
+    : r.rapportId
+      ? '<span class="pill done">Commencé</span>'
+      : `<span class="contact-go">${ICONS.chevron}</span>`
   return `
-    <li class="rapport-ligne rdv-ligne${r.rapportId ? ' fait' : ''}" data-rdv="${esc(r.id)}">
+    <li class="rapport-ligne rdv-ligne${r.rapportId ? ' fait' : ''}${estAnnule(r) ? ' annule' : ''}" data-rdv="${esc(r.id)}">
       <span class="rdv-heure">
         <b>${r.heure ? esc(r.heure) : '–'}</b>
         ${r.heure ? `<i>${esc(libelleDuree(dureeDe(r)))}</i>` : ''}
@@ -51,7 +62,7 @@ export function rdvLigneHTML(r, { montrerQui = false } = {}) {
         <span class="rapport-nom">${esc(nomClient(r.client) || 'Client')}</span>
         <span class="rapport-detail">${esc(detail)}</span>
       </span>
-      ${r.rapportId ? '<span class="pill done">Commencé</span>' : `<span class="contact-go">${ICONS.chevron}</span>`}
+      ${marque}
     </li>`
 }
 
@@ -145,15 +156,23 @@ function blocHTML(place, total, debutPlage) {
   const large = 100 / colonnes
   const serre = colonnes > 1 ? ' serre' : ''
   const court = fin - debut < 40 ? ' court' : ''
+  const etat = estAnnule(r) ? ' annule' : estFait(r) ? ' termine' : ''
   const style = [
     `top:${pourcent((debut - debutPlage) / total)}`,
     `height:${pourcent((fin - debut) / total)}`,
     `left:calc(${pourcent((colonne * large) / 100)} + 1px)`,
     `width:calc(${pourcent(large / 100)} - 2px)`,
   ].join(';')
-  const titre = `${r.heure} – ${enHeure(fin)} · ${nomClient(r.client) || 'Client'}${r.pour?.nom ? ` · ${r.pour.nom}` : ''}`
-  return `<button type="button" class="sem-bloc ton-${tonPersonne(r.pour?.id)}${serre}${court}${
-    r.rapportId ? ' fait' : ''
+  const titre = [
+    `${r.heure} – ${enHeure(fin)}`,
+    nomClient(r.client) || 'Client',
+    r.pour?.nom,
+    libelleStatut(r),
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  return `<button type="button" class="sem-bloc ton-${tonPersonne(r.pour?.id)}${serre}${court}${etat}${
+    r.rapportId && !etat ? ' fait' : ''
   }" style="${style}" data-rdv="${esc(r.id)}" title="${esc(titre)}" aria-label="${esc(titre)}"><b class="sem-h">${esc(r.heure)}</b><span class="sem-n">${esc(
     nomClient(r.client) || t.choix
   )}</span></button>`
@@ -192,9 +211,9 @@ function semaineHTML({ lundi, jour, aujourdhui, rdvs, ajoutable }) {
           const puces = du
             .map(
               (r) =>
-                `<button type="button" class="sem-puce ton-${tonPersonne(r.pour?.id)}" data-rdv="${esc(r.id)}" title="${esc(
-                  nomClient(r.client)
-                )}">${esc(nomClient(r.client) || '—')}</button>`
+                `<button type="button" class="sem-puce ton-${tonPersonne(r.pour?.id)}${estAnnule(r) ? ' annule' : ''}" data-rdv="${esc(
+                  r.id
+                )}" title="${esc(nomClient(r.client))}">${esc(nomClient(r.client) || '—')}</button>`
             )
             .join('')
           return `<div class="sem-entier">${puces}</div>`

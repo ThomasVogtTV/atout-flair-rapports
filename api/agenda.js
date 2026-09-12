@@ -4,10 +4,11 @@
 //   GET                                  -> { moi, role, rdvs }
 //   POST { action: 'enregistrer', rdv }  -> cree ou modifie
 //   POST { action: 'commencer', id, rapportId } -> le rapport est lance
+//   POST { action: 'statut', id, statut }     -> prevu / fait / annule
 //   POST { action: 'supprimer', id }
 
 import { identifier, baseConfiguree, lireAgenda, ecrireAgenda, retirerDeAgenda } from './_lib/equipe.js'
-import { nettoyerRdv, visiblesPour, peutModifier, personne, jourSuisse, trierParDate, idValable } from './_lib/agenda.js'
+import { nettoyerRdv, visiblesPour, peutModifier, personne, jourSuisse, trierParDate, idValable, statutValable } from './_lib/agenda.js'
 
 // Au-dela, un rendez-vous passe n'a plus rien a dire sur un telephone.
 const PASSES_GARDES = 60 * 86_400_000
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
     const agenda = await lireAgenda()
 
     if (req.method === 'POST') {
-      const { action, rdv: brut, id, rapportId } = req.body ?? {}
+      const { action, rdv: brut, id, rapportId, statut } = req.body ?? {}
 
       if (action === 'enregistrer') {
         if (ident.role === 'invite') return res.status(403).json({ error: 'Un invité ne peut pas modifier l’agenda.' })
@@ -50,6 +51,7 @@ export default async function handler(req, res) {
         rdv.par = existant?.par ?? personne(ident)
         rdv.cree = existant?.cree ?? Date.now()
         rdv.rapportId = rdv.rapportId ?? existant?.rapportId ?? null
+        rdv.suiteDe = rdv.suiteDe ?? existant?.suiteDe ?? null
         await ecrireAgenda([rdv])
         return res.status(200).json({ rdv })
       }
@@ -59,6 +61,19 @@ export default async function handler(req, res) {
         if (!rdv || !visiblesPour(ident, [rdv]).length) return res.status(404).json({ error: 'Rendez-vous introuvable' })
         if (!idValable(rapportId)) return res.status(400).json({ error: 'Rapport invalide' })
         rdv.rapportId = rapportId
+        rdv.maj = Date.now()
+        await ecrireAgenda([rdv])
+        return res.status(200).json({ rdv })
+      }
+
+      // Fait ou annule : un geste a part, pour qu'un technicien puisse le
+      // poser depuis la fiche sans rouvrir tout le formulaire.
+      if (action === 'statut') {
+        const rdv = agenda.get(String(id ?? ''))
+        if (!rdv) return res.status(404).json({ error: 'Rendez-vous introuvable' })
+        if (!peutModifier(ident, rdv)) return res.status(403).json({ error: 'Ce rendez-vous est celui d’un collègue.' })
+        if (!statutValable(statut)) return res.status(400).json({ error: 'État inconnu' })
+        rdv.statut = statut
         rdv.maj = Date.now()
         await ecrireAgenda([rdv])
         return res.status(200).json({ rdv })

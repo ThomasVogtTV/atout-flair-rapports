@@ -28,6 +28,8 @@ import {
   disposerJour,
   tonPersonne,
   personnesDe,
+  estAnnule,
+  libelleStatut,
 } from '../src/agenda-outils.js'
 
 const rdvBrut = (x = {}) => ({ id: 'r1', date: '2026-09-14', heure: '14:30', type: 'immeuble', client: { type: 'gerance', nom: 'Régie Duval' }, ...x })
@@ -271,5 +273,66 @@ describe('le semainier', () => {
       { pour: null },
     ])
     assert.deepEqual(gens, [{ id: 'e1', nom: 'Julie' }, { id: 'e2', nom: 'Marc' }])
+  })
+})
+
+describe("l'etat d'un rendez-vous", () => {
+  test('prevu par defaut, et un etat invente est refuse', () => {
+    assert.equal(nettoyerRdv(rdvBrut(), 1).statut, 'prevu')
+    assert.equal(nettoyerRdv(rdvBrut({ statut: 'peut-etre' }), 1).statut, 'prevu')
+    assert.equal(nettoyerRdv(rdvBrut({ statut: 'annule' }), 1).statut, 'annule')
+  })
+
+  test('un rendez-vous annule ne compte plus parmi ceux a venir', () => {
+    const l = [
+      { id: 'a', date: '2026-09-14' },
+      { id: 'b', date: '2026-09-15', statut: 'annule' },
+      { id: 'c', date: '2026-09-16', statut: 'fait' },
+    ]
+    assert.deepEqual(aVenir(l, '2026-09-11').map((r) => r.id), ['a', 'c'])
+    assert.equal(libelleStatut(l[1]), 'Annulé')
+    assert.equal(libelleStatut(l[2]), 'Fait')
+    assert.equal(libelleStatut(l[0]), '')
+    assert.equal(estAnnule(l[1]), true)
+  })
+
+  test('le controle garde le rapport dont il est la suite', () => {
+    assert.equal(nettoyerRdv(rdvBrut({ suiteDe: 'rap-1' }), 1).suiteDe, 'rap-1')
+    assert.equal(nettoyerRdv(rdvBrut({ suiteDe: 'pas un id !' }), 1).suiteDe, null)
+  })
+})
+
+describe('/api/agenda : fait, annule', () => {
+  const ADMIN = 'stessyoberli'
+  const demain = new Date(Date.now() + 86_400_000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' })
+
+  beforeEach(() => {
+    process.env.APP_CODE = 'StessyOberli'
+    process.env.KV_REST_API_URL = 'https://faux'
+    process.env.KV_REST_API_TOKEN = 'faux'
+    E._brancherBase(fauxRedis())
+  })
+
+  test("l'employe marque le sien fait, pas celui d'une collegue", async () => {
+    const marc = await E.creerEmploye('Marc')
+    const julie = await E.creerEmploye('Julie')
+    await appel(ADMIN, { action: 'enregistrer', rdv: rdvBrut({ date: demain, pour: { id: marc.id, nom: 'Marc' } }) })
+    assert.equal((await appel(julie.code, { action: 'statut', id: 'r1', statut: 'fait' })).statut, 403)
+    const ok = await appel(marc.code, { action: 'statut', id: 'r1', statut: 'fait' })
+    assert.equal(ok.statut, 200)
+    assert.equal(ok.corps.rdv.statut, 'fait')
+    assert.equal((await appel(marc.code, { action: 'statut', id: 'r1', statut: 'brouillon' })).statut, 400)
+    assert.equal((await appel(ADMIN)).corps.rdvs[0].statut, 'fait')
+  })
+
+  test("modifier un rendez-vous ne perd ni son etat ni le rapport dont il est la suite", async () => {
+    await appel(ADMIN, { action: 'enregistrer', rdv: rdvBrut({ date: demain, suiteDe: 'rap-1' }) })
+    await appel(ADMIN, { action: 'statut', id: 'r1', statut: 'fait' })
+    const vu = (await appel(ADMIN)).corps.rdvs[0]
+    await appel(ADMIN, { action: 'enregistrer', rdv: { ...vu, heure: '16:00' } })
+    const apres = (await appel(ADMIN)).corps.rdvs[0]
+    assert.equal(apres.heure, '16:00')
+    assert.equal(apres.statut, 'fait')
+    assert.equal(apres.suiteDe, 'rap-1')
   })
 })

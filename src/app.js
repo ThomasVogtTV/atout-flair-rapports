@@ -23,9 +23,9 @@ import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
-import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, ajouterAuCalendrier } from './agenda.js'
+import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, marquerStatut, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
-import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe } from './agenda-outils.js'
+import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe, plusJours, libelleJour } from './agenda-outils.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
@@ -393,6 +393,7 @@ async function editerRdv(rdv = null, creneau = {}) {
     choisirContact,
     date,
     heure: creneau.heure,
+    modele: creneau.modele,
     conflits: conflitsPour,
   })
   if (!saisi) return
@@ -431,11 +432,57 @@ async function commencerRdv(rdv) {
   openReport(report.id)
 }
 
+// Le controle de suivi : une detection positive appelle un second passage,
+// deux semaines plus tard. L'app le propose une fois, au moment ou le rapport
+// est remis - c'est la que la question se pose reellement, sur place, et c'est
+// la seule fois ou l'on est sur de ne pas l'oublier.
+const JOURS_CONTROLE = 14
+
+async function proposerControle(rapport) {
+  if (!rapport || rapport.controleFait || estInvite() || !navigator.onLine) return
+  // Un envoi refuse laisse le rapport en chantier : rien a programmer encore.
+  if (!S.estTermine(rapport) && rapport.status !== 'queued') return
+  if (S.contaminatedCount(rapport) === 0) return
+
+  const depart = rapport.lieu?.dateIntervention || S.todayISO()
+  const date = plusJours(depart, JOURS_CONTROLE)
+  const nom = S.fullName(rapport.mandant) || 'ce client'
+  const veut = confirm(
+    `Détection positive chez ${nom}.
+
+Programmer le contrôle de suivi ?
+${libelleJour(date, S.todayISO())}, dans ${JOURS_CONTROLE} jours.`
+  )
+  // Posee une fois, la question ne revient pas : on ne harcele pas quelqu'un
+  // qui a deja dit non, et il peut toujours ajouter le rendez-vous a la main.
+  rapport.controleFait = true
+  await S.saveReport(rapport)
+  if (!veut) return
+
+  const l = rapport.lieu ?? {}
+  const lieu =
+    typeOf(rapport).layout === 'pieces'
+      ? { adresse: l.adresseIntervention || '', npaLieu: '' }
+      : { adresse: l.adresse || '', npaLieu: l.npaLieu || '' }
+  await editerRdv(null, {
+    modele: {
+      date,
+      heure: l.heureIntervention || '',
+      type: rapport.type,
+      client: S.contactVersMandant(rapport.mandant ?? {}),
+      lieu,
+      note: `Contrôle de suivi${rapport.ref ? ` - rapport ${rapport.ref}` : ''}`,
+      suiteDe: rapport.id,
+    },
+  })
+}
+
 async function montrerRdv(rdv) {
   const a = view.agenda
   const moi = a?.moi?.id
   const modifiable = a?.role === 'admin' || (a?.role === 'employe' && (rdv.pour?.id === moi || rdv.par?.id === moi))
   const choix = await ouvrirRdv(rdv, { modifiable })
+  if (choix?.startsWith('statut:')) return changerStatutRdv(rdv, choix.slice(7))
   if (choix === 'commencer') return commencerRdv(rdv)
   if (choix === 'agenda') return ajouterAuCalendrier(rdv)
   if (choix === 'modifier') return editerRdv(rdv)
@@ -449,6 +496,19 @@ async function montrerRdv(rdv) {
     }
     await rafraichirAgenda()
   }
+}
+
+const MOT_STATUT = { prevu: 'Rendez-vous à nouveau prévu', fait: 'Rendez-vous fait', annule: 'Rendez-vous annulé' }
+
+async function changerStatutRdv(rdv, statut) {
+  if (statut === (rdv.statut || 'prevu')) return
+  try {
+    await marquerStatut(rdv.id, statut)
+    toast(MOT_STATUT[statut] ?? 'État changé')
+  } catch (err) {
+    return toast(err.message)
+  }
+  await rafraichirAgenda()
 }
 
 // --- rendu -----------------------------------------------------------------
@@ -1121,9 +1181,11 @@ root.addEventListener('click', async (ev) => {
   if (act === 'terminer') {
     // Un rapport remis a la main fait entrer son client au carnet, comme un
     // rapport parti par mail.
-    if (!estInvite()) await S.rememberContact(view.report.mandant)
-    await S.terminerReport(view.report)
+    const rapport = view.report
+    if (!estInvite()) await S.rememberContact(rapport.mandant)
+    await S.terminerReport(rapport)
     toast('Rapport terminé. Il reste dans « Mes rapports ».')
+    await proposerControle(rapport)
     return goHome()
   }
   if (act === 'rouvrir') {
@@ -1300,7 +1362,8 @@ root.addEventListener('click', async (ev) => {
     // intervention pour la meme regie.
     if (!estInvite()) await S.rememberContact(view.report.mandant)
     view.contacts = await contactsVisibles()
-    return openSendDialog(view.report, view.children, goHome)
+    const rapport = view.report
+    return openSendDialog(rapport, view.children, () => proposerControle(rapport).then(goHome))
   }
 })
 

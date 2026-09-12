@@ -7,7 +7,26 @@ import { openOverlay } from './ui/dialogs.js'
 import { ICONS } from './ui/icons.js'
 import { TYPE_LIST } from './templates.js'
 import { uid, todayISO, contactVersMandant } from './state.js'
-import { typeRdv, nomClient, adresseRdv, libelleJour, plageRdv, libelleDuree, enHeure, finDe, DUREE_DEFAUT } from './agenda-outils.js'
+import {
+  typeRdv,
+  nomClient,
+  adresseRdv,
+  libelleJour,
+  plageRdv,
+  libelleDuree,
+  enHeure,
+  finDe,
+  estAnnule,
+  DUREE_DEFAUT,
+} from './agenda-outils.js'
+
+// Ou en est le rendez-vous. Un technicien le pose depuis la fiche, en un geste,
+// sans rouvrir le formulaire.
+const ETATS = [
+  { id: 'prevu', label: 'Prévu' },
+  { id: 'fait', label: 'Fait' },
+  { id: 'annule', label: 'Annulé' },
+]
 
 // Les durees proposees. Une detection courante tient en une heure ; un immeuble
 // ou un hotel se compte en demi-journees.
@@ -17,7 +36,7 @@ const clientVide = () => ({ type: '', nom: '', prenom: '', adresse: '', npaLieu:
 
 /**
  * La fiche d'un rendez-vous.
- * @returns {Promise<'commencer'|'agenda'|'modifier'|'supprimer'|null>}
+ * @returns {Promise<'commencer'|'agenda'|'modifier'|'supprimer'|`statut:${string}`|null>}
  */
 export function ouvrirRdv(rdv, { modifiable }) {
   const t = typeRdv(rdv.type)
@@ -36,6 +55,16 @@ export function ouvrirRdv(rdv, { modifiable }) {
     ${adresse ? `<p class="rdv-adresse">${esc(adresse)}</p>` : ''}
     ${rdv.note ? `<p class="rdv-note">${esc(rdv.note)}</p>` : ''}
     ${rdv.pour?.nom ? `<p class="muted small">Pour : ${esc(rdv.pour.nom)}</p>` : ''}
+    ${
+      modifiable
+        ? `<div class="rdv-statuts">${ETATS.map(
+            (e) =>
+              `<button type="button" class="chip chip-sm${(rdv.statut || 'prevu') === e.id ? ' on' : ''}" data-choix="statut:${e.id}">${
+                e.label
+              }</button>`
+          ).join('')}</div>`
+        : ''
+    }
     <div class="fiche-actions">
       <button type="button" class="fiche-btn" data-choix="agenda">${ICONS.calendrier}Mon agenda</button>
       ${
@@ -45,9 +74,13 @@ export function ouvrirRdv(rdv, { modifiable }) {
       }
       ${tel ? `<a class="fiche-btn" href="tel:${esc(tel)}">${ICONS.phone}Appeler</a>` : ''}
     </div>
-    <button type="button" class="btn primary wide rdv-commencer" data-choix="commencer">
-      ${rdv.rapportId ? 'Ouvrir le rapport' : 'Commencer le rapport'}
-    </button>
+    ${
+      estAnnule(rdv)
+        ? ''
+        : `<button type="button" class="btn primary wide rdv-commencer" data-choix="commencer">
+             ${rdv.rapportId ? 'Ouvrir le rapport' : 'Commencer le rapport'}
+           </button>`
+    }
     <div class="dialog-actions">
       ${
         modifiable
@@ -80,8 +113,9 @@ export function ouvrirRdv(rdv, { modifiable }) {
  * @param {{contacts: object[], reports: object[], equipe: object[]|null, admin: boolean, choisirContact: Function}} ctx
  * @returns {Promise<object|null>} le rendez-vous saisi, ou null si l'on renonce
  */
-export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date, heure, conflits }) {
-  // Un nouveau rendez-vous prend le jour touche dans le calendrier.
+export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date, heure, conflits, modele }) {
+  // Un nouveau rendez-vous prend le jour touche dans le calendrier ; un modele
+  // (le controle propose apres un rapport positif) le remplit d'avance.
   const r = rdv
     ? structuredClone(rdv)
     : {
@@ -94,6 +128,7 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
         lieu: { adresse: '', npaLieu: '' },
         note: '',
         pour: null,
+        ...(modele ?? {}),
       }
 
   const choixPour = admin

@@ -2557,3 +2557,35 @@ span.contact-etoile svg { width: 15px; height: 15px; }
 @supports not (container-type: size) {
   .sem-bloc.serre .sem-n { display: none; }
 }
+
+/* --- L'etat d'un rendez-vous ------------------------------------------------
+   Prevu, fait, annule. Un rendez-vous annule reste visible et barre plutot que
+   d'etre efface : savoir qu'une plage s'est liberee, et pourquoi, vaut mieux
+   qu'un trou dans la semaine. */
+.rdv-statuts { display: flex; gap: 6px; margin: 12px 0 4px; }
+.rdv-statuts .chip { flex: 1 1 0; }
+.pill.fait {
+  background: color-mix(in srgb, var(--green) var(--voile), transparent);
+  color: var(--green);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) var(--liseret), transparent);
+}
+.pill.annule {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 13%, transparent);
+}
+.rdv-ligne.annule { opacity: 0.66; }
+.rdv-ligne.annule .rapport-nom, .rdv-ligne.annule .rdv-heure b { text-decoration: line-through; }
+
+.sem-bloc.termine { opacity: 0.8; }
+.sem-bloc.termine b::after { content: ' ✓'; }
+.sem-bloc.annule {
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ton) 12%, var(--card-solid)) 0 5px,
+    var(--card-solid) 5px 10px
+  );
+}
+.sem-bloc.annule .sem-n, .sem-bloc.annule .sem-h { text-decoration: line-through; }
+.sem-puce.annule { opacity: 0.6; text-decoration: line-through; }

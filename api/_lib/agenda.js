@@ -10,6 +10,11 @@
 //     modifie aucun - il peut seulement commencer le rapport.
 
 const TYPES = new Set(['detection', 'immeuble', 'hotel'])
+
+// Ou en est le rendez-vous. "prevu" tant que rien n'est dit ; les anciens
+// rendez-vous, qui n'ont pas ce champ, le sont donc naturellement.
+const STATUTS = new Set(['prevu', 'fait', 'annule'])
+export const statutValable = (v) => STATUTS.has(v)
 const ID_OK = /^[\w-]{1,64}$/
 const DATE_OK = /^\d{4}-\d{2}-\d{2}$/
 const HEURE_OK = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -53,12 +58,15 @@ export function nettoyerRdv(brut, maintenant = Date.now()) {
     date: brut.date,
     heure,
     duree: heure ? nettoyerDuree(brut.duree) : 0,
+    statut: STATUTS.has(brut.statut) ? brut.statut : 'prevu',
     type: TYPES.has(brut.type) ? brut.type : 'detection',
     client,
     lieu: { adresse: texte(brut.lieu?.adresse), npaLieu: texte(brut.lieu?.npaLieu) },
     note: texte(brut.note, 500),
     pour: brut.pour && idValable(brut.pour.id) ? { id: brut.pour.id, nom: texte(brut.pour.nom, 60) } : null,
     rapportId: idValable(brut.rapportId) ? brut.rapportId : null,
+    // Le rapport dont ce rendez-vous est le controle, s'il en est un.
+    suiteDe: idValable(brut.suiteDe) ? brut.suiteDe : null,
     maj: maintenant,
   }
 }

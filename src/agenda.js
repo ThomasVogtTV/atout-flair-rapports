@@ -65,6 +65,13 @@ export async function supprimerRdv(id) {
   await appel('POST', { action: 'supprimer', id })
 }
 
+/** Fait, annule, ou remis a "prevu". */
+export async function marquerStatut(id, statut) {
+  if (!navigator.onLine) throw new Error(SANS_RESEAU)
+  const { rdv } = await appel('POST', { action: 'statut', id, statut })
+  return rdv
+}
+
 /** Le rapport du rendez-vous est lance. Sans reseau, tant pis : ce n'est qu'un repere. */
 export async function marquerCommence(id, rapportId) {
   if (!navigator.onLine) return

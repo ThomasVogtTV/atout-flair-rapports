@@ -216,7 +216,17 @@ export function personnesDe(rdvs) {
   return [...vues.values()].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
 }
 
-export const aVenir = (rdvs, aujourdhui) => trierRdv(rdvs.filter((r) => r.date >= aujourdhui))
+// --- l'etat d'un rendez-vous -------------------------------------------------
+
+/** Annule : il reste visible, barre, mais ne compte plus nulle part. */
+export const estAnnule = (rdv) => rdv.statut === 'annule'
+export const estFait = (rdv) => rdv.statut === 'fait'
+
+/** "Fait", "Annulé", ou rien du tout quand il est simplement prevu. */
+export const libelleStatut = (rdv) => (estFait(rdv) ? 'Fait' : estAnnule(rdv) ? 'Annulé' : '')
+
+/** Ce qui tient encore : un rendez-vous annule n'est plus un rendez-vous a venir. */
+export const aVenir = (rdvs, aujourdhui) => trierRdv(rdvs.filter((r) => r.date >= aujourdhui && !estAnnule(r)))
 
 /** Les rendez-vous des deux dernieres semaines, du plus recent au plus ancien. */
 export const recents = (rdvs, aujourdhui, jours = 14) =>
