@@ -1,33 +1,34 @@
-// Ecran d'accueil. Il repond, dans cet ordre, aux trois questions qu'on se pose
-// en rouvrant l'app sur le terrain : je commence ? je continue ? je cherche ?
+// Ecran d'accueil : le poste de travail du technicien.
 //
-// "Nouveau rapport" passe devant "En cours" : neuf fois sur dix on ouvre l'app
-// devant une porte, pour commencer une detection - reprendre un brouillon est
-// l'exception, et elle reste a portee juste dessous.
+// Il repond, dans cet ordre, a ce qu'on vient chercher en ouvrant l'app sur le
+// terrain : ou j'en suis (le jour, ce qui reste sur les bras), je commence (le
+// choix du lieu), aujourd'hui (les rendez-vous), je continue (les rapports en
+// cours), je cherche (les archives).
 //
-// Il parle la meme langue que l'ecran de saisie : des rubriques (petite icone,
-// intitule en capitales, filet qui file jusqu'au bord) plutot que des volets
-// repliables qui n'existaient qu'ici. Une seule grammaire pour toute l'app.
+// La photo des chiens tient le haut de l'ecran, nette et en entier : c'est
+// l'identite de la maison. Elle se fond dans la nuit du poste de controle, ou
+// se lisent le jour et les trois chiffres du mois. Le reste se pose sur le
+// papier, sans rien de flou ni de transparent derriere ce qu'on lit.
 
 import { TYPE_LIST, typeOf } from '../templates.js'
 import * as S from '../state.js'
 import { fullName } from '../state.js'
 import { esc } from '../ui/dom.js'
-import { estAdmin, estInvite, identite } from '../lock.js'
+import { estAdmin, identite } from '../lock.js'
 import { derniereSauvegarde } from '../sauvegarde.js'
-import { ICONS, sectionIcon } from '../ui/icons.js'
+import { ICONS } from '../ui/icons.js'
 import { ILLUSTRATIONS } from '../ui/illustrations.js'
 import { ICONES_3D } from '../ui/icones3d.js'
+import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { rdvAccueilHTML } from './agenda.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
 const APERCU = 3
 
-// "Rapport de détection" -> "Détection" : le mot "rapport" est deja dans le
-// titre de la rubrique, seule la nature du rapport distingue les filtres. Les
-// grandes cartes du choix, elles, portent un nom plus parlant (voir `choix`
-// dans templates.js) - trop long pour une puce de filtre ou une ligne de liste.
+// "Rapport de détection" -> "Détection" : seule la nature du rapport distingue
+// les filtres. Les tuiles de choix, elles, portent un nom plus parlant (voir
+// `choix` dans templates.js) - trop long pour une puce de filtre.
 const shortLabel = (t) => {
   const s = t.label.replace(/^Rapport (de |d'|d’)/i, '')
   return s[0].toUpperCase() + s.slice(1)
@@ -36,10 +37,6 @@ const shortLabel = (t) => {
 // Les filtres : les trois types, plus ce qui est fini - c'est ainsi qu'on
 // cherche un rapport ("le rapport d'immeuble de mardi", "celui que j'ai deja
 // rendu"), pas en se souvenant d'un dossier ou il serait range.
-//
-// "Envoyés" ne repondait qu'a l'envoi automatique : un rapport remis a la main
-// n'y entrait jamais, et le filtre restait vide sur un telephone qui avait
-// pourtant rendu trente rapports.
 const FILTERS = [
   { key: 'tous', label: 'Tous', match: () => true },
   ...TYPE_LIST.map((t) => ({ key: t.id, label: shortLabel(t), match: (r) => r.type === t.id })),
@@ -47,10 +44,7 @@ const FILTERS = [
 ]
 
 /**
- * Quand le rapport a ete touche pour la derniere fois.
- *
- * La liste n'en disait rien : dix-sept lignes sans une date, ou l'on cherchait
- * "celui de mardi" en ouvrant les rapports un par un. Une date absolue plutot
+ * Quand le rapport a ete touche pour la derniere fois. Une date absolue plutot
  * qu'un "il y a trois jours" : on retrouve un rapport par le jour ou l'on y
  * etait, pas par le temps ecoule depuis.
  */
@@ -69,45 +63,49 @@ function quand(ts) {
   return d.getFullYear() === new Date().getFullYear() ? court : `${court}.${d.getFullYear()}`
 }
 
-// L'etat ne s'affiche que lorsqu'il apprend quelque chose. "Brouillon" est
-// l'etat de presque tous les rapports : repete a chaque ligne, il occupait la
-// meilleure place de la liste pour ne rien dire. Ce qui compte, c'est de voir
-// d'un coup ce qui est deja parti.
-const etatPill = (r) =>
-  r.status === 'sent'
-    ? `<span class="pill sent">Envoyé</span>`
-    : r.status === 'done'
-      ? `<span class="pill done">Terminé</span>`
-      : r.status === 'queued'
-        ? `<span class="pill queued">En attente</span>`
-        : ''
+/**
+ * L'etat d'un rapport, tel qu'on le dit. Un rapport rouvert apres un envoi n'est
+ * plus "en cours" comme un autre : il a deja ete remis une fois, et devra
+ * repartir.
+ */
+export function etatRapport(r) {
+  if (r.status === 'sent') return { cle: 'sent', mot: 'Envoyé' }
+  if (r.status === 'done') return { cle: 'done', mot: 'Terminé' }
+  if (r.status === 'queued') return { cle: 'queued', mot: 'En attente' }
+  if (r.sentAt) return { cle: 'amodifier', mot: 'Rouvert' }
+  return { cle: 'encours', mot: 'En cours' }
+}
+
+/** L'adresse d'intervention, quelle que soit la forme du rapport. */
+const lieuDe = (r) => r.lieu?.adresseIntervention || [r.lieu?.adresse, r.lieu?.npaLieu].filter(Boolean).join(', ')
 
 /**
- * Une ligne de la liste des rapports.
- *
- * Elle affichait "Sans nom" en gros sur presque chaque ligne - le nom du
- * locataire manque tant que la saisie n'est pas faite - et reléguait le type en
- * gris dessous. La colonne la plus lisible ne portait donc rien, et la seule
- * chose qui distinguait deux rapports etait la plus pale.
- *
- * Le type passe en pastille a gauche, reconnaissable a son icone sans qu'on
- * lise ; le titre prend la premiere chose reellement identifiante - le
- * locataire, le mandant, l'adresse, et le numero de rapport en dernier recours.
+ * Une ligne de la liste des rapports : un document. En tete son numero, sa date
+ * et son etat ; puis ce qui l'identifie - le locataire, le mandant, l'adresse,
+ * et le numero en dernier recours ; enfin le lieu.
  */
 export function reportRowHTML(r, { suppr = true } = {}) {
   const t = typeOf(r)
-  const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
+  const ou = lieuDe(r)
   const qui = r.lieu?.locataire || fullName(r.mandant) || ou || `Rapport ${r.ref}`
-  const detail = [ou === qui ? '' : ou, quand(r.updatedAt)].filter(Boolean).join(' · ')
+  const etat = etatRapport(r)
   return `
-    <li class="rapport-ligne${S.estTermine(r) ? ' fini' : ''}" data-open="${r.id}">
+    <li class="rapport-ligne dossier-ligne t-${t.id}${S.estTermine(r) ? ' fini' : ''}" data-open="${r.id}">
       <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
       <span class="rapport-corps">
+        <span class="rapport-meta">
+          <span class="mono">${esc(r.ref ?? '')}</span>
+          <span class="rapport-quand">${esc(quand(r.updatedAt))}</span>
+          <span class="pill ${etat.cle}">${esc(etat.mot)}</span>
+        </span>
         <span class="rapport-nom">${esc(qui)}</span>
-        <span class="rapport-detail">${esc(detail)}</span>
+        ${ou && ou !== qui ? `<span class="rapport-detail">${esc(ou)}</span>` : ''}
       </span>
-      ${etatPill(r)}
-      ${suppr ? `<button class="icon-btn rapport-suppr" data-del="${r.id}" title="Supprimer">✕</button>` : ''}
+      ${
+        suppr
+          ? `<button class="icon-btn rapport-suppr" data-del="${r.id}" title="Supprimer" aria-label="Supprimer le rapport ${esc(r.ref ?? '')}">${ICONS.poubelle}</button>`
+          : `<span class="rapport-go" aria-hidden="true">${ICONS.chevron}</span>`
+      }
     </li>`
 }
 
@@ -117,72 +115,72 @@ export function reportRowHTML(r, { suppr = true } = {}) {
 // cours sans transformer la rubrique en seconde liste.
 const EN_COURS = 3
 
-// Les rapports encore ouverts. Il n'en montrait qu'un - le plus recent - alors
-// qu'une tournee en laisse volontiers trois derriere elle : les deux autres se
-// retrouvaient noyes dans "Mes rapports", au milieu de ce qui est deja parti.
+/**
+ * Les rapports encore ouverts, en dossiers : le numero, le type, le client en
+ * grand, le lieu, et ou en est la visite - les pieces deja tranchees sur
+ * l'ensemble (voir resumeDe dans state.js).
+ */
 function enCoursHTML(reports) {
   const tous = reports.filter(S.enCours)
   const brouillons = tous.slice(0, EN_COURS)
   if (!brouillons.length) return ''
-  // Meme silhouette et meme pastille que les lignes de "Mes rapports" : ce sont
-  // les memes objets, ils ne se peignent pas de deux facons a dix centimetres
-  // d'ecart. La pastille porte le type - maison, immeuble, lit - plutot qu'un
-  // stylo repete trois fois : la rubrique dit deja qu'ils sont en cours, et le
-  // type, lui, ne se lisait nulle part.
-  const ligne = (r) => {
+  const carte = (r) => {
     const t = typeOf(r)
     const qui = r.lieu?.locataire || fullName(r.mandant) || `Rapport ${r.ref}`
-    const ou = r.lieu?.adresseIntervention || r.lieu?.adresse || ''
-    // Ou en est la visite : les pieces deja tranchees sur l'ensemble. Voir
-    // resumeDe dans state.js.
+    const ou = lieuDe(r)
     const av = r.avancement
-    const progres = av?.total
-      ? `<span class="lead-progres">
-           <span class="lead-barre"><span style="--p:${Math.round((av.fait / av.total) * 100)}%"></span></span>
-           <span class="lead-progres-txt">${av.fait}/${av.total} ${esc(t.rowLabel)}${av.total > 1 ? 's' : ''}</span>
-         </span>`
-      : ''
+    const part = av?.total ? Math.round((av.fait / av.total) * 100) : 0
     return `
-    <button type="button" class="lead-row" data-open="${r.id}">
-      <span class="rapport-type icon-${t.id}">${ICONS[t.id] ?? ''}</span>
-      <span class="lead-body">
-        <span class="lead-name">${esc(qui)}</span>
-        <span class="lead-where">${esc([ou, quand(r.updatedAt)].filter(Boolean).join(' · '))}</span>
-        ${progres}
+    <button type="button" class="dossier t-${t.id}" data-open="${r.id}">
+      <span class="dossier-tete">
+        <span class="dossier-ref">${esc(r.ref ?? '')}</span>
+        <span class="dossier-type">${ICONS[t.id] ?? ''}${esc(shortLabel(t))}</span>
+        <span class="dossier-quand">${esc(quand(r.updatedAt))}</span>
       </span>
-      <span class="lead-go">${ICONS.chevron}</span>
+      <span class="dossier-nom">${esc(qui)}</span>
+      <span class="dossier-lieu">${esc(ou || 'Adresse à renseigner')}</span>
+      <span class="dossier-go" aria-hidden="true">${ICONS.suivant}</span>
+      ${
+        av?.total
+          ? `<span class="dossier-avancement">
+               <span class="barre" role="progressbar" aria-valuenow="${part}" aria-valuemin="0" aria-valuemax="100"><span style="--p:${part}%"></span></span>
+               <span class="dossier-compte">${av.fait}/${av.total} ${esc(av.total > 1 ? t.rowLabelPlural : t.rowLabel)}</span>
+             </span>`
+          : ''
+      }
     </button>`
   }
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('note', 'accent')}En cours</span>
+    <h2 class="section-title">
+      <span class="section-title-main">En cours</span>
       ${tous.length > 1 ? `<span class="count-pill"><b>${tous.length}</b></span>` : ''}
     </h2>
-    <div class="lead-list">${brouillons.map(ligne).join('')}</div>`
+    <div class="lead-list">${brouillons.map(carte).join('')}</div>`
 }
 
 // --- je commence ? ---------------------------------------------------------
 
 // Les trois types pesent autant les uns que les autres - immeubles et hotels
 // reviennent au moins aussi souvent qu'un particulier. Trois tuiles egales,
-// chacune pleine de sa couleur : petrole, ardoise, prune.
-function nouveauHTML() {
-  // L'illustration en 3D quand le type en a une, sinon son icone.
-  const tuiles = TYPE_LIST.map(
+// chacune pleine de sa couleur, chacune avec son illustration.
+export function tuilesTypesHTML({ attr = 'data-new' } = {}) {
+  return TYPE_LIST.map(
     (t) => `
-    <button type="button" class="type-tuile card-${t.id}" data-new="${t.id}">
-      ${
-        ILLUSTRATIONS[t.id]
-          ? `<span class="type-tuile-illu">${ILLUSTRATIONS[t.id]}</span>`
-          : `<span class="type-tuile-icone">${ICONS[t.id] ?? ''}</span>`
-      }
-      <span class="type-tuile-plus" aria-hidden="true">+</span>
+    <button type="button" class="type-tuile card-${t.id}" ${attr}="${t.id}" aria-label="Nouveau rapport : ${esc(t.choix)}">
+      <span class="type-tuile-plus" aria-hidden="true">${ICONS.ajout}</span>
+      <span class="type-tuile-illu">${ILLUSTRATIONS[t.id] ?? ICONS[t.id] ?? ''}</span>
       <span class="type-tuile-nom">${esc(t.choix)}</span>
     </button>`
   ).join('')
+}
 
+function nouveauHTML() {
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('plus', 'accent')}Nouveau rapport</span></h2>
-    <div class="types-pleins">${tuiles}</div>`
+    <div class="bloc-tete">
+      <h2 class="bloc-titre">Nouveau rapport</h2>
+      <p class="bloc-sous">Où a lieu la détection ?</p>
+    </div>
+    <div class="types-pleins">${tuilesTypesHTML()}</div>`
 }
 
 // --- je cherche ? ----------------------------------------------------------
@@ -201,19 +199,14 @@ function filterBarHTML(reports, active) {
     .join('')}</div>`
 }
 
-/**
- * Le champ de recherche. Il n'apparait qu'au-dela d'une poignee de rapports :
- * une loupe sur une liste de trois lignes ne sert a rien qu'a l'encombrer.
- *
- * Les filtres ne trient que par type. Passe deux cents rapports, retrouver "la
- * regie du Lac, avenue de la Gare, en mars" demandait de tout derouler.
- */
+/** Le champ de recherche, au-dela d'une poignee de rapports. */
 function rechercheHTML(recherche) {
   return `
     <div class="recherche">
       <span class="recherche-loupe">${ICONS.loupe}</span>
       <input data-recherche type="search" value="${esc(recherche)}" enterkeyhint="search"
              autocapitalize="none" autocorrect="off" spellcheck="false"
+             aria-label="Rechercher un rapport"
              placeholder="Nom, adresse ou n° de rapport" />
     </div>`
 }
@@ -222,35 +215,10 @@ function mesRapportsHTML(view) {
   const reports = view.reports
   const recherche = (view.recherche ?? '').trim()
   const tout = view.reportsOpen || !!recherche
-  // Le filtre actif peut avoir perdu son dernier rapport (suppression, envoi) :
-  // on retombe alors sur "Tous" plutot que d'afficher une liste vide inexplicable.
   const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
-  // L'apercu ne repete pas les brouillons deja poses en tete d'ecran : le meme
-  // rapport apparaissait deux fois, a deux centimetres d'intervalle. La liste
-  // deroulee, elle, reste complete - c'est la liste, elle doit tout contenir.
-  const enTete = new Set(reports.filter(S.enCours).slice(0, EN_COURS).map((r) => r.id))
-  const apercu = reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
-  // Une recherche en cours cherche partout : elle ignore l'apercu, et elle
-  // ignore le filtre de type, qui n'aurait plus de sens quand on tape une rue.
-  const listed = recherche
-    ? reports.filter((r) => S.matchRapport(r, recherche))
-    : tout
-      ? reports.filter(filter.match)
-      : apercu
-  const reste = reports.length - listed.length - (tout ? 0 : enTete.size)
-
-  const items = listed.length
-    ? listed.map(reportRowHTML).join('')
-    : `<li class="empty">${
-        recherche
-          ? `Aucun rapport ne correspond à « ${esc(recherche)} ».`
-          : reports.length
-            ? 'Aucun rapport dans cette sélection.'
-            : 'Créez un rapport ci-dessus, il apparaîtra ici.'
-      }</li>`
-
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('folder', 'neutral')}Mes rapports</span>
+    <h2 class="section-title">
+      <span class="section-title-main">Mes rapports</span>
       <span class="section-title-trailer">
         <span class="count-pill"><b>${reports.length}</b> gardé${reports.length > 1 ? 's' : ''}</span>
         ${reports.length > APERCU ? `<button class="link" data-toggle-reports>${tout ? 'Réduire' : 'Tout voir'}</button>` : ''}
@@ -270,6 +238,7 @@ export function listeRapportsHTML(view) {
   const recherche = (view.recherche ?? '').trim()
   const tout = view.reportsOpen || !!recherche
   const filter = FILTERS.find((f) => f.key === view.filter && (f.key === 'tous' || reports.some(f.match))) ?? FILTERS[0]
+  // L'apercu ne repete pas les brouillons deja poses en tete d'ecran.
   const enTete = new Set(reports.filter(S.enCours).slice(0, EN_COURS).map((r) => r.id))
   const listed = recherche
     ? reports.filter((r) => S.matchRapport(r, recherche))
@@ -277,155 +246,114 @@ export function listeRapportsHTML(view) {
       ? reports.filter(filter.match)
       : reports.filter((r) => !enTete.has(r.id)).slice(0, APERCU)
   const items = listed.length
-    ? listed.map(reportRowHTML).join('')
+    ? listed.map((r) => reportRowHTML(r)).join('')
     : `<li class="empty">${
         recherche
           ? `Aucun rapport ne correspond à « ${esc(recherche)} ».`
           : reports.length
             ? 'Aucun rapport dans cette sélection.'
-            : 'Créez un rapport ci-dessus, il apparaîtra ici.'
+            : 'Vos rapports apparaîtront ici. Commencez par choisir un lieu ci-dessus.'
       }</li>`
-  // Le bouton fait partie de la liste : redessine avec elle, il ne reste pas
-  // affiche pendant une recherche, qui montre deja tout ce qui correspond.
   const reste = reports.length - listed.length - (tout ? 0 : enTete.size)
   return `<ul class="report-list">${items}</ul>
-    ${!tout && reste > 0 ? `<button class="btn ghost wide" data-toggle-reports>Voir les ${reste} autres</button>` : ''}`
+    ${!tout && reste > 0 ? `<button class="btn ghost wide" data-toggle-reports>${reste > 1 ? `Voir les ${reste} autres` : 'Voir le dernier'}</button>` : ''}`
 }
 
-/**
- * Le haut de l'accueil.
- *
- * Il portait une affiche : le nom de l'app en gros, deja ecrit dans la barre
- * juste au-dessus, et un slogan - "Saisie, photos, signature et envoi sur
- * place" - qu'on lit une fois et plus jamais. Cela coutait un tiers du premier
- * ecran avant le moindre travail.
- *
- * Il porte maintenant ce qu'on vient y chercher en ouvrant l'app le matin : le
- * jour, et ce qui reste sur les bras. La photo et la signature de la maison
- * restent - c'est l'identite - mais elles tiennent en moins de place.
- */
+// --- ou j'en suis ? --------------------------------------------------------
+
 // Qui tient le telephone : l'administrateur ou un employe, et lequel. Discret,
-// mais visible a chaque ouverture - un telephone prete ou echange entre deux
-// techniciens ne doit pas envoyer des rapports au nom du mauvais. Rien tant que
-// le serveur n'a pas encore dit qui est connecte.
+// mais visible a chaque ouverture - un telephone prete entre deux techniciens
+// ne doit pas envoyer des rapports au nom du mauvais.
 function sessionHTML() {
   const ident = identite()
   if (!ident) return ''
-  const admin = ident.role === 'admin'
   const invite = ident.role === 'invite'
-  const jusqua = invite && ident.fin
-    ? ` · jusqu'au ${new Date(ident.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}`
-    : ''
-  const texte = admin
-    ? 'Session administrateur'
-    : invite
-      ? `Session invité · ${ident.nom}${jusqua}`
-      : `Session employé · ${ident.nom}`
-  return `<span class="hero-session${admin ? ' admin' : invite ? ' invite' : ''}">${esc(texte)}</span>`
+  const jusqua =
+    invite && ident.fin ? ` · jusqu'au ${new Date(ident.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}` : ''
+  const texte = ident.role === 'admin' ? 'Administrateur' : invite ? `Invité · ${ident.nom}${jusqua}` : ident.nom
+  return `<span class="poste-session ${ident.role}">${esc(texte)}</span>`
 }
 
-function heroHTML(view) {
+/**
+ * Le poste de controle : le jour, qui tient le telephone, et les trois chiffres
+ * qu'on vient chercher le matin - ce qui reste sur les bras, et ce que le mois a
+ * deja produit. Seul ce qui reclame un geste porte une alerte.
+ */
+function posteHTML(view) {
   const maintenant = new Date()
-  const jour = maintenant.toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' })
   const semaine = maintenant.toLocaleDateString('fr-CH', { weekday: 'long' })
-  const mois = maintenant.toLocaleDateString('fr-CH', { month: 'short' }).replace('.', '')
+  const quantieme = maintenant.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })
 
-  // Trois chiffres, ceux qu'on vient chercher le matin : ce qui reste sur les
-  // bras, et ce que le mois a deja produit.
   const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).getTime()
   const brouillons = view.reports.filter(S.enCours).length
   const crees = view.reports.filter((r) => (r.createdAt ?? 0) >= debutMois).length
   const remis = view.reports.filter((r) => S.estTermine(r) && (r.sentAt ?? r.remisAt ?? r.updatedAt ?? 0) >= debutMois).length
 
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
-  // perdre - et il doit apparaitre la ou l'on passe, pas seulement dans les
-  // reglages, ou l'on ne va justement jamais.
+  // perdre, et que la sauvegarde en ligne n'a pas pu passer depuis une semaine.
   const jours = S.backupAge()
-  // La sauvegarde en ligne, recente, suffit : le rappel ne sonne plus que si
-  // elle n'a pas pu passer depuis une semaine.
   const enLigneRecente = Date.now() - derniereSauvegarde() < 7 * 86_400_000
   const sauvegardeEnRetard = view.reports.length > 0 && !enLigneRecente && (jours === null || jours > 30)
-  // La place restante ne s'annonce qu'au moment ou elle devient un probleme :
-  // une jauge permanente sur l'accueil serait du bruit trois cent jours par an.
   const memoirePleine = (view.stockage?.part ?? 0) > S.STOCKAGE_ALERTE
-  // Seul ce qui reclame un geste porte la couleur d'alerte.
   const alertes = [
-    view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true },
-    !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente` },
-    memoirePleine && { t: 'Mémoire presque pleine', alerte: true },
-    sauvegardeEnRetard && { t: 'Sauvegarde à faire', alerte: true },
+    view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true, act: 'open-envois' },
+    !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente`, act: 'open-envois' },
+    memoirePleine && { t: 'Mémoire presque pleine', alerte: true, act: 'open-reglages' },
+    sauvegardeEnRetard && { t: 'Sauvegarde à faire', alerte: true, act: 'open-reglages' },
   ].filter(Boolean)
 
-  const tuile = (n, libelle, classe = '') => `<div class="hero-stat${classe}"><b>${n}</b><span>${libelle}</span></div>`
+  const mesure = (n, libelle, vif = false) =>
+    `<div class="releve-mesure${vif ? ' vif' : ''}"><b>${n}</b><span>${libelle}</span></div>`
+
   return `
-    <div class="hero-caption reveal" style="--i:0">
-      <!-- Une carte vitree posee sur la photo : la page du calendrier a
-           gauche, le metier, le jour et la session a droite. -->
-      <div class="hero-carte" data-act="open-agenda" role="button" tabindex="0"
-           title="Ouvrir l'agenda · ${esc(jour[0].toUpperCase() + jour.slice(1))}">
-        <div class="hero-cal" aria-hidden="true">
-          <span class="hero-cal-mois">${esc(mois)}</span>
-          <span class="hero-cal-jour">${maintenant.getDate()}</span>
-        </div>
-        <div class="hero-infos">
-          <span class="hero-kicker">${PATTE}Détection canine professionnelle</span>
-          <h2>${esc(semaine[0].toUpperCase() + semaine.slice(1))}</h2>
-          ${sessionHTML()}
-        </div>
-        <span class="hero-carte-go" aria-hidden="true">${ICONS.chevron}</span>
+    <div class="poste reveal" style="--i:0">
+      ${LIGNES_FLAIR}
+      <button type="button" class="poste-jour" data-act="open-agenda" aria-label="Ouvrir l'agenda">
+        <span class="poste-date">
+          <span class="poste-semaine">${esc(semaine[0].toUpperCase() + semaine.slice(1))}</span>
+          <span class="poste-quantieme">${esc(quantieme)}</span>
+        </span>
+        ${sessionHTML()}
+        <span class="poste-agenda">${ICONS.calendrier}Agenda</span>
+      </button>
+      <div class="releve" role="group" aria-label="Activité">
+        ${mesure(brouillons, 'en cours', brouillons > 0)}
+        ${mesure(crees, 'créés ce mois')}
+        ${mesure(remis, 'remis ce mois')}
       </div>
-    </div>
-    <div class="hero-stats reveal" style="--i:1">
-      ${tuile(brouillons, 'en cours', brouillons ? ' vif' : '')}
-      ${tuile(crees, 'créés ce mois')}
-      ${tuile(remis, 'remis ce mois')}
-    </div>
-    ${
-      alertes.length
-        ? `<div class="hero-alertes reveal" style="--i:1">${alertes
-            .map((m) => `<span class="hero-alerte-chip${m.alerte ? ' alerte' : ''}">${esc(m.t)}</span>`)
-            .join('')}</div>`
-        : ''
-    }`
+      ${
+        alertes.length
+          ? `<div class="poste-alertes">${alertes
+              .map((m) => `<button type="button" class="poste-alerte${m.alerte ? ' alerte' : ''}" data-act="${m.act}">${esc(m.t)}</button>`)
+              .join('')}</div>`
+          : ''
+      }
+    </div>`
 }
-
-// Une patte de chien, en or, devant le nom du metier.
-const PATTE = `<svg class="hero-patte" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="5.6" cy="10.4" rx="2.3" ry="2.9"/><ellipse cx="9.8" cy="5.9" rx="2.3" ry="3"/><ellipse cx="14.4" cy="5.9" rx="2.3" ry="3"/><ellipse cx="18.6" cy="10.4" rx="2.3" ry="2.9"/><path d="M12.1 11.6c-3.5 0-6.8 3.9-6.8 6.6 0 2 1.6 2.7 3.1 2.7 1.4 0 2.4-.8 3.7-.8s2.3.8 3.7.8c1.5 0 3.1-.7 3.1-2.7 0-2.7-3.3-6.6-6.8-6.6z"/></g></svg>`
-
-// Une icone de l'en-tete, dessinee pour l'app (voir ui/icones3d.js).
-const icone3d = (nom) => ICONES_3D[nom]
 
 export function homeView(view) {
   return `
-    <header class="top">
-      <img src="/logo.jpg" alt="Atout Flair" class="logo" />
-      <div class="top-title">
-        <h1>Atout Flair</h1>
+    <div class="accueil">
+      <div class="accueil-scene">
+        <img class="accueil-photo" src="/hero-dog.webp" alt="" decoding="sync" fetchpriority="high" />
+        <span class="accueil-voile" aria-hidden="true"></span>
+        <header class="accueil-barre">
+          <div class="marque">
+            <span class="marque-nom">Atout Flair</span>
+            <span class="marque-metier">Détection canine professionnelle</span>
+          </div>
+          <span class="accueil-portes">
+            ${estAdmin() ? `<button class="porte" data-act="open-admin" title="Administration" aria-label="Administration">${ICONES_3D.admin}</button>` : ''}
+            <button class="porte" data-act="open-reglages" title="Réglages" aria-label="Réglages">${ICONES_3D.reglages}</button>
+          </span>
+        </header>
       </div>
-      <!-- Icones dessinees pour l'app, dans l'ordre voulu par Thomas :
-           carnet, envois, administration, reglages. -->
-      <span class="top-actions">
-        ${
-          // Pas de carnet pour un invite : la liste des clients reste a l'entreprise.
-          estInvite()
-            ? ''
-            : `<button class="icon-btn contacts-toggle icone-3d" data-act="open-contacts" title="Carnet">${icone3d('carnet')}</button>`
-        }
-        <button class="icon-btn envois-toggle icone-3d${view.enEchec ? ' en-echec' : ''}" data-act="open-envois"
-                data-compte="${view.enEchec || view.enAttente || ''}" title="Envois">${icone3d('envois')}</button>
-        ${
-          estAdmin()
-            ? `<button class="icon-btn contacts-toggle icone-3d" data-act="open-admin" title="Administration">${icone3d('admin')}</button>`
-            : ''
-        }
-        <button class="icon-btn contacts-toggle icone-3d" data-act="open-reglages" title="Réglages">${icone3d('reglages')}</button>
-      </span>
-    </header>
-    ${heroHTML(view)}
-    <section class="content-sheet">
-      <div class="reveal rdv-accueil-zone" style="--i:2">${rdvAccueilHTML(view)}</div>
-      <div class="reveal" style="--i:3">${nouveauHTML()}</div>
-      <div class="reveal" style="--i:4">${enCoursHTML(view.reports)}</div>
-      <div class="reveal" style="--i:5">${mesRapportsHTML(view)}</div>
-    </section>`
+      ${posteHTML(view)}
+      <section class="accueil-feuille">
+        <div class="reveal bloc-nouveau" style="--i:1">${nouveauHTML()}</div>
+        <div class="reveal rdv-accueil-zone" style="--i:2">${rdvAccueilHTML(view)}</div>
+        <div class="reveal" style="--i:3">${enCoursHTML(view.reports)}</div>
+        <div class="reveal" style="--i:4">${mesRapportsHTML(view)}</div>
+      </section>
+    </div>`
 }

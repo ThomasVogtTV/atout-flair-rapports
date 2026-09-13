@@ -145,10 +145,93 @@ const REGLAGES = `
   <circle cx="24" cy="22.5" r="2.8" fill="#5a3657"/>
 </svg>`
 
-/** Les icones de l'en-tete, par nom de bouton. */
+// Les rapports : une feuille au bandeau petrole, posee sur une autre, et le
+// sceau de terre cuite qui dit qu'elle est signee.
+const RAPPORTS = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-ra-page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#e6dcc9"/>
+    </linearGradient>
+    <linearGradient id="ic-ra-bande" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d93a2"/>
+      <stop offset="1" stop-color="#0e4c57"/>
+    </linearGradient>
+    <radialGradient id="ic-ra-sceau" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#eea27a"/>
+      <stop offset="1" stop-color="#b3552f"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="24" cy="43.8" rx="15" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- la feuille de dessous, un peu de travers -->
+  <rect x="11.5" y="6.5" width="25" height="32" rx="3.5" transform="rotate(-8 24 23)" fill="#cbbda3"/>
+  <!-- epaisseur, puis la feuille de dessus -->
+  <rect x="12.7" y="8.9" width="25" height="32" rx="3.5" fill="#bfb199"/>
+  <rect x="11" y="7" width="25" height="32" rx="3.5" fill="url(#ic-ra-page)"/>
+  <!-- le bandeau du rapport -->
+  <path d="M14.5 7 H32.5 A3.5 3.5 0 0 1 36 10.5 V14.8 H11 V10.5 A3.5 3.5 0 0 1 14.5 7 Z" fill="url(#ic-ra-bande)"/>
+  <rect x="14.5" y="9.7" width="11" height="1.8" rx="0.9" fill="#fff" opacity="0.5"/>
+  <!-- les lignes du texte -->
+  <rect x="14.5" y="19.2" width="17" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <rect x="14.5" y="23.6" width="12.5" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <rect x="14.5" y="28" width="15" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <!-- le sceau -->
+  <circle cx="33.6" cy="34.2" r="7.8" fill="#fff"/>
+  <circle cx="33.6" cy="34.2" r="6.5" fill="url(#ic-ra-sceau)"/>
+  <path d="M30.6 34.3 L32.8 36.5 L36.8 32" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`
+
+// L'agenda : la page du calendrier, son bandeau petrole et ses anneaux, et le
+// jour du rendez-vous en or parmi les autres.
+const AGENDA = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-ag-page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#e6dcc9"/>
+    </linearGradient>
+    <linearGradient id="ic-ag-bande" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d93a2"/>
+      <stop offset="1" stop-color="#0e4c57"/>
+    </linearGradient>
+    <linearGradient id="ic-ag-or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8cd74"/>
+      <stop offset="1" stop-color="#d7862a"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="24.5" cy="43.6" rx="16" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- epaisseur, puis la page -->
+  <rect x="7.6" y="11.4" width="34" height="30" rx="5" fill="#bfb199"/>
+  <rect x="6" y="9.6" width="34" height="30" rx="5" fill="url(#ic-ag-page)"/>
+  <path d="M11 9.6 H35 A5 5 0 0 1 40 14.6 V18.6 H6 V14.6 A5 5 0 0 1 11 9.6 Z" fill="url(#ic-ag-bande)"/>
+  <rect x="10" y="12" width="13" height="1.7" rx="0.85" fill="#fff" opacity="0.3"/>
+  <!-- les anneaux -->
+  <rect x="13.2" y="6" width="3.4" height="8.2" rx="1.7" fill="#2f3a44"/>
+  <rect x="29.4" y="6" width="3.4" height="8.2" rx="1.7" fill="#2f3a44"/>
+  <rect x="13.9" y="6.8" width="1.1" height="5" rx="0.55" fill="#fff" opacity="0.35"/>
+  <rect x="30.1" y="6.8" width="1.1" height="5" rx="0.55" fill="#fff" opacity="0.35"/>
+  <!-- les jours -->
+  <g fill="#d9cdb8">
+    <rect x="9.6" y="22.4" width="5.6" height="4.6" rx="1.3"/>
+    <rect x="17.4" y="22.4" width="5.6" height="4.6" rx="1.3"/>
+    <rect x="25.2" y="22.4" width="5.6" height="4.6" rx="1.3"/>
+    <rect x="33" y="22.4" width="4.2" height="4.6" rx="1.3"/>
+    <rect x="9.6" y="30.2" width="5.6" height="4.6" rx="1.3"/>
+    <rect x="17.4" y="30.2" width="5.6" height="4.6" rx="1.3"/>
+    <rect x="33" y="30.2" width="4.2" height="4.6" rx="1.3"/>
+  </g>
+  <!-- le jour du rendez-vous -->
+  <rect x="24.4" y="29.4" width="7.2" height="6.2" rx="1.8" fill="url(#ic-ag-or)"/>
+  <rect x="25.6" y="30.3" width="4.8" height="1.2" rx="0.6" fill="#fff" opacity="0.5"/>
+</svg>`
+
+/** Les icones dessinees de l'app, par nom de porte. */
 export const ICONES_3D = {
   carnet: CARNET,
   envois: ENVOIS,
   admin: ADMIN,
   reglages: REGLAGES,
+  rapports: RAPPORTS,
+  agenda: AGENDA,
 }

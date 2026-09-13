@@ -140,7 +140,7 @@ export function contactsView(view) {
   const n = (view.contacts ?? []).length
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Carnet</h1>
         <p class="muted">${n} contact${n > 1 ? 's' : ''}</p>
@@ -199,7 +199,7 @@ export function ficheContactView(view) {
 
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="open-contacts">‹</button>
+      <button class="icon-btn back" data-act="open-contacts" aria-label="Retour au carnet">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Fiche client</h1>
         <p class="muted">${esc(mandantTypeLabel(c.type) || 'Carnet')}</p>

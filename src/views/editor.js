@@ -1,5 +1,14 @@
-// Ecran d'un rapport ouvert : mandant, lieu d'intervention, lignes
-// (pieces / appartements / chambres), photos libres, remarques, signature.
+// Ecran d'un rapport ouvert : cinq etapes, dans l'ordre du geste.
+//
+//   1. Client     pour qui l'on intervient (le mandant, qui recoit le rapport)
+//   2. Lieu       ou le chien a travaille, et dans quelles conditions
+//   3. Detection  pieces, appartements ou chambres, et le verdict de chacun
+//   4. Constats   ce que le rapport conclut, et les photos d'ensemble
+//   5. Cloture    le bilan, le technicien, le partenaire, la signature, l'envoi
+//
+// On passe d'une etape a l'autre par la barre du bas ou en touchant l'etape
+// voulue : rien n'impose l'ordre, tout est enregistre a mesure. Les etapes
+// disent seulement ce qui reste (voir src/etapes.js).
 
 import { typeOf, accordE, rowLabelFor, CONSTATS, RECOMMANDATIONS } from '../templates.js'
 import * as S from '../state.js'
@@ -7,6 +16,8 @@ import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { mandantPicker } from '../ui/chips.js'
 import { srcVignette } from '../ui/vignettes.js'
+import { etapesDuRapport, manques, adresseDuLieu } from '../etapes.js'
+import { etatRapport } from './home.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
 // pour le rapport de detection, deux champs separes (comme le mandant)
@@ -24,8 +35,7 @@ export function applySameAddress(report) {
 }
 
 // Le mandant est souvent l'occupant lui-meme (proprietaire, particulier) :
-// meme geste que pour l'adresse, une case a cocher plutot qu'une seconde saisie
-// du meme nom.
+// meme geste que pour l'adresse, une case a cocher plutot qu'une seconde saisie.
 export function applySameName(report) {
   report.lieu.locataire = S.fullName(report.mandant)
 }
@@ -44,25 +54,23 @@ function fieldInput(f, value, disabled) {
 }
 
 // Puces de constat sous le champ "Informations" d'une ligne. Elles restent
-// affichees en permanence : un constat s'ajoute souvent a un autre, et des
-// puces qui disparaissent au premier choix obligent a taper le second a la main.
+// affichees : un constat s'ajoute souvent a un autre.
 function constatChips() {
   return `<div class="quick-rooms quick-constats">${CONSTATS.map(
     (c) => `<button type="button" class="chip chip-sm" data-quick-info="${esc(c)}">${esc(c)}</button>`
   ).join('')}</div>`
 }
 
-// Les photos arrivent dans l'ordre des prises, qui n'est pas toujours celui du
-// recit. La barre du bas porte le numero que la photo aura dans l'annexe du
-// PDF, et une fleche de chaque cote pour la deplacer.
+// Les photos, dans l'ordre de l'annexe du PDF : le numero qu'elles y auront, et
+// une fleche de chaque cote pour les deplacer.
 function photoStrip(photos) {
   if (!photos.length) return ''
   const n = photos.length
   return `<div class="photos">${photos
     .map(
       (p, i) => `<div class="thumb" data-photo-id="${p.id}">
-        <img src="${srcVignette(p)}" data-vignette="${p.id}" alt="" decoding="async" />
-        <button class="thumb-del" data-del-photo="${p.id}">✕</button>
+        <img src="${srcVignette(p)}" data-vignette="${p.id}" alt="Photo ${i + 1}" decoding="async" />
+        <button class="thumb-del" data-del-photo="${p.id}" aria-label="Supprimer la photo">✕</button>
         ${
           n > 1
             ? `<div class="thumb-order">
@@ -77,63 +85,54 @@ function photoStrip(photos) {
     .join('')}</div>`
 }
 
-// Etat d'une ligne, en toutes lettres. Sert au resume d'une carte repliee :
-// "Non" tout seul, sorti de ses trois boutons, ne veut plus rien dire.
+// Etat d'une ligne, en toutes lettres, pour le resume d'une carte repliee.
 function etatEnMots(row, t) {
   if (row.contamine === 'oui') return `Contaminé${accordE(t)}`
-  // "Rien trouvé" plutot que "Non contaminée" : deux mots de moins sur une
-  // ligne ou le nom de la piece se faisait rogner, et le mot que le technicien
-  // emploie deja dans ses recommandations.
   if (row.contamine === 'non') return 'Rien trouvé'
   if (row.contamine) return 'À revoir'
   return 'À faire'
 }
 
-/**
- * Bouton de repliage. Volontairement dessine comme un bouton - rond, cercle
- * visible, pas un chevron gris perdu dans un coin : une rubrique repliee qu'on
- * ne sait pas rouvrir est une rubrique perdue.
- *
- * @param {string} attr  l'attribut qui porte l'identifiant (piece ou rubrique)
- * @param {string} cle   ce qu'on replie
- * @param {boolean} replie
- */
+/** Bouton de repliage : un vrai bouton rond, un chevron qui montre ou va le contenu. */
 function foldBtn(attr, cle, replie) {
   return `<button type="button" class="fold-btn${replie ? ' replie' : ''}" ${attr}="${cle}"
     aria-expanded="${!replie}" title="${replie ? 'Déplier' : 'Replier'}">${ICONS.chevron}</button>`
 }
 
+/** Rubrique d'une etape : un intitule, et son contenu. */
+function bloc({ icone, ton, titre, action = '', contenu }) {
+  return `
+    <h3 class="section-title">
+      <span class="section-title-main">${sectionIcon(icone, ton)}${esc(titre)}</span>
+      ${action ? `<span class="section-title-trailer">${action}</span>` : ''}
+    </h3>
+    ${contenu}`
+}
+
 /**
- * Rubrique repliable : intitule, bouton de repliage, et soit son contenu, soit
- * une ligne de resume qu'un tap rouvre.
- *
- * Toutes les rubriques d'un rapport ne meritent pas d'etre ouvertes en
- * permanence : le technicien est deja rempli, le partenaire sert une fois sur
- * trois, les photos libres sont souvent vides. Ce qui reste ouvert, c'est ce
- * qu'on vient remplir.
+ * Rubrique repliable : ce qu'on ne visite qu'au besoin (le technicien deja
+ * rempli, le partenaire present une fois sur trois) se replie sur une ligne de
+ * resume qu'un tap rouvre.
  */
 function rubrique({ cle, icone, ton, titre, action = '', resume, contenu, replie }) {
   return `
-    <h2 class="section-title">
+    <h3 class="section-title">
       <span class="section-title-main">${sectionIcon(icone, ton)}${esc(titre)}</span>
       <span class="section-title-trailer">${action}${foldBtn('data-fold-section', cle, replie)}</span>
-    </h2>
+    </h3>
     ${
       replie
         ? `<button type="button" class="rubrique-repliee" data-fold-section="${cle}">
              <span class="rubrique-resume">${esc(resume || 'À remplir')}</span>
+             <span class="rubrique-ouvrir">Modifier</span>
            </button>`
         : contenu
     }`
 }
 
 /**
- * Carte repliee : une ligne, parfois deux. Six pieces depliees font 2 100 px,
- * soit trois ecrans a faire defiler pour atteindre les photos et la signature.
- * Repliees, elles en font 320.
- *
- * Rien n'est cache pour autant : le resume porte le nom, l'etat, le debut des
- * constatations et le nombre de photos. Ce qu'on ne voit plus, ce sont les
+ * Carte repliee : une ligne. Le resume porte le nom, l'etat, le debut des
+ * constatations et le nombre de photos ; ce qu'on ne voit plus, ce sont les
  * champs vides et les boutons d'une piece deja traitee.
  */
 function carteReplieeHTML(row, t, index, titre, infos, nPhotos) {
@@ -150,14 +149,13 @@ function carteReplieeHTML(row, t, index, titre, infos, nPhotos) {
         ${detail ? `<span class="resume-detail">${esc(detail)}</span>` : ''}
       </span>
       ${foldBtn('data-fold', row.id, true)}
-      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+      <button class="icon-btn row-del" data-del-row="${row.id}" title="Supprimer" aria-label="Supprimer">${ICONS.poubelle}</button>
     </div>
   </div>`
 }
 
-// Carte d'une piece : badge numerote colore par statut, labels persistants,
-// puces de noms courants tant que le champ est vide (le champ texte reste
-// disponible pour les cas hors-liste).
+// Carte d'une piece : badge numerote colore par verdict, le verdict en grand,
+// puces de noms courants tant que le champ est vide.
 function pieceCardHTML(r, t, row, index, repliee) {
   const photos = r.photos.filter((p) => p.rowId === row.id)
   const status = row.contamine || ''
@@ -171,7 +169,7 @@ function pieceCardHTML(r, t, row, index, repliee) {
         <input class="row-name piece-name" data-row-field="nom" value="${esc(row.nom)}" placeholder="Nom de la pièce" />
       </label>
       ${foldBtn('data-fold', row.id, false)}
-      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+      <button class="icon-btn row-del" data-del-row="${row.id}" title="Supprimer" aria-label="Supprimer">${ICONS.poubelle}</button>
     </div>
     ${
       row.nom
@@ -180,17 +178,20 @@ function pieceCardHTML(r, t, row, index, repliee) {
             .map((s) => `<button type="button" class="chip chip-sm" data-quick-room="${esc(s)}">${esc(s)}</button>`)
             .join('')}</div>`
     }
-    <div class="seg tri" data-seg-row="${row.id}">
-      <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminée</button>
-      <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Non</button>
-      <button type="button" class="seg-btn inconnu${status === 'inconnu' ? ' on' : ''}" data-val="inconnu">?</button>
+    <div class="verdict">
+      <span class="field-label">Verdict du chien</span>
+      <div class="seg tri" data-seg-row="${row.id}">
+        <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminée</button>
+        <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Rien trouvé</button>
+        <button type="button" class="seg-btn inconnu${status === 'inconnu' ? ' on' : ''}" data-val="inconnu" aria-label="À revoir">?</button>
+      </div>
     </div>
     <label class="field-info"><span class="field-label">Informations</span>
       <input data-row-field="info" value="${esc(row.info)}" placeholder="Marquage, punaises visibles…" />
     </label>
     ${constatChips()}
     ${photoStrip(photos)}
-    <button class="btn ghost wide" data-photo="${row.id}">+ Photo de cette pièce</button>
+    <button class="btn ghost wide btn-photo" data-photo="${row.id}">${ICONS.camera}Photo de cette pièce</button>
   </div>`
 }
 
@@ -201,8 +202,6 @@ function lineCardHTML(r, t, row, index, children, repliee) {
   const status = row.contamine || ''
   if (repliee) {
     const resume = [row.resident, row.infos, child ? 'rapport de détection' : ''].filter(Boolean).join(' · ')
-    // rowLabelFor donne "N° 12 - 1er" : un numero seul, sorti de sa colonne,
-    // ne dit plus de quoi il est le numero.
     return carteReplieeHTML(row, t, index, rowLabelFor(r, row), resume, photos.length)
   }
   return `
@@ -214,11 +213,8 @@ function lineCardHTML(r, t, row, index, children, repliee) {
         <input class="row-name piece-name" data-row-field="numero" value="${esc(row.numero)}" placeholder="${isHotel ? 'ex. 101' : 'ex. 12'}" />
       </label>
       ${foldBtn('data-fold', row.id, false)}
-      <button class="icon-btn" data-del-row="${row.id}" title="Supprimer">✕</button>
+      <button class="icon-btn row-del" data-del-row="${row.id}" title="Supprimer" aria-label="Supprimer">${ICONS.poubelle}</button>
     </div>
-    <!-- L'etage et la date tenaient sur la ligne du numero, avec la poignee et
-         la croix : trois champs pour 200 px, ou "Étage" s'affichait "Éta" et la
-         date "31/08/". Ils descendent d'un cran, apparies. -->
     <div class="grid2">
       <label>Étage<input data-row-field="etage" list="etages-list" value="${esc(row.etage)}" placeholder="1er" /></label>
       <label>Date<input type="date" data-row-field="date" value="${esc(row.date)}" /></label>
@@ -226,9 +222,12 @@ function lineCardHTML(r, t, row, index, children, repliee) {
     <label class="field-info"><span class="field-label">${isHotel ? 'Occupation' : 'Résident'}</span>
       <input data-row-field="resident" value="${esc(row.resident)}" placeholder="${isHotel ? 'ex. occupée, libre, en travaux…' : 'Nom du résident'}" />
     </label>
-    <div class="seg" data-seg-row="${row.id}">
-      <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminé</button>
-      <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Non</button>
+    <div class="verdict">
+      <span class="field-label">Verdict du chien</span>
+      <div class="seg" data-seg-row="${row.id}">
+        <button type="button" class="seg-btn oui${status === 'oui' ? ' on' : ''}" data-val="oui">Contaminé</button>
+        <button type="button" class="seg-btn non${status === 'non' ? ' on' : ''}" data-val="non">Rien trouvé</button>
+      </div>
     </div>
     <label class="field-info"><span class="field-label">Constatations</span>
       <input data-row-field="infos" value="${esc(row.infos)}" placeholder="Marquage, punaises visibles…" />
@@ -236,13 +235,13 @@ function lineCardHTML(r, t, row, index, children, repliee) {
     ${constatChips()}
     ${photoStrip(photos)}
     <div class="row-actions">
-      <button class="btn ghost" data-photo="${row.id}">+ Photo</button>
+      <button class="btn ghost btn-photo" data-photo="${row.id}">${ICONS.camera}Photo</button>
       ${
         isHotel
           ? ''
           : child
-            ? `<button class="btn ghost" data-open-child="${child.id}">Rapport de détection ✓</button>`
-            : `<button class="btn ghost" data-add-child="${row.id}">+ Rapport de détection</button>`
+            ? `<button class="btn ghost" data-open-child="${child.id}">${ICONS.coche}Rapport de détection</button>`
+            : `<button class="btn ghost" data-add-child="${row.id}">${ICONS.ajout}Rapport de détection</button>`
       }
     </div>
   </div>`
@@ -257,10 +256,8 @@ export function rowCardHTML(view, row, index) {
     : lineCardHTML(view.report, t, row, index, view.children, repliee)
 }
 
-// Les deux compteurs de la rubrique. Le libelle et son accord sortent du type
-// de rapport : un immeuble compte des appartements contamines, pas des
-// "lignes contaminees". Exporte car l'app les redessine a chaque changement,
-// sans re-rendre l'ecran - c'est la seule facon que le pluriel suive.
+// Les deux compteurs de la rubrique. Exporte car l'app les redessine a chaque
+// changement, sans re-rendre l'ecran - c'est la seule facon que le pluriel suive.
 export function counterPills(r, t) {
   const total = S.filledRows(r).length
   const cont = S.contaminatedCount(r)
@@ -270,74 +267,110 @@ export function counterPills(r, t) {
       <span class="count-pill${cont ? ' cont' : ''}"><b id="cnt-cont">${cont}</b> contaminé${e}${cont > 1 ? 's' : ''}</span>`
 }
 
+/**
+ * La repartition des verdicts, en une barre : ce que le chien a trouve, ce qui
+ * est sain, ce qui reste a revoir ou a faire. La visite se lit d'un coup d'oeil.
+ */
+export function verdictsHTML(r, t) {
+  const lignes = r.rows ?? []
+  if (!lignes.length) return ''
+  const n = (v) => lignes.filter((l) => (v === '' ? !l.contamine : l.contamine === v)).length
+  const e = accordE(t)
+  const parts = [
+    { cle: 'oui', n: n('oui'), mot: `contaminé${e}` },
+    { cle: 'non', n: n('non'), mot: 'rien trouvé' },
+    { cle: 'inconnu', n: n('inconnu'), mot: 'à revoir' },
+    { cle: 'afaire', n: n(''), mot: 'à faire' },
+  ]
+  const faites = lignes.length - parts[3].n
+  return `
+    <div class="verdicts" data-verdicts>
+      <div class="verdicts-tete">
+        <span class="verdicts-compte"><b>${faites}</b>/${lignes.length}</span>
+        <span class="verdicts-mot">${esc(lignes.length > 1 ? t.rowLabelPlural : t.rowLabel)} contrôlé${e}${lignes.length > 1 ? 's' : ''}</span>
+      </div>
+      <div class="verdicts-barre" role="img" aria-label="${parts.map((p) => `${p.n} ${p.mot}`).join(', ')}">
+        ${parts.map((p) => (p.n ? `<span class="v-${p.cle}" style="flex:${p.n}"></span>` : '')).join('')}
+      </div>
+      <div class="verdicts-legende">
+        ${parts
+          .filter((p) => p.n)
+          .map((p) => `<span class="v-${p.cle}"><b>${p.n}</b> ${esc(p.n > 1 && p.cle === 'oui' ? `${p.mot}s` : p.mot)}</span>`)
+          .join('')}
+      </div>
+    </div>`
+}
+
 function piecesSection(view, r, t) {
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}Pièces</span>
+    ${verdictsHTML(r, t)}
+    <h3 class="section-title">
+      <span class="section-title-main">${sectionIcon('room', 'accent')}Pièces</span>
       <span class="section-title-trailer">
         <span class="counter-pills">${counterPills(r, t)}</span>
-        <button class="link" data-act="add-row">+ Ajouter</button>
       </span>
-    </h2>
+    </h3>
     <div class="rows">${r.rows.map((row, i) => rowCardHTML(view, row, i)).join('')}</div>
-    <button class="btn ghost wide" data-act="add-row">+ Ajouter une pièce</button>`
+    <button class="btn ghost wide btn-ajout" data-act="add-row">${ICONS.ajout}Ajouter une pièce</button>`
 }
 
 // Un immeuble apporte d'un coup les coordonnees d'un batiment entier. Le
-// bouton n'apparait que la ou il a un sens : dans un hotel, la colonne du meme
-// nom decrit l'occupation d'une chambre, pas une personne.
+// bouton n'apparait que la ou il a un sens.
 function residentsSection(r, t) {
   if (t.id !== 'immeuble') return ''
   const n = r.rows.filter((row) => (row.resident || '').trim()).length
   if (!n) return ''
-  return `<button class="btn ghost wide" data-act="residents-carnet">+ Ajouter ${
+  return `<button class="btn ghost wide" data-act="residents-carnet">${ICONS.contacts}Ajouter ${
     n > 1 ? `les ${n} résidents` : 'le résident'
   } au carnet</button>`
 }
 
 function lignesSection(view, r, t) {
   const etages = t.columns.find((c) => c.key === 'etage')?.suggestions ?? []
+  const titre = t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1)
   return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('room', 'accent')}${esc(t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1))}</span>
+    ${verdictsHTML(r, t)}
+    <h3 class="section-title">
+      <span class="section-title-main">${sectionIcon('room', 'accent')}${esc(titre)}</span>
       <span class="section-title-trailer">
         <span class="counter-pills">${counterPills(r, t)}</span>
-        <button class="link" data-act="add-row">+ Ajouter</button>
       </span>
-    </h2>
+    </h3>
     <datalist id="etages-list">${etages.map((s) => `<option value="${esc(s)}"></option>`).join('')}</datalist>
     <div class="rows">${r.rows.map((row, i) => rowCardHTML(view, row, i)).join('')}</div>
-    <button class="btn ghost wide" data-act="add-row">+ Ajouter une ligne</button>
+    <button class="btn ghost wide btn-ajout" data-act="add-row">${ICONS.ajout}Ajouter ${t.rowLabel.endsWith('e') ? 'une' : 'un'} ${esc(t.rowLabel)}</button>
     ${residentsSection(r, t)}`
 }
 
-// Signature de la personne presente. Son nom est un champ a part entiere : sur
-// place, ce n'est pas toujours le locataire ni le mandant qui ouvre la porte -
-// concierge, voisin, fils, employe d'hotel. Le rapport doit porter le nom de
-// celui qui a reellement signe.
+// Signature de la personne presente : son nom est un champ a part entiere - sur
+// place, ce n'est pas toujours le locataire ni le mandant qui ouvre la porte.
 function signatureSection(r) {
   const propose = r.signataire?.nom ?? ''
-  return `
-    <h2 class="section-title"><span class="section-title-main">${sectionIcon('pen', 'neutral')}Signature sur place</span></h2>
+  return bloc({
+    icone: 'pen',
+    ton: 'neutral',
+    titre: 'Signature sur place',
+    contenu: `
     <div class="card grid2">
       <label class="full">Nom du signataire
         <input data-path="signataire.nom" value="${esc(propose)}"
                placeholder="${esc(S.fullName(r.mandant) || 'Personne présente')}" autocomplete="off" />
       </label>
       <div class="full tech-sig">
-        ${r.signature ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />` : `<p class="muted small">Non signé</p>`}
-        <button class="btn ghost wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
+        ${
+          r.signature
+            ? `<img class="sig-preview" src="${r.signature}" alt="Signature" />`
+            : `<div class="sig-vide">${ICONS.pen}<span>Pas encore signé</span></div>`
+        }
+        <button class="btn ${r.signature ? 'ghost' : 'primary'} wide" data-act="sign">${r.signature ? 'Refaire la signature' : 'Faire signer'}</button>
       </div>
-    </div>`
+    </div>`,
+  })
 }
 
-// Logo du desinsectiseur avec qui l'intervention est menee. Il s'imprime en
-// tete du rapport, a cote de celui d'Atout-Flair, sous la mention "en
-// collaboration avec" - les deux entreprises cote a cote, et aucun doute sur
-// qui a fait quoi.
-//
-// Rien n'est repris d'office d'un rapport a l'autre : la plupart des detections
-// se font seules, et un logo tiers pose par defaut ferait cosigner un rapport a
-// quelqu'un qui n'etait pas la. Les partenaires deja utilises restent en
-// revanche a portee de tap, sous la case.
+// Logo du desinsectiseur avec qui l'intervention est menee. Rien n'est repris
+// d'office d'un rapport a l'autre ; les partenaires deja utilises restent a
+// portee de tap.
 function partenaireSection(view, r, replie) {
   const p = r.partenaire ?? {}
   const connus = (view.partenaires ?? []).filter((x) => x.logo !== p.logo)
@@ -380,10 +413,8 @@ function partenaireSection(view, r, replie) {
   })
 }
 
-// Nom et signature deja remplis a l'ouverture du rapport (technicien par
-// defaut de l'appareil). Les modifier ici ne vaut que pour ce rapport - le cas
-// du collegue envoye faire la detection ; "Enregistrer par defaut" change le
-// reglage de l'appareil pour les rapports suivants.
+// Nom et signature du technicien, repris du reglage de l'appareil. Les modifier
+// ici ne vaut que pour ce rapport ; "Enregistrer par defaut" change le reglage.
 function technicienSection(r, replie) {
   const tech = r.technicien ?? {}
   return rubrique({
@@ -391,7 +422,7 @@ function technicienSection(r, replie) {
     icone: 'person',
     ton: 'accent',
     titre: 'Le technicien',
-    action: `<button class="link" data-act="tech-default">Enregistrer par défaut</button>`,
+    action: `<button class="link" data-act="tech-default">Par défaut</button>`,
     resume: [tech.nom, tech.signature ? 'signature enregistrée' : 'sans signature'].filter(Boolean).join(' · '),
     replie,
     contenu: `
@@ -403,7 +434,7 @@ function technicienSection(r, replie) {
         ${
           tech.signature
             ? `<img class="sig-preview" src="${tech.signature}" alt="Signature du technicien" />`
-            : `<p class="muted small">Aucune signature enregistrée sur cet appareil</p>`
+            : `<div class="sig-vide">${ICONS.pen}<span>Aucune signature enregistrée sur cet appareil</span></div>`
         }
         <button class="btn ghost wide" data-act="sign-tech">${tech.signature ? 'Refaire ma signature' : 'Ajouter ma signature'}</button>
       </div>
@@ -411,8 +442,7 @@ function technicienSection(r, replie) {
   })
 }
 
-// Suggestions du carnet pendant la frappe : le carnet ne sert a rien s'il faut
-// se souvenir du nom exact pour en profiter. Un tap remplit tout le bloc.
+// Suggestions du carnet pendant la frappe : un tap remplit tout le bloc.
 function contactSuggestions(view, r) {
   const props = S.matchContacts(r.mandant.nom, view.contacts ?? [])
   return `<div class="quick-rooms full suggestions-carnet"${props.length ? '' : ' hidden'}>${props
@@ -424,47 +454,43 @@ function contactSuggestions(view, r) {
     .join('')}</div>`
 }
 
-function mandantSection(view, r, contacts, replie) {
+function mandantSection(view, r, contacts) {
   const contactOptions = contacts.map((c) => `<option value="${esc(S.fullName(c))}"></option>`).join('')
   // Une gerance est une societe : pas de prenom, et le nom prend la ligne.
   const societe = r.mandant.type === 'gerance'
-  return rubrique({
-    cle: 'mandant',
-    icone: 'person',
-    ton: 'amber',
-    titre: 'Mandant',
-    action: `<button class="link" data-act="copier-mandant">Copier</button>`,
-    resume: [S.fullName(r.mandant), r.mandant.npaLieu].filter(Boolean).join(' · '),
-    replie,
-    contenu: `
-    <div class="card grid2">
-      ${
-        // Le client deja connu se choisit d'un tap, sans se souvenir de
-        // l'orthographe de son nom.
-        contacts.length
-          ? `<button type="button" class="btn ghost wide full carnet-choisir" data-act="choisir-contact">Choisir un client du carnet</button>`
-          : ''
-      }
-      <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
-      <label class="${societe ? 'full' : ''}">Nom
-        <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
-        <datalist id="contacts">${contactOptions}</datalist>
-      </label>
-      ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
-      ${contactSuggestions(view, r)}
-      <!-- Deux colonnes : le bloc tient en quatre lignes au lieu de six. Une
-           adresse ou une longue localite depasse alors de son champ - elle
-           defile a la saisie, et le PDF l'imprime en entier. C'est le prix du
-           deroulement plus court, assume. -->
-      <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
-      <label>NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
-      <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" /></label>
-      <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" /></label>
-    </div>`,
-  })
+  return `
+    ${
+      contacts.length
+        ? `<button type="button" class="carnet-choisir" data-act="choisir-contact">
+             <span class="carnet-choisir-ico">${ICONS.contacts}</span>
+             <span class="carnet-choisir-txt"><b>Choisir dans le carnet</b><span>${contacts.length} client${contacts.length > 1 ? 's' : ''} enregistré${contacts.length > 1 ? 's' : ''}</span></span>
+             <span class="carnet-choisir-go">${ICONS.chevron}</span>
+           </button>`
+        : ''
+    }
+    ${bloc({
+      icone: 'person',
+      ton: 'amber',
+      titre: 'Mandant',
+      action: `<button class="link" data-act="copier-mandant">Copier</button>`,
+      contenu: `
+      <div class="card grid2">
+        <div class="full">${mandantPicker(r.mandant.type, { attr: 'data-mandant-type' })}</div>
+        <label class="${societe ? 'full' : ''}">Nom
+          <input data-path="mandant.nom" list="contacts" value="${esc(r.mandant.nom)}" autocomplete="off" />
+          <datalist id="contacts">${contactOptions}</datalist>
+        </label>
+        ${societe ? '' : `<label>Prénom<input data-path="mandant.prenom" value="${esc(r.mandant.prenom)}" autocomplete="off" /></label>`}
+        ${contactSuggestions(view, r)}
+        <label>Adresse<input data-path="mandant.adresse" value="${esc(r.mandant.adresse)}" /></label>
+        <label>NPA / Lieu<input data-path="mandant.npaLieu" value="${esc(r.mandant.npaLieu)}" /></label>
+        <label>Email<input data-path="mandant.email" value="${esc(r.mandant.email)}" inputmode="email" autocomplete="off" /></label>
+        <label>Téléphone<input data-path="mandant.tel" value="${esc(r.mandant.tel)}" inputmode="tel" autocomplete="off" /></label>
+      </div>`,
+    })}`
 }
 
-function lieuSection(r, t, replie) {
+function lieuSection(r, t) {
   const fields = t.lieuFields
     .flat()
     .filter((f) => !f.derived)
@@ -473,16 +499,14 @@ function lieuSection(r, t, replie) {
       const isLocataire = f.key === 'locataire'
       const disabled =
         (LIEU_ADDR_KEYS.includes(f.key) && r.lieu.sameAsMandant) || (isLocataire && r.lieu.sameNameAsMandant)
-      // Deux colonnes par defaut, pour que le formulaire se deroule court.
-      // Seuls les controles qui ne sont pas des champs de texte gardent la ligne
-      // entiere (segment Oui/Non, cases "meme adresse") : a 149 px de large,
-      // leur libelle passerait a la ligne pour rien.
-      const field = `<label class="${f.large ? 'full' : ''}">
+      // L'adresse prend la ligne entiere : c'est la valeur la plus longue du
+      // bloc, et la plus relue. Sa case "meme adresse" se pose dessous.
+      const field = `<label class="${f.large || isAddrField ? 'full' : ''}">
         ${esc(f.label)}${fieldInput(f, r.lieu[f.key], disabled)}
       </label>`
       if (isAddrField) {
         return `${field}
-        <label class="same-addr">
+        <label class="same-addr full">
           <input type="checkbox" data-same-addr${r.lieu.sameAsMandant ? ' checked' : ''} />
           Même adresse que le mandant
         </label>`
@@ -498,99 +522,224 @@ function lieuSection(r, t, replie) {
     })
     .join('')
 
-  return rubrique({
-    cle: 'lieu',
+  return bloc({
     icone: 'pin',
     ton: 'ardoise',
     titre: "Lieu d'intervention",
-    resume: [r.lieu.adresseIntervention || r.lieu.adresse, r.lieu.locataire].filter(Boolean).join(' · '),
-    replie,
     contenu: `<div class="card grid2">${fields}</div>`,
   })
+}
+
+function constatsSection(r) {
+  const libres = r.photos.filter((p) => !p.rowId)
+  return `
+    ${bloc({
+      icone: 'note',
+      ton: 'neutral',
+      titre: 'Remarques et recommandations',
+      contenu: `<div class="card">
+        <textarea data-path="remarques" rows="5" aria-label="Remarques et recommandations" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
+        <span class="field-label quick-notes-titre">Ajouter une recommandation</span>
+        <div class="quick-rooms quick-notes">${RECOMMANDATIONS.map(
+          (n) => `<button type="button" class="chip chip-sm" data-quick-note="${esc(n.texte)}">${ICONS.ajout}${esc(n.label)}</button>`
+        ).join('')}</div>
+      </div>`,
+    })}
+    ${bloc({
+      icone: 'camera',
+      ton: 'prune',
+      titre: 'Photos libres',
+      action: libres.length ? `<span class="count-pill"><b>${libres.length}</b> photo${libres.length > 1 ? 's' : ''}</span>` : '',
+      contenu: `<div class="card">
+        <p class="muted small">Façade, cave, hall… les photos qui ne se rattachent à aucune ${esc(typeOf(r).rowLabel)}.</p>
+        ${photoStrip(libres)}
+        <button class="btn ghost wide btn-photo" data-photo="">${ICONS.camera}Ajouter une photo</button>
+      </div>`,
+    })}`
+}
+
+const dateLisible = (iso) => (iso ? S.frDate(iso) : '')
+
+/**
+ * Le bilan : le rapport tel qu'il va partir, en une carte. Ses faits, le verdict
+ * d'ensemble, et ce qui manque encore - chaque manque ramene a son etape.
+ */
+function bilanHTML(r, t) {
+  const lignes = r.rows ?? []
+  const cont = S.contaminatedCount(r)
+  const e = accordE(t)
+  const etat = etatRapport(r)
+  const reste = manques(r)
+  const date = dateLisible(r.lieu?.dateIntervention || lignes.find((l) => l.date)?.date) || new Date(r.createdAt ?? Date.now()).toLocaleDateString('fr-CH')
+  const photos = (r.photos ?? []).length
+  const faits = [
+    ['Client', S.fullName(r.mandant) || '—'],
+    ['Lieu', adresseDuLieu(r) || '—'],
+    ['Date', date],
+    [t.rowLabelPlural[0].toUpperCase() + t.rowLabelPlural.slice(1), `${lignes.length} contrôlé${e}${lignes.length > 1 ? 's' : ''}`],
+    ['Photos', photos ? `${photos}` : 'Aucune'],
+  ]
+  return `
+    <article class="bilan${cont ? ' positif' : ''}">
+      <header class="bilan-tete">
+        <span class="bilan-ref">${esc(r.ref ?? '')}</span>
+        <span class="pill ${etat.cle}">${esc(etat.mot)}</span>
+      </header>
+      <h3 class="bilan-titre">${esc(t.label)}</h3>
+      <dl class="bilan-faits">
+        ${faits.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}
+      </dl>
+      <div class="bilan-verdict">
+        <span class="bilan-verdict-ico">${cont ? ICONS.alerte : ICONS.coche}</span>
+        <span>
+          <b>${cont ? 'Détection positive' : lignes.some((l) => l.contamine) ? 'Aucune trace détectée' : 'Détection à mener'}</b>
+          <span>${cont ? `${cont} ${cont > 1 ? t.rowLabelPlural : t.rowLabel} contaminé${e}${cont > 1 ? 's' : ''}` : lignes.some((l) => l.contamine) ? 'Le chien n’a marqué nulle part' : 'Aucun verdict saisi'}</span>
+        </span>
+      </div>
+      ${
+        reste.length
+          ? `<div class="bilan-manques">
+               <p class="field-label">Avant de remettre le rapport</p>
+               <ul>${reste
+                 .map((m) => `<li><button type="button" data-etape="${m.etape}">${esc(m.texte)}${ICONS.chevron}</button></li>`)
+                 .join('')}</ul>
+             </div>`
+          : `<p class="bilan-pret">${ICONS.coche}Rapport complet, prêt à être remis.</p>`
+      }
+    </article>`
+}
+
+function clotureSection(view, r, t, replie) {
+  return `
+    ${bilanHTML(r, t)}
+    ${t.hasSignature ? signatureSection(r) : ''}
+    ${technicienSection(r, replie('technicien'))}
+    ${partenaireSection(view, r, replie('partenaire'))}`
+}
+
+// --- les etapes --------------------------------------------------------------
+
+const TITRES = {
+  client: () => 'Pour qui ?',
+  lieu: () => "Le lieu d'intervention",
+  detection: (t) => `${t.rowLabelPlural[0].toUpperCase()}${t.rowLabelPlural.slice(1)} contrôlé${accordE(t)}s`,
+  constats: () => 'Constats',
+  cloture: () => 'Clôture',
+}
+
+const AIDES = {
+  client: () => 'Le mandant, à qui le rapport sera remis.',
+  lieu: () => 'Où le chien a travaillé, et dans quelles conditions.',
+  detection: (t) =>
+    t.layout === 'pieces'
+      ? 'Pour chaque pièce, le verdict du chien. « Rien trouvé » range la pièce et passe à la suivante.'
+      : `Une ligne par ${t.rowLabel}, avec son verdict et ses constatations.`,
+  constats: () => 'Ce que le rapport conclut, et les photos d’ensemble.',
+  cloture: () => 'Vérifiez le bilan, faites signer, puis remettez le rapport.',
+}
+
+/** La frise des etapes. Exportee : l'app la redessine a mesure qu'on remplit. */
+export function etapesNavHTML(view, { vientDeFinir = [] } = {}) {
+  const etapes = etapesDuRapport(view.report)
+  const courante = view.etape ?? 0
+  const faites = etapes.filter((e) => e.fait).length
+  return `
+    <ol class="etapes-liste" style="--avance:${(courante / (etapes.length - 1)).toFixed(3)}">
+      ${etapes
+        .map((e, k) => {
+          const classes = [
+            'etape',
+            k === courante ? 'courante' : '',
+            e.fait ? 'faite' : '',
+            // Un marquage du chien est un constat, pas un oubli : seul ce qui
+            // reclame un geste porte le point fauve.
+            e.alerte && e.id !== 'detection' ? 'alerte' : '',
+            vientDeFinir.includes(e.id) ? 'vient-de-finir' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')
+          return `<li>
+            <button type="button" class="${classes}" data-etape="${k}" ${k === courante ? 'aria-current="step"' : ''}
+                    aria-label="Étape ${k + 1} : ${esc(e.titre)}${e.fait ? ', faite' : ''}${e.alerte ? `, ${esc(e.alerte)}` : ''}">
+              <span class="etape-pastille">${e.fait && k !== courante ? ICONS.coche : k + 1}</span>
+              <span class="etape-nom">${esc(e.titre)}</span>
+            </button>
+          </li>`
+        })
+        .join('')}
+    </ol>
+    <span class="etapes-bilan" aria-hidden="true">${faites}/${etapes.length}</span>`
+}
+
+function barreHTML(r, courante, etapes) {
+  const fini = !S.enCours(r)
+  const derniere = courante === etapes.length - 1
+  if (!derniere) {
+    const suivante = etapes[courante + 1]
+    return `
+    <div class="bottom-bar barre-etapes">
+      ${courante > 0 ? `<button class="btn ghost etroit" data-etape-pas="-1" aria-label="Étape précédente">${ICONS.precedent}</button>` : ''}
+      <button class="btn primary" data-etape-pas="1"><span>Suivant · ${esc(suivante.titre)}</span>${ICONS.suivant}</button>
+    </div>`
+  }
+  return `
+    <div class="bottom-bar barre-cloture">
+      <button class="btn ghost" data-act="preview">${ICONS.oeil}<span>Aperçu</span></button>
+      ${
+        r.parentId
+          ? ''
+          : `<button class="btn ghost" data-act="${fini ? 'rouvrir' : 'terminer'}">${fini ? 'Rouvrir' : 'Terminer'}</button>`
+      }
+      <button class="btn primary" data-act="send">${ICONS.envoyer}<span>${fini ? 'Renvoyer' : 'Envoyer'}</span></button>
+    </div>`
 }
 
 export function editorView(view) {
   const r = view.report
   const t = typeOf(r)
   const replie = (cle) => view.sectionsRepliees?.has(cle) ?? false
-  const libres = r.photos.filter((p) => !p.rowId)
+  const etapes = etapesDuRapport(r)
+  const courante = Math.min(Math.max(view.etape ?? 0, 0), etapes.length - 1)
+  const e = etapes[courante]
   const fini = !S.enCours(r)
-  const sousTitre = [`N° ${r.ref}`, r.lieu?.adresseIntervention || r.lieu?.adresse || 'Nouveau rapport']
+  const titre = S.fullName(r.mandant) || r.lieu?.locataire || t.label
+
+  const contenu =
+    e.id === 'client'
+      ? mandantSection(view, r, view.contacts)
+      : e.id === 'lieu'
+        ? lieuSection(r, t)
+        : e.id === 'detection'
+          ? t.layout === 'pieces'
+            ? piecesSection(view, r, t)
+            : lignesSection(view, r, t)
+          : e.id === 'constats'
+            ? constatsSection(r)
+            : clotureSection(view, r, t, replie)
 
   return `
-    <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+    <header class="top editor-top rapport-tete">
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
-        <h1>${esc(t.label)}</h1>
-        <p class="muted">${esc(sousTitre.join(' · '))}${fini ? ' · <b>Terminé</b>' : ''}</p>
+        <h1>${esc(titre)}</h1>
+        <p><span class="mono">${esc(r.ref ?? '')}</span> · ${esc(t.choix)}${fini ? ' · <b>Remis</b>' : ''}</p>
       </div>
-      ${
-        // Pas de duplication pour un sous-rapport : sa copie serait orpheline,
-        // rattachee a aucun immeuble.
-        r.parentId
-          ? ''
-          : `<span class="top-actions">
-               <button class="btn ghost btn-mini" data-act="dupliquer">Dupliquer</button>
-             </span>`
-      }
+      <span class="top-actions">
+        <span class="save-etat" data-save-etat role="status" aria-live="polite" title="Enregistré sur l'appareil">${ICONS.coche}<span>Enregistré</span></span>
+        <button class="icon-btn menu-rapport" data-act="menu-rapport" aria-label="Autres actions">${ICONS.plusmenu}</button>
+      </span>
+      <nav class="etapes" aria-label="Étapes du rapport" data-etapes>${etapesNavHTML(view, { vientDeFinir: view.vientDeFinir ?? [] })}</nav>
     </header>
 
-    <section class="pad">
-      ${mandantSection(view, r, view.contacts, replie('mandant'))}
-
-      ${lieuSection(r, t, replie('lieu'))}
-
-      ${t.layout === 'pieces' ? piecesSection(view, r, t) : lignesSection(view, r, t)}
-
-      ${rubrique({
-        cle: 'photos',
-        icone: 'camera',
-        ton: 'prune',
-        titre: 'Photos libres',
-        resume: libres.length ? `${libres.length} photo${libres.length > 1 ? 's' : ''}` : 'Aucune photo',
-        replie: replie('photos'),
-        contenu: `<div class="card">
-          <p class="muted small">Photos non rattachées à une ligne (façade, cave, hall…).</p>
-          ${photoStrip(libres)}
-          <button class="btn ghost wide" data-photo="">+ Ajouter une photo</button>
-        </div>`,
-      })}
-
-      ${rubrique({
-        cle: 'remarques',
-        icone: 'note',
-        ton: 'neutral',
-        titre: 'Remarques et recommandations',
-        resume: (r.remarques || '').trim() || 'Aucune remarque',
-        replie: replie('remarques'),
-        contenu: `<div class="card">
-          <textarea data-path="remarques" rows="4" placeholder="Aucun marquage du chien de recherche.">${esc(r.remarques)}</textarea>
-          <div class="quick-rooms quick-notes">${RECOMMANDATIONS.map(
-            (n) => `<button type="button" class="chip chip-sm" data-quick-note="${esc(n.texte)}">+ ${esc(n.label)}</button>`
-          ).join('')}</div>
-        </div>`,
-      })}
-
-      ${technicienSection(r, replie('technicien'))}
-
-      ${partenaireSection(view, r, replie('partenaire'))}
-
-      ${t.hasSignature ? signatureSection(r) : ''}
+    <section class="pad etape-corps${view.etapeSens ? ` vers-${view.etapeSens}` : ''}" data-etape-id="${e.id}">
+      <div class="etape-tete">
+        <p class="etape-numero"><span>Étape ${courante + 1}</span> sur ${etapes.length}</p>
+        <h2 class="etape-titre">${esc(TITRES[e.id](t))}</h2>
+        <p class="etape-aide">${esc(AIDES[e.id](t))}</p>
+        ${e.alerte && e.id !== 'detection' ? `<p class="etape-alerte">${ICONS.alerte}${esc(e.alerte)}</p>` : ''}
+      </div>
+      ${contenu}
     </section>
 
-    <!-- Les trois sorties d'un rapport, dans l'ordre ou on les emprunte : le
-         relire, le declarer fini, l'envoyer. "Terminer" a d'abord loge dans
-         l'en-tete, a cote de "Dupliquer" : a 375 px les deux boutons y
-         mangeaient le titre, qui tombait a "Rapport d'..." et le numero a
-         "N° AF-00096 · No...". Une cloture est de toute facon une sortie, pas
-         un reglage : sa place est ici. -->
-    <div class="bottom-bar">
-      <button class="btn ghost" data-act="preview">Aperçu PDF</button>
-      ${
-        r.parentId
-          ? ''
-          : `<button class="btn ghost" data-act="${fini ? 'rouvrir' : 'terminer'}">${fini ? 'Rouvrir' : 'Terminer'}</button>`
-      }
-      <button class="btn primary" data-act="send">${fini ? 'Renvoyer' : 'Envoyer'}</button>
-    </div>`
+    ${barreHTML(r, courante, etapes)}`
 }

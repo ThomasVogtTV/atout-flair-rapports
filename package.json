@@ -12,6 +12,9 @@
     "test:mutations": "node test/mutations.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@vercel/blob": "^2.8.0",
     "nodemailer": "^9.1.1",
     "pdf-lib": "^1.17.1"

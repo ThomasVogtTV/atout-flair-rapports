@@ -8,7 +8,7 @@
 
 import { backupAge, enPoids, STOCKAGE_ALERTE } from '../state.js'
 import { esc } from '../ui/dom.js'
-import { sectionIcon } from '../ui/icons.js'
+import { ICONS, sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
 import { currentCode } from '../mailer.js'
 import { identite, souvenirJusqua } from '../lock.js'
@@ -62,7 +62,7 @@ export function reglagesView(view) {
   const place = view?.stockage ?? null
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Réglages</h1>
         <p class="muted">Valent pour cet appareil</p>

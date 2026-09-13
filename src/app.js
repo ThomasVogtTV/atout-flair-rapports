@@ -17,7 +17,7 @@ import { contactsView, ficheContactView, listeContactsHTML } from './views/conta
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
 import { adminView } from './views/admin.js'
-import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS } from './views/editor.js'
+import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS, etapesNavHTML, verdictsHTML } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
@@ -31,6 +31,11 @@ import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
 import { sauvegarder, listerSauvegardes, restaurer } from './sauvegarde.js'
 import { choisirRestauration } from './restauration.js'
+import { etapesDuRapport, etapeDeReprise, ETAPES } from './etapes.js'
+import { installerDock, majDock } from './ui/dock.js'
+import { ouvrirNouveauRapport } from './nouveau-dialog.js'
+import { ouvrirMenuRapport } from './rapport-menu.js'
+import { montrerSceau } from './ui/sceau.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -58,6 +63,7 @@ function scheduleSave() {
   aEnregistrer = view.report
   clearTimeout(saveTimer)
   saveTimer = setTimeout(flushSave, 600)
+  etatSauvegarde(true)
 }
 
 // Enregistre tout de suite ce qui attend : avant de changer d'ecran, et quand
@@ -66,12 +72,36 @@ function flushSave() {
   clearTimeout(saveTimer)
   const r = aEnregistrer
   aEnregistrer = null
-  return r ? S.saveReport(r) : Promise.resolve(true)
+  const fait = r ? S.saveReport(r) : Promise.resolve(true)
+  fait.then((ok) => ok !== false && etatSauvegarde(false))
+  return fait
+}
+
+// L'etat de l'enregistrement, dans l'en-tete du rapport : ce qu'on tape est
+// garde a mesure, et on le voit sans avoir a y penser.
+function etatSauvegarde(enCours) {
+  const el = root.querySelector('[data-save-etat]')
+  if (!el) return
+  el.classList.toggle('en-cours', enCours)
+  el.querySelector('span').textContent = enCours ? 'Enregistrement…' : 'Enregistré'
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) flushSave()
 })
 window.addEventListener('pagehide', () => flushSave())
+
+// Un filet se pose sous l'en-tete des qu'on a quitte le haut de page.
+let defile = false
+window.addEventListener(
+  'scroll',
+  () => {
+    const bas = window.scrollY > 6
+    if (bas === defile) return
+    defile = bas
+    document.body.classList.toggle('defile', bas)
+  },
+  { passive: true }
+)
 
 function get(path) {
   return path.split('.').reduce((o, k) => o?.[k], view.report)
@@ -234,6 +264,11 @@ async function openReport(id) {
   // creer pour la remplir.
   view.repliees = new Set(report.rows.map((r) => r.id))
   view.sectionsRepliees = sectionsParDefaut(report)
+  // Le rapport s'ouvre a l'etape ou il en est : un neuf sur le client, un
+  // brouillon repris sur ce qui reste a faire, un rapport remis sur son bilan.
+  view.etape = etapeDeReprise(report)
+  view.etapeSens = null
+  etapesFaites = null
   view.children = await S.enfantsDe(report.id)
   view.contacts = await contactsVisibles()
   view.partenaires = await S.listPartenaires()
@@ -518,14 +553,22 @@ async function changerStatutRdv(rdv, statut) {
 // re-rendu local (ajout d'une ligne, d'une photo, etc.).
 let lastViewKey = null
 let entreeTimer = null
+// Les etapes deja faites du rapport ouvert, pour cocher avec un rebond celle qui
+// vient de se completer.
+let etapesFaites = null
 
 function render() {
   const key = `${view.screen}:${view.report?.id ?? ''}`
   const navigated = key !== lastViewKey
   lastViewKey = key
-  // La photo de fond n'apparait que sur l'accueil : derriere un formulaire,
-  // elle nuirait a la lecture des champs (voir .app-bg dans style.css).
+  // L'ecran courant, pour le CSS : le dock ne vit que sur les ecrans de premier
+  // niveau, la barre d'actions que dans un rapport.
   document.body.dataset.screen = view.screen
+  if (view.screen === 'editor' && view.report) {
+    const faites = etapesDuRapport(view.report).filter((e) => e.fait).map((e) => e.id)
+    view.vientDeFinir = !navigated && etapesFaites ? faites.filter((id) => !etapesFaites.includes(id)) : []
+    etapesFaites = faites
+  }
   root.innerHTML =
     view.screen === 'home'
       ? homeView(view)
@@ -554,6 +597,7 @@ function render() {
     // Assez long pour laisser passer le reflet de la carte de l'accueil.
     entreeTimer = setTimeout(() => root.classList.remove('entree'), 1500)
   }
+  majDock({ ecran: view.screen, invite: estInvite(), enAttente: view.enAttente, enEchec: view.enEchec })
   updatePendingBadge()
   if (view.screen === 'editor' && view.report) chargerVignettes(view.report.photos, root)
 }
@@ -633,6 +677,7 @@ root.addEventListener('input', (ev) => {
     // l'ecran : un re-rendu ferait perdre le curseur du champ en cours.
     if (el.dataset.path === 'mandant.nom') rafraichirSuggestions()
     scheduleSave()
+    planifierEtapes()
   } else if (el.dataset.rowField) {
     const row = rowOf(el)
     if (!row) return
@@ -645,6 +690,7 @@ root.addEventListener('input', (ev) => {
     // quelque chose : elles laissent la place au reste de la carte.
     if (champ === 'nom' && el.value) el.closest('.row-card')?.querySelector('.quick-rooms')?.remove()
     scheduleSave()
+    planifierEtapes()
   }
 })
 
@@ -717,13 +763,82 @@ root.addEventListener('change', async (ev) => {
 // qu'elle continue de vouloir dire quelque chose.
 function refreshCounters() {
   const zone = root.querySelector('.counter-pills')
-  if (!zone) return
+  if (!zone) return rafraichirEtapes()
   const avant = { total: zone.querySelector('#cnt-total')?.textContent, cont: zone.querySelector('#cnt-cont')?.textContent }
   zone.innerHTML = counterPills(view.report, typeOf(view.report))
   for (const [cle, id] of [['total', 'cnt-total'], ['cont', 'cnt-cont']]) {
     const el = zone.querySelector(`#${id}`)
     if (el && el.textContent !== avant[cle]) pulse(el)
   }
+  rafraichirEtapes()
+}
+
+// --- les etapes du rapport -------------------------------------------------
+
+// La frise des etapes et la barre des verdicts suivent la saisie sans redessiner
+// l'ecran : un rendu complet ferait perdre le curseur du champ en cours.
+function rafraichirEtapes() {
+  if (view.screen !== 'editor' || !view.report) return
+  const faites = etapesDuRapport(view.report).filter((e) => e.fait).map((e) => e.id)
+  const nouvelles = etapesFaites ? faites.filter((id) => !etapesFaites.includes(id)) : []
+  etapesFaites = faites
+  const nav = root.querySelector('[data-etapes]')
+  if (nav) nav.innerHTML = etapesNavHTML(view, { vientDeFinir: nouvelles })
+  const verdicts = root.querySelector('[data-verdicts]')
+  if (verdicts) verdicts.outerHTML = verdictsHTML(view.report, typeOf(view.report))
+}
+
+let etapesTimer = null
+function planifierEtapes() {
+  clearTimeout(etapesTimer)
+  etapesTimer = setTimeout(rafraichirEtapes, 250)
+}
+
+// Passer d'une etape a l'autre : tout est deja enregistre, on ne perd rien en
+// revenant en arriere. Le contenu glisse dans le sens du mouvement.
+function allerEtape(k) {
+  const cible = Math.max(0, Math.min(ETAPES.length - 1, k))
+  if (cible === (view.etape ?? 0)) return
+  flushSave()
+  view.etapeSens = cible > (view.etape ?? 0) ? 'avant' : 'arriere'
+  view.etape = cible
+  render()
+  view.etapeSens = null
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+}
+
+// Une action choisie hors de l'ecran (le menu du rapport) emprunte le meme
+// chemin qu'un bouton de l'ecran : un bouton ephemere, clique puis retire.
+function declencher(act) {
+  const bouton = document.createElement('button')
+  bouton.type = 'button'
+  bouton.dataset.act = act
+  bouton.hidden = true
+  root.appendChild(bouton)
+  bouton.click()
+  bouton.remove()
+}
+
+// --- navigation du bas -------------------------------------------------------
+
+// "Nouveau rapport" depuis n'importe quel ecran du dock : les trois lieux, et
+// au besoin le client d'abord.
+async function nouveauRapport() {
+  const contacts = await contactsVisibles()
+  const choix = await ouvrirNouveauRapport({
+    contacts,
+    choisirClient: () => choisirContact(contacts, view.reports ?? []),
+  })
+  if (choix) createReport(choix.type, choix.contact)
+}
+
+function naviguer(ou) {
+  if (ou === 'nouveau') return nouveauRapport()
+  if (ou === 'agenda') return view.screen === 'agenda' ? undefined : openAgenda()
+  if (ou === 'contacts') return view.screen === 'contacts' ? undefined : openContacts()
+  if (ou === 'envois') return openEnvois()
+  if (view.screen === 'home') return window.scrollTo({ top: 0, behavior: 'smooth' })
+  return goHome()
 }
 
 // Ajoute une ligne directement dans le DOM (pas de render() complet) pour
@@ -818,6 +933,13 @@ root.addEventListener('click', async (ev) => {
 
   const newType = el.closest('[data-new]')?.dataset.new
   if (newType) return createReport(newType)
+
+  // Les etapes du rapport : une pastille de la frise, un manque du bilan, ou
+  // les boutons Precedent / Suivant de la barre du bas.
+  const etapeCible = el.closest('[data-etape]')?.dataset.etape
+  if (etapeCible !== undefined && view.screen === 'editor') return allerEtape(Number(etapeCible))
+  const pasEtape = el.closest('[data-etape-pas]')?.dataset.etapePas
+  if (pasEtape && view.screen === 'editor') return allerEtape((view.etape ?? 0) + Number(pasEtape))
 
   if (el.closest('[data-toggle-reports]')) {
     view.reportsOpen = !view.reportsOpen
@@ -996,6 +1118,7 @@ root.addEventListener('click', async (ev) => {
       ta.value = actuel ? `${actuel}\n${quickNote}` : quickNote
       set('remarques', ta.value)
       scheduleSave()
+      planifierEtapes()
     }
     return
   }
@@ -1020,6 +1143,7 @@ root.addEventListener('click', async (ev) => {
       segRow.closest('.row-card').dataset.status = row.contamine || ''
       refreshCounters()
       clearDefaultRemarques()
+      rafraichirEtapes()
       // "Non" clot la piece : rien a decrire, rien a photographier, on passe a
       // la suivante - la carte se replie d'elle-meme et la suivante remonte
       // sous le pouce. "Contaminée" et "?" laissent la carte ouverte : il reste
@@ -1184,7 +1308,9 @@ root.addEventListener('click', async (ev) => {
     const rapport = view.report
     if (!estInvite()) await S.rememberContact(rapport.mandant)
     await S.terminerReport(rapport)
-    toast('Rapport terminé. Il reste dans « Mes rapports ».')
+    montrerSceau({ titre: 'Rapport terminé', ref: rapport.ref })
+    // Le cachet a le temps de se poser avant la question du controle de suivi.
+    if (S.contaminatedCount(rapport)) await new Promise((r) => setTimeout(r, 900))
     await proposerControle(rapport)
     return goHome()
   }
@@ -1194,6 +1320,11 @@ root.addEventListener('click', async (ev) => {
     await S.rouvrirReport(view.report)
     toast('Rapport rouvert.')
     return render()
+  }
+  if (act === 'menu-rapport') {
+    const choix = await ouvrirMenuRapport({ fini: !S.enCours(view.report), sousRapport: !!view.report?.parentId })
+    if (choix) declencher(choix)
+    return
   }
   if (act === 'open-contacts') return openContacts()
   if (act === 'open-agenda') return openAgenda()
@@ -1554,10 +1685,7 @@ async function createChild(rowId) {
 // ouvert, et ne disait ni ce qui attendait, ni pourquoi.
 async function updatePendingBadge() {
   await majCompteurs()
-  const pastille = document.querySelector('.envois-toggle')
-  if (!pastille) return
-  pastille.dataset.compte = view.enEchec || view.enAttente || ''
-  pastille.classList.toggle('en-echec', view.enEchec > 0)
+  majDock({ ecran: view.screen, invite: estInvite(), enAttente: view.enAttente, enEchec: view.enEchec })
 }
 
 // --- reseau ----------------------------------------------------------------
@@ -1623,6 +1751,8 @@ export async function boot() {
   // Le verrou se pose avant tout affichage : l'accueil se dessine dessous, sans
   // qu'une liste de rapports ne transparaisse une fraction de seconde avant le code.
   installerVerrou()
+  // La navigation du bas, posee une fois : elle traverse les ecrans.
+  installerDock(naviguer)
   // Une ecriture refusee ne doit pas passer inapercue : c'est le seul incident
   // de l'app qui fait disparaitre du travail deja saisi.
   S.onEcritureRefusee((plein) => {

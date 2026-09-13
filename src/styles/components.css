@@ -1,0 +1,671 @@
+/* ==========================================================================
+   Composants : boutons, champs, pastilles, cartes, etats, fenetres
+   --------------------------------------------------------------------------
+   Chaque composant a ses etats : repos, survol (pointeur seulement), appui,
+   focus clavier, desactive, chargement. Le survol est reserve aux pointeurs :
+   sur un ecran tactile, il resterait colle apres le tap.
+   ========================================================================== */
+
+/* --- Bouton ---------------------------------------------------------------- */
+.btn {
+  --btn-bg: var(--c-surface);
+  --btn-fg: var(--c-ink);
+  --btn-bd: var(--c-line-2);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 20px;
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-bd);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    transform var(--d-1) var(--ease),
+    background-color var(--d-2) var(--ease),
+    border-color var(--d-2) var(--ease),
+    box-shadow var(--d-2) var(--ease),
+    color var(--d-2) var(--ease),
+    filter var(--d-2) var(--ease);
+}
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled,
+.btn[aria-disabled='true'] { opacity: 0.42; pointer-events: none; }
+@media (hover: hover) {
+  .btn:hover { border-color: var(--c-faint); }
+}
+
+/* L'action principale : la nuit pleine, en clair ; la creme, en sombre. */
+.btn.primary {
+  --btn-bg: var(--c-primary);
+  --btn-fg: var(--c-on-primary);
+  --btn-bd: var(--c-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 10px 22px -12px rgba(8, 16, 18, 0.6);
+}
+@media (hover: hover) {
+  .btn.primary:hover { filter: brightness(1.14); border-color: var(--c-primary); }
+}
+
+/* L'accent fauve : la seule action qui merite l'or (rare). */
+.btn.accent {
+  --btn-bg: var(--c-fauve);
+  --btn-fg: #1b1206;
+  --btn-bd: var(--c-fauve);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 22px -12px color-mix(in srgb, var(--c-fauve) 80%, transparent);
+}
+
+.btn.ghost { --btn-bg: var(--c-surface); --btn-bd: var(--c-line-2); font-weight: 560; }
+.btn.ghost.danger,
+.btn.danger {
+  --btn-fg: var(--c-danger);
+  --btn-bd: color-mix(in srgb, var(--c-danger) 32%, var(--c-line));
+}
+.btn.quiet { --btn-bg: transparent; --btn-bd: transparent; }
+.btn.wide { width: 100%; margin-top: 12px; }
+.btn-mini { min-height: 36px; padding: 0 13px; font-size: 13.5px; border-radius: 10px; }
+
+/* Chargement : le libelle cede la place a un anneau, la largeur ne bouge pas. */
+.btn.chargement { color: transparent !important; pointer-events: none; }
+.btn.chargement::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--btn-fg) 30%, transparent);
+  border-top-color: var(--btn-fg);
+  animation: tourne 0.7s linear infinite;
+}
+
+/* --- Bouton-icone ---------------------------------------------------------- */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-muted);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--d-2) var(--ease), transform var(--d-1) var(--ease), color var(--d-2);
+}
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn:active { background: var(--c-veil); transform: scale(0.93); }
+@media (hover: hover) {
+  .icon-btn:hover { background: var(--c-veil); color: var(--c-ink); }
+}
+
+/* --- Lien d'action ---------------------------------------------------------
+   Une cible de 20 px est trop petite pour un pouce : la zone de prise s'elargit
+   sans toucher a la mise en page. */
+.link {
+  position: relative;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font-family: var(--f-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-brand-ink);
+  cursor: pointer;
+}
+.link::after { content: ''; position: absolute; inset: -11px -8px; }
+@media (hover: hover) {
+  .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+/* --- Champs ---------------------------------------------------------------
+   Le libelle annonce, la valeur compte : libelle petit et espace, valeur en
+   16 px - la taille qui se relit d'un coup d'oeil, et le seuil sous lequel iOS
+   zoome de force a la mise au point. */
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: var(--fs-micro);
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  font-family: var(--f-ui);
+  font-size: var(--fs-input);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--c-ink);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-line-2);
+  border-radius: var(--r-sm);
+  transition: border-color var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease), background-color var(--d-2) var(--ease);
+}
+input[type='date'],
+input[type='time'] { font-variant-numeric: tabular-nums; }
+textarea { min-height: 116px; line-height: 1.55; resize: vertical; }
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23676c69' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+}
+@media (hover: hover) {
+  input:hover,
+  textarea:hover,
+  select:hover { border-color: var(--c-faint); }
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--c-brand);
+  background-color: var(--c-surface);
+  box-shadow: var(--ring);
+}
+input::placeholder,
+textarea::placeholder { color: var(--c-faint); }
+input:disabled,
+textarea:disabled { opacity: 0.55; background: var(--c-bg-2); }
+input[type='search']::-webkit-search-cancel-button { display: none; }
+input[aria-invalid='true'],
+.champ-erreur input {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-danger) 18%, transparent);
+}
+
+/* Cases et boutons radio : la forme native, a la couleur de la maison. */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  box-shadow: none;
+  accent-color: var(--c-brand);
+  cursor: pointer;
+}
+
+.field-label {
+  font-size: var(--fs-micro);
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; }
+.grid2 .full { grid-column: 1 / -1; }
+.grid2 > * { min-width: 0; }
+
+/* La case "meme adresse que le mandant" se pose dans la colonne voisine de
+   son champ, alignee sur le bas, au niveau du champ qu'elle commande. */
+.same-addr {
+  flex-direction: row;
+  align-items: center;
+  align-self: end;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 0 2px;
+  font-size: 13.5px;
+  font-weight: 560;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-ink-2);
+  cursor: pointer;
+}
+
+/* --- Pastilles de choix ------------------------------------------------------ */
+.chip {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 15px;
+  font-family: var(--f-ui);
+  font-size: 13.5px;
+  font-weight: 560;
+  white-space: nowrap;
+  color: var(--c-ink-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line-2);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition:
+    transform var(--d-1) var(--ease),
+    background-color var(--d-2) var(--ease),
+    color var(--d-2) var(--ease),
+    border-color var(--d-2) var(--ease),
+    box-shadow var(--d-2) var(--ease);
+}
+.chip:active { transform: scale(0.95); }
+@media (hover: hover) {
+  .chip:hover { border-color: var(--c-faint); color: var(--c-ink); }
+}
+.chip.on {
+  font-weight: 650;
+  color: var(--c-brand-ink);
+  background: color-mix(in srgb, var(--c-brand) var(--voile-fort), var(--c-surface));
+  border-color: color-mix(in srgb, var(--c-brand) var(--liseret), transparent);
+}
+.chip-sm { min-height: 34px; padding: 0 13px; font-size: 13px; }
+/* La cible s'elargit verticalement, sans empieter sur les voisines. */
+.chip-sm::after { content: ''; position: absolute; inset: -5px 0; }
+
+.chip-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-muted);
+  background: var(--c-bg-2);
+  border-radius: var(--r-pill);
+}
+.chip.on .chip-count { color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
+
+/* Le choix d'un type prend la couleur de ce qu'il designe. */
+.chip.type-immeuble.on {
+  color: var(--t-immeuble);
+  background: color-mix(in srgb, var(--t-immeuble) var(--voile-fort), var(--c-surface));
+  border-color: color-mix(in srgb, var(--t-immeuble) var(--liseret), transparent);
+}
+.chip.type-hotel.on {
+  color: var(--t-hotel);
+  background: color-mix(in srgb, var(--t-hotel) var(--voile-fort), var(--c-surface));
+  border-color: color-mix(in srgb, var(--t-hotel) var(--liseret), transparent);
+}
+.chip.type-termines.on {
+  color: var(--c-success);
+  background: color-mix(in srgb, var(--c-success) var(--voile-fort), var(--c-surface));
+  border-color: color-mix(in srgb, var(--c-success) var(--liseret), transparent);
+}
+
+/* Bandes de pastilles : elles defilent lateralement plutot que de passer a la
+   ligne, et le bord droit s'estompe - ce qui s'estompe se prolonge. */
+.quick-rooms,
+.report-filters {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 26px 3px 1px;
+  margin-right: calc(-1 * var(--gutter));
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+.quick-rooms::-webkit-scrollbar,
+.report-filters::-webkit-scrollbar { display: none; }
+.dialog-box .quick-rooms,
+.card .quick-rooms,
+.row-card .quick-rooms { margin-right: -18px; }
+
+/* --- Controle segmente ------------------------------------------------------
+   Un rail, un curseur : le choix se lit a la surface qui se souleve. Le verdict
+   d'une piece, lui, se peint plein - c'est la donnee la plus importante du
+   rapport, elle doit se lire au soleil sans lire un mot. */
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--c-bg-2);
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+}
+.seg-btn {
+  flex: 1;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-ink-2);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--d-2) var(--ease), color var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease), transform var(--d-1) var(--ease);
+}
+.seg-btn:active { transform: scale(0.96); }
+.seg-btn.on {
+  color: var(--c-ink);
+  background: var(--c-surface);
+  box-shadow: 0 1px 2px rgba(21, 25, 26, 0.1), 0 2px 8px -4px rgba(21, 25, 26, 0.2);
+}
+.seg-btn.oui.on { color: #fff; background: var(--c-danger); box-shadow: 0 8px 16px -10px var(--c-danger); }
+.seg-btn.non.on { color: #fff; background: var(--c-success); box-shadow: 0 8px 16px -10px var(--c-success); }
+.seg-btn.inconnu.on { color: #1b1206; background: var(--c-fauve); box-shadow: 0 8px 16px -10px var(--c-fauve); }
+:root[data-theme='dark'] .seg-btn.oui.on,
+:root[data-theme='dark'] .seg-btn.non.on { color: #0b1113; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .seg-btn.oui.on,
+  :root:not([data-theme='light']) .seg-btn.non.on { color: #0b1113; }
+}
+.seg.tri .seg-btn:last-child { flex: 0 0 56px; }
+
+/* --- Carte ------------------------------------------------------------------ */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+  padding: 18px;
+}
+
+/* --- Pastilles d'etat -------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  border-radius: var(--r-pill);
+  color: var(--c-ink-2);
+  background: color-mix(in srgb, var(--c-ink) 7%, transparent);
+}
+.pill::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.pill.sent,
+.pill.fait { color: var(--c-success); background: var(--c-success-soft); }
+.pill.queued { color: var(--c-warning); background: var(--c-warning-soft); }
+.pill.done,
+.pill.annule,
+.pill.draft { color: var(--c-ink-2); background: color-mix(in srgb, var(--c-ink) 7%, transparent); }
+.pill.encours { color: var(--c-brand-ink); background: color-mix(in srgb, var(--c-brand) var(--voile), transparent); }
+.pill.amodifier { color: var(--c-fauve-ink); background: var(--c-fauve-soft); }
+.pill.off { color: var(--c-danger); background: var(--c-danger-soft); }
+.pill.invite { color: var(--c-fauve-ink); background: var(--c-fauve-soft); }
+
+.counter-pills { display: inline-flex; gap: 6px; }
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-muted);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-pill);
+}
+.count-pill b { color: var(--c-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.count-pill.cont { color: var(--c-danger); background: var(--c-danger-soft); border-color: color-mix(in srgb, var(--c-danger) 30%, transparent); }
+.count-pill.cont b { color: var(--c-danger); }
+
+/* --- Titre de rubrique --------------------------------------------------------
+   Sur les ecrans, un titre en Fraunces : la rubrique est un chapitre. Dans un
+   rapport, le titre de l'etape parle deja en grand ; ses rubriques reprennent
+   la signature du PDF - petites capitales et filet jusqu'au bord. */
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 36px 2px 14px;
+}
+.section-title-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: min-content;
+  font-family: var(--f-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  color: var(--c-ink);
+}
+.section-title-trailer { display: inline-flex; align-items: center; gap: 12px; }
+
+.section-icon {
+  --ton: var(--c-brand);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  color: var(--ton);
+  background: color-mix(in srgb, var(--ton) var(--voile), transparent);
+}
+.section-icon svg { width: 17px; height: 17px; }
+.section-icon.icon-accent { --ton: var(--c-brand); }
+.section-icon.icon-red { --ton: var(--c-danger); }
+.section-icon.icon-ardoise { --ton: var(--t-immeuble); }
+.section-icon.icon-prune { --ton: var(--t-hotel); }
+.section-icon.icon-amber { --ton: var(--c-fauve-ink); }
+.section-icon.icon-green { --ton: var(--c-success); }
+.section-icon.icon-neutral { --ton: var(--c-muted); }
+
+/* --- Etat vide, chargement --------------------------------------------------- */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 30px 22px;
+  text-align: center;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--c-muted);
+  background: transparent;
+  border: 1px dashed var(--c-line-2);
+  border-radius: var(--r-lg);
+  list-style: none;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-top-color: currentColor;
+  animation: tourne 0.75s linear infinite;
+}
+@keyframes tourne { to { transform: rotate(360deg); } }
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 12, 14, 0.36);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-2) var(--ease);
+}
+.loading-overlay.show { opacity: 1; pointer-events: auto; }
+.loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(360px, 86vw);
+  padding: 18px 24px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--c-on-night);
+  background: var(--c-night);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-float);
+  transform: translateY(6px) scale(0.98);
+  transition: transform var(--d-3) var(--ease-spring);
+}
+.loading-overlay.show .loading-card { transform: none; }
+.loading-card .spinner { color: var(--c-fauve-bright); }
+
+/* --- Message court ------------------------------------------------------------ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--dock-h) + 22px + env(safe-area-inset-bottom));
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 520px);
+  padding: 12px 18px 12px 14px;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.35;
+  color: var(--c-on-night);
+  background: var(--c-night);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-float);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 14px) scale(0.98);
+  transition: opacity var(--d-2) var(--ease), transform var(--d-3) var(--ease-spring);
+}
+.toast::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--c-fauve-bright);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+body[data-screen='editor'] .toast { bottom: calc(var(--barre-h) + 18px + env(safe-area-inset-bottom)); }
+
+/* --- Fenetres : la feuille qui monte du bas ------------------------------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  background: #0b0f10;
+}
+.dialog {
+  justify-content: flex-end;
+  align-items: center;
+  background: rgba(6, 12, 14, 0.46);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog { animation: voile-entre var(--d-2) var(--ease) backwards; }
+  .dialog .dialog-box { animation: feuille-monte var(--d-3) var(--ease) backwards; }
+}
+@keyframes voile-entre { from { background: rgba(6, 12, 14, 0); } }
+@keyframes feuille-monte { from { transform: translateY(40px); opacity: 0.4; } }
+
+.dialog-box {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 26px var(--gutter) calc(20px + env(safe-area-inset-bottom));
+  background: var(--c-surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: 0 -12px 40px rgba(6, 12, 14, 0.28);
+}
+/* La poignee : la feuille se lit comme une feuille. */
+.dialog-box::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 38px;
+  height: 4px;
+  margin-left: -19px;
+  border-radius: 2px;
+  background: var(--c-line-2);
+}
+.dialog-box h2 {
+  font-family: var(--f-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.dialog-box > p.muted { margin-top: -6px; }
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-line);
+}
+.dialog-actions .btn { flex: 1 1 0; min-width: 0; padding: 0 12px; }
+/* Sur un telephone, l'action principale prend la premiere ligne entiere : trois
+   boutons cote a cote ne laissaient plus la place a leur libelle. */
+@media (max-width: 519px) {
+  .dialog-actions:has(.btn:nth-child(3)) .btn { flex-basis: calc(50% - 4px); }
+  .dialog-actions:has(.btn:nth-child(3)) .btn.primary { flex-basis: 100%; order: -1; }
+}
+@media (min-width: 720px) {
+  .dialog { justify-content: center; padding: 24px; }
+  .dialog-box { border-radius: var(--r-xl); padding-bottom: 22px; }
+  .dialog-box::before { display: none; }
+}
+
+/* --- Recherche ------------------------------------------------------------------ */
+.recherche { position: relative; margin-bottom: 12px; }
+.recherche-loupe {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--c-muted);
+  pointer-events: none;
+}
+.recherche-loupe svg { width: 18px; height: 18px; }
+.recherche input { padding-left: 42px; background: var(--c-surface); border-radius: var(--r-pill); }

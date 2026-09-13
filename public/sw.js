@@ -2,7 +2,7 @@
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
 
-const CACHE = 'atout-flair-v14'
+const CACHE = 'atout-flair-v15'
 const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
@@ -32,6 +32,21 @@ async function pruneStaleAssets() {
       } catch {
         // Ce script n'a pas pu etre relu : on ne sait pas ce qu'il reference,
         // donc on ne nettoie rien du tout plutot que de casser le hors ligne.
+        return
+      }
+    }
+    // Les polices de la maison sont appelees par la feuille de style, pas par
+    // index.html : sans cette passe, elles seraient effacees du cache a chaque
+    // mise a jour, et l'app retomberait sur les polices du systeme hors ligne.
+    for (const path of Array.from(current).filter((p) => p.endsWith('.css'))) {
+      try {
+        const css = await (await fetch(path, { cache: 'no-store' })).text()
+        const base = new URL(path, location.origin)
+        for (const m of css.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)) {
+          if (m[1].startsWith('data:')) continue
+          current.add(new URL(m[1], base).pathname)
+        }
+      } catch {
         return
       }
     }

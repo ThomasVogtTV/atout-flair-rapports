@@ -1,0 +1,471 @@
+/* ==========================================================================
+   Accueil : la scene, le poste de controle, la feuille de travail
+   ========================================================================== */
+
+.accueil { position: relative; }
+
+/* --- La scene : les chiens, nets et en entier ------------------------------ */
+/* Un peu moins haute que la photo : le haut n'est que de la foret floue, et le
+   choix du lieu doit tenir dans le premier ecran, au-dessus du dock. */
+.accueil-scene {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: min(86vw, 520px);
+  background: var(--c-night);
+}
+.accueil-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 62%;
+}
+/* Le haut s'assombrit juste assez pour porter le nom de la maison ; le bas se
+   fond dans la nuit du poste - pas de coupure nette entre photo et panneau. */
+.accueil-voile {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 12, 14, 0.62) 0%,
+    rgba(6, 12, 14, 0.12) 22%,
+    rgba(6, 12, 14, 0) 46%,
+    color-mix(in srgb, var(--c-night) 35%, transparent) 70%,
+    color-mix(in srgb, var(--c-night) 88%, transparent) 88%,
+    var(--c-night) 100%
+  );
+}
+
+.accueil-barre {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top) + 16px) var(--gutter) 0;
+  color: #fff;
+}
+body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-inset-top) + 10px); }
+.marque { display: grid; gap: 6px; min-width: 0; }
+.marque-nom {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.022em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+.marque-metier {
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+.accueil-portes { display: flex; gap: 8px; flex-shrink: 0; }
+.porte {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  background: rgba(8, 14, 16, 0.32);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: transform var(--d-2) var(--ease-spring), background-color var(--d-2) var(--ease);
+}
+.porte svg { width: 32px; height: 32px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); pointer-events: none; }
+.porte:active { transform: scale(0.92); }
+@media (hover: hover) {
+  .porte:hover { background: rgba(8, 14, 16, 0.5); transform: translateY(-1px); }
+}
+
+/* --- Le poste de controle ----------------------------------------------------
+   La nuit de la maison, les lignes de niveau en filigrane, le jour en grand, et
+   un releve de trois mesures, comme sur un instrument. */
+.poste {
+  position: relative;
+  z-index: 1;
+  margin-top: -92px;
+  padding: 0 var(--gutter) 50px;
+  color: var(--c-on-night);
+  background: linear-gradient(180deg, transparent 0, var(--c-night) 92px);
+  overflow: hidden;
+}
+.poste .lignes-flair {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--c-on-night);
+  opacity: 0.075;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 40px, #000 140px);
+  mask-image: linear-gradient(180deg, transparent 40px, #000 140px);
+}
+.poste > :not(.lignes-flair) { position: relative; }
+
+.poste-jour {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 2px 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.poste-date { display: grid; gap: 4px; min-width: 0; }
+.poste-semaine {
+  font-family: var(--f-display);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.028em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+.poste-quantieme {
+  font-family: var(--f-display);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: var(--c-on-night-2);
+}
+.poste-session {
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--c-on-night-2);
+}
+.poste-session::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #7fcf9f;
+  box-shadow: 0 0 0 3px rgba(127, 207, 159, 0.18);
+}
+.poste-session.admin::before { background: var(--c-fauve-bright); box-shadow: 0 0 0 3px rgba(222, 176, 107, 0.2); }
+.poste-session.invite::before { background: #f1c27d; }
+.poste-agenda {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 15px 0 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-on-night);
+  border: 1px solid rgba(241, 237, 228, 0.2);
+  border-radius: var(--r-pill);
+  background: rgba(241, 237, 228, 0.06);
+  transition: background-color var(--d-2) var(--ease);
+}
+.poste-agenda svg { width: 17px; height: 17px; color: var(--c-fauve-bright); }
+.poste-jour:active .poste-agenda { background: rgba(241, 237, 228, 0.14); }
+@media (hover: hover) {
+  .poste-jour:hover .poste-agenda { background: rgba(241, 237, 228, 0.12); }
+}
+
+.releve {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-night-line);
+}
+/* La reglette : une graduation discrete, a l'endroit ou commence la mesure. */
+.releve::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, rgba(241, 237, 228, 0.34) 0 1px, transparent 1px 11px);
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent 65%);
+  mask-image: linear-gradient(90deg, #000, transparent 65%);
+}
+.releve-mesure { display: grid; gap: 8px; padding: 0 12px; border-left: 1px solid var(--c-night-line); min-width: 0; }
+.releve-mesure:first-child { padding-left: 0; border-left: 0; }
+.releve-mesure b {
+  font-family: var(--f-display);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--c-on-night);
+}
+.releve-mesure span {
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-on-night-2);
+}
+.releve-mesure.vif b { color: var(--c-fauve-bright); }
+
+.poste-alertes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.poste-alerte {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 14px 0 12px;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-on-night);
+  background: rgba(241, 237, 228, 0.07);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.poste-alerte::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--c-fauve-bright); }
+.poste-alerte.alerte { color: #ffdcd5; background: rgba(170, 60, 48, 0.3); border-color: rgba(242, 164, 151, 0.36); }
+.poste-alerte.alerte::before { background: #f08a7a; }
+
+/* --- La feuille de travail ------------------------------------------------------ */
+.accueil-feuille {
+  position: relative;
+  z-index: 2;
+  margin-top: -28px;
+  padding: 30px var(--gutter) 28px;
+  background: var(--c-bg);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+.accueil-feuille > .reveal:first-child .section-title:first-child,
+.rdv-accueil-zone > .section-title:first-child { margin-top: 34px; }
+.rdv-accueil-zone:empty { display: none; }
+
+.bloc-tete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin: 0 2px 16px; }
+.bloc-titre {
+  font-family: var(--f-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+}
+.bloc-sous { font-size: var(--fs-small); color: var(--c-muted); }
+
+/* --- Les trois types : trois tuiles egales, pleines de leur couleur -------- */
+.types-pleins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.type-tuile {
+  --ton: var(--t-maison-fill);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  min-height: 158px;
+  padding: 12px 12px 14px;
+  border: 0;
+  border-radius: var(--r-lg);
+  font-family: var(--f-ui);
+  text-align: left;
+  color: #fff;
+  cursor: pointer;
+  background:
+    radial-gradient(130% 90% at 15% 0%, color-mix(in srgb, var(--ton) 55%, #fff) 0%, transparent 58%),
+    linear-gradient(165deg, var(--ton) 22%, color-mix(in srgb, var(--ton) 55%, #04080a) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 18px 30px -20px color-mix(in srgb, var(--ton) 95%, transparent),
+    0 2px 5px rgba(8, 12, 14, 0.16);
+  transition: transform var(--d-2) var(--ease-spring), box-shadow var(--d-2) var(--ease);
+}
+.type-tuile.card-immeuble { --ton: var(--t-immeuble-fill); }
+.type-tuile.card-hotel { --ton: var(--t-hotel-fill); }
+.type-tuile-illu {
+  align-self: center;
+  justify-self: center;
+  display: block;
+  width: 90px;
+  height: 86px;
+  margin-top: 6px;
+  filter: drop-shadow(0 9px 8px rgba(0, 0, 0, 0.3));
+  transition: transform var(--d-3) var(--ease-spring);
+}
+.type-tuile-illu svg { display: block; width: 100%; height: 100%; }
+.type-tuile-nom { position: relative; font-size: 14px; font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
+.type-tuile-plus {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+.type-tuile-plus svg { width: 14px; height: 14px; }
+.type-tuile:active { transform: scale(0.96); }
+@media (hover: hover) {
+  .type-tuile:hover { transform: translateY(-3px); }
+  .type-tuile:hover .type-tuile-illu { transform: translateY(-3px) scale(1.04); }
+}
+
+/* --- Rapports en cours : des dossiers ------------------------------------------ */
+.lead-list { display: grid; gap: 12px; }
+.dossier {
+  --ton: var(--t-maison);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 14px;
+  width: 100%;
+  padding: 15px 16px 15px 20px;
+  overflow: hidden;
+  font-family: var(--f-ui);
+  text-align: left;
+  color: inherit;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  cursor: pointer;
+  transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease), border-color var(--d-2) var(--ease);
+}
+.dossier.t-immeuble { --ton: var(--t-immeuble); }
+.dossier.t-hotel { --ton: var(--t-hotel); }
+/* L'onglet du dossier : la couleur du type, sur la tranche. */
+.dossier::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--ton); }
+.dossier:active { transform: scale(0.985); }
+@media (hover: hover) {
+  .dossier:hover { transform: translateY(-2px); box-shadow: var(--sh-3); border-color: var(--c-line-2); }
+}
+.dossier-tete {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.dossier-ref { font-family: var(--f-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
+.dossier-type { display: inline-flex; align-items: center; gap: 5px; font-weight: 650; color: var(--ton); }
+.dossier-type svg { width: 15px; height: 15px; }
+.dossier-quand { margin-left: auto; white-space: nowrap; }
+.dossier-nom {
+  grid-column: 1;
+  margin-top: 8px;
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.016em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dossier-lieu {
+  grid-column: 1;
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dossier-go {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--c-on-primary);
+  background: var(--c-primary);
+  box-shadow: 0 8px 18px -10px rgba(8, 16, 18, 0.7);
+  transition: transform var(--d-2) var(--ease-spring);
+}
+.dossier-go svg { width: 19px; height: 19px; }
+@media (hover: hover) {
+  .dossier:hover .dossier-go { transform: translateX(3px); }
+}
+.dossier-avancement {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--c-line-2);
+}
+.barre { flex: 1; height: 6px; overflow: hidden; border-radius: var(--r-pill); background: var(--c-bg-2); }
+.barre > span {
+  display: block;
+  width: var(--p);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--ton, var(--c-brand)), color-mix(in srgb, var(--ton, var(--c-brand)) 55%, #fff));
+  transition: width var(--d-4) var(--ease);
+}
+.dossier-compte { font-size: 12.5px; font-weight: 650; color: var(--c-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* --- Tablette et ordinateur : le poste a gauche, le travail a droite -------- */
+@media (min-width: 1024px) {
+  .accueil {
+    display: grid;
+    grid-template-columns: minmax(360px, 440px) minmax(0, 1fr);
+    /* La scene a sa hauteur, le poste se pose juste dessous : c'est la feuille
+       de droite, plus longue, qui prend le reste - pas l'ecart entre les deux. */
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: 0 36px;
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 24px 28px 0;
+  }
+  .accueil-scene,
+  .poste { grid-column: 1; }
+  .accueil-scene { border-radius: var(--r-xl) var(--r-xl) 0 0; max-height: none; }
+  .poste {
+    align-self: start;
+    border-radius: 0 0 var(--r-xl) var(--r-xl);
+    padding-bottom: 30px;
+  }
+  .accueil-feuille {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+    padding: 6px 0 40px;
+    border-radius: 0;
+    background: transparent;
+  }
+  .accueil-feuille > .reveal:first-child .bloc-tete { margin-top: 6px; }
+  .type-tuile { min-height: 190px; }
+  .type-tuile-illu { width: 120px; height: 112px; }
+}

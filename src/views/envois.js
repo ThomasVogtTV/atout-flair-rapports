@@ -6,7 +6,7 @@
 // rassurant et faux.
 
 import { esc } from '../ui/dom.js'
-import { sectionIcon } from '../ui/icons.js'
+import { ICONS, sectionIcon } from '../ui/icons.js'
 
 // "il y a 3 minutes" plutot qu'une heure exacte : ce qu'on veut savoir d'un
 // envoi, c'est s'il vient de partir ou s'il traine depuis hier.
@@ -82,7 +82,7 @@ export function envoisView(view) {
 
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Envois</h1>
         <p class="muted">${

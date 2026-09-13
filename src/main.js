@@ -1,4 +1,10 @@
-import './style.css'
+// Les trois familles de la maison, embarquees avec l'app : elles doivent
+// s'afficher hors ligne, dans une cave comme au bureau.
+import '@fontsource-variable/fraunces/wght.css'
+import '@fontsource-variable/onest/wght.css'
+import '@fontsource/ibm-plex-mono/500.css'
+import '@fontsource/ibm-plex-mono/600.css'
+import './styles/index.css'
 import { boot } from './app.js'
 
 boot()

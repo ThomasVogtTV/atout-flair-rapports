@@ -1,0 +1,304 @@
+/* ==========================================================================
+   Atout Flair — les jetons du design system
+   --------------------------------------------------------------------------
+   Une maison d'expertise, un instrument de precision. Trois familles de
+   caracteres, une nuit de foret, un petrole, un fauve.
+
+   TYPOGRAPHIE
+     Fraunces   la voix de la maison : le nom, les titres, les grands chiffres.
+                Un serif doux et solide - le rapport est un document d'expert,
+                pas un formulaire administratif.
+     Onest      l'outil : tout ce qu'on lit et touche en intervention. Grand oeil,
+                formes ouvertes, lisible en plein soleil a bout de bras.
+     Plex Mono  la precision : numeros de rapport, heures, references. Ce qui
+                se recopie doit se lire caractere par caractere.
+
+   COULEUR
+     nuit      #0D1B1E  les panneaux sombres : le centre de controle, la barre
+                        de navigation, l'action principale.
+     petrole   #14626F  la marque. C'est la couleur que le PDF imprime depuis
+                        toujours : l'ecran et le papier ont une seule identite.
+     fauve     #C58B3F  l'accent, la robe du malinois. Rare : ce qui merite l'oeil.
+     lin       #F3F0E8  le fond : un papier chaud plutot qu'un gris d'ecran.
+     etats     brique (contamine, erreur), sapin (rien trouve, envoye),
+               ocre (a revoir, en attente). Assourdis : un rapport d'expertise
+               n'est pas un tableau de bord de voiture.
+     types     petrole (maison), ardoise (immeuble), prune (hotel).
+
+   Chaque couleur existe en deux jetons quand il le faut : l'encre (texte,
+   trait) et le plein (surface qui porte du blanc). En theme sombre, l'encre
+   s'eclaircit pour rester lisible, le plein reste profond.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- familles --------------------------------------------------------- */
+  --f-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --f-ui: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* --- echelle typographique (mobile d'abord) --------------------------- */
+  --fs-micro: 11px;     /* libelles en capitales espacees */
+  --fs-caption: 12.5px; /* mentions, dates, compteurs */
+  --fs-small: 13.5px;   /* texte secondaire */
+  --fs-body: 15.5px;    /* texte courant */
+  --fs-input: 16px;     /* valeur saisie (seuil sous lequel iOS zoome) */
+  --fs-lead: 17px;      /* nom d'un client, titre de carte */
+  --fs-h3: 20px;
+  --fs-h2: 24px;
+  --fs-h1: 30px;
+  --fs-display: 40px;   /* grands chiffres, date du jour */
+
+  /* --- couleurs : fond et surfaces --------------------------------------- */
+  --c-bg: #f3f0e8;
+  --c-bg-2: #ebe6da;
+  --c-surface: #ffffff;
+  --c-surface-2: #faf8f3;
+  --c-raised: #ffffff;
+  --c-line: #e5dfd2;
+  --c-line-2: #d5cdbd;
+  --c-veil: rgba(21, 25, 26, 0.045); /* survol, zone pressee */
+
+  /* --- couleurs : texte --------------------------------------------------- */
+  --c-ink: #15191a;
+  --c-ink-2: #454a49;
+  --c-muted: #676c69;   /* 4,7:1 sur le lin */
+  --c-faint: #8c908b;   /* decor et grands caracteres seulement */
+
+  /* --- nuit, marque, accent --------------------------------------------- */
+  --c-night: #0d1b1e;
+  --c-night-2: #14292d;
+  --c-night-line: rgba(236, 232, 223, 0.12);
+  --c-on-night: #f1ede4;
+  --c-on-night-2: rgba(241, 237, 228, 0.66);
+
+  --c-brand: #14626f;
+  --c-brand-ink: #0f5460;
+  --c-brand-fill: #14626f;
+  --c-brand-strong: #0e4a54;
+  --c-brand-soft: #e1ecec;
+
+  --c-fauve: #c58b3f;
+  --c-fauve-ink: #8a5c1f;
+  --c-fauve-bright: #deb06b;
+  --c-fauve-soft: #f4eadb;
+
+  /* l'action principale : la nuit en clair, la creme en sombre */
+  --c-primary: #0d1b1e;
+  --c-on-primary: #ffffff;
+  --c-dock: #0d1b1e;
+
+  /* --- etats ---------------------------------------------------------------- */
+  --c-danger: #a53a2f;
+  --c-danger-soft: #f6e6e2;
+  --c-success: #2c6a4c;
+  --c-success-soft: #e3efe7;
+  --c-warning: #8f6119;
+  --c-warning-soft: #f5ecda;
+
+  /* --- types de rapport ----------------------------------------------------- */
+  --t-maison: #14626f;
+  --t-maison-fill: #14626f;
+  --t-immeuble: #3f4c73;
+  --t-immeuble-fill: #3f4c73;
+  --t-hotel: #6b4468;
+  --t-hotel-fill: #6b4468;
+
+  /* --- teintes : un etat se pose en voile, jamais en aplat --------------- */
+  --voile: 13%;
+  --voile-fort: 20%;
+  --liseret: 42%;
+
+  /* --- espace, formes ----------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 44px;
+  --gutter: 18px;
+
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --tap: 46px;
+  --tap-min: 40px;
+
+  /* --- profondeur : ombres chaudes, jamais grises ------------------------ */
+  --sh-1: 0 1px 1px rgba(21, 25, 26, 0.04), 0 1px 3px rgba(21, 25, 26, 0.05);
+  --sh-2: 0 1px 2px rgba(21, 25, 26, 0.05), 0 10px 24px -14px rgba(33, 28, 18, 0.24);
+  --sh-3: 0 2px 6px rgba(21, 25, 26, 0.06), 0 22px 44px -22px rgba(33, 28, 18, 0.42);
+  --sh-float: 0 10px 30px -10px rgba(8, 16, 18, 0.5), 0 2px 8px rgba(8, 16, 18, 0.18);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--c-brand) 28%, transparent);
+
+  /* --- mouvement ---------------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --d-1: 120ms;
+  --d-2: 200ms;
+  --d-3: 320ms;
+  --d-4: 520ms;
+
+  /* --- structure ---------------------------------------------------------- */
+  --dock-h: 74px;
+  --barre-h: 76px;
+  --page-max: 1120px;
+  --lecture-max: 760px;
+
+  /* --- alias historiques ---------------------------------------------------
+     Les jetons d'avant la refonte, conserves comme noms de raccourci : le
+     calendrier et le semainier, eprouves sur le terrain, les emploient encore. */
+  --ink: var(--c-ink);
+  --ink-soft: var(--c-ink-2);
+  --muted: var(--c-muted);
+  --muted-soft: var(--c-faint);
+  --line: var(--c-line);
+  --line-strong: var(--c-line-2);
+  --bg: var(--c-bg);
+  --bg-solid: var(--c-bg);
+  --card: var(--c-surface);
+  --card-solid: var(--c-surface);
+  --fill: var(--c-night);
+  --fill-text: #ffffff;
+  --accent: var(--c-brand);
+  --accent-ink: var(--c-brand-ink);
+  --accent-fill: var(--c-brand-fill);
+  --accent-soft: var(--c-brand-soft);
+  --red: var(--c-danger);
+  --red-soft: var(--c-danger-soft);
+  --green: var(--c-success);
+  --green-soft: var(--c-success-soft);
+  --amber: var(--c-warning);
+  --amber-soft: var(--c-warning-soft);
+  --ardoise: var(--t-immeuble);
+  --ardoise-fill: var(--t-immeuble-fill);
+  --ardoise-soft: color-mix(in srgb, var(--t-immeuble) 12%, var(--c-surface));
+  --prune: var(--t-hotel);
+  --prune-fill: var(--t-hotel-fill);
+  --prune-soft: color-mix(in srgb, var(--t-hotel) 12%, var(--c-surface));
+  --radius-lg: var(--r-lg);
+  --radius-md: var(--r-md);
+  --radius-sm: var(--r-sm);
+  --shadow-sm: var(--sh-1);
+  --shadow-md: var(--sh-2);
+}
+
+/* --- theme sombre : suit le systeme, ou impose par data-theme ------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --c-bg: #0b1113;
+    --c-bg-2: #0f171a;
+    --c-surface: #131c1f;
+    --c-surface-2: #172226;
+    --c-raised: #1b272b;
+    --c-line: #233135;
+    --c-line-2: #304045;
+    --c-veil: rgba(236, 232, 223, 0.06);
+    --c-ink: #ece8df;
+    --c-ink-2: #c6c9c3;
+    --c-muted: #9ba29e;
+    --c-faint: #6f7773;
+    --c-night: #060c0e;
+    --c-night-2: #0e1c20;
+    --c-brand: #67b6c3;
+    --c-brand-ink: #7cc3cf;
+    --c-brand-fill: #17697a;
+    --c-brand-strong: #1c7a8b;
+    --c-brand-soft: #12282c;
+    --c-fauve: #d6a35c;
+    --c-fauve-ink: #e2b877;
+    --c-fauve-bright: #e6bd7c;
+    --c-fauve-soft: #2a2216;
+    --c-primary: #ece8df;
+    --c-on-primary: #0b1113;
+  --c-dock: #142226;
+    --c-danger: #e0877b;
+    --c-danger-soft: #331e1b;
+    --c-success: #6db58f;
+    --c-success-soft: #172a21;
+    --c-warning: #d4a75f;
+    --c-warning-soft: #2c2416;
+    --t-maison: #6cb8c4;
+    --t-maison-fill: #17697a;
+    --t-immeuble: #98a6d0;
+    --t-immeuble-fill: #3a4870;
+    --t-hotel: #c298bc;
+    --t-hotel-fill: #5e3d5c;
+    --voile: 18%;
+    --voile-fort: 27%;
+    --liseret: 55%;
+    --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sh-2: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 28px -16px rgba(0, 0, 0, 0.8);
+    --sh-3: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 48px -22px rgba(0, 0, 0, 0.9);
+    --ring: 0 0 0 3px color-mix(in srgb, var(--c-brand) 38%, transparent);
+    --fill-text: #ffffff;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-bg: #0b1113;
+  --c-bg-2: #0f171a;
+  --c-surface: #131c1f;
+  --c-surface-2: #172226;
+  --c-raised: #1b272b;
+  --c-line: #233135;
+  --c-line-2: #304045;
+  --c-veil: rgba(236, 232, 223, 0.06);
+  --c-ink: #ece8df;
+  --c-ink-2: #c6c9c3;
+  --c-muted: #9ba29e;
+  --c-faint: #6f7773;
+  --c-night: #060c0e;
+  --c-night-2: #0e1c20;
+  --c-brand: #67b6c3;
+  --c-brand-ink: #7cc3cf;
+  --c-brand-fill: #17697a;
+  --c-brand-strong: #1c7a8b;
+  --c-brand-soft: #12282c;
+  --c-fauve: #d6a35c;
+  --c-fauve-ink: #e2b877;
+  --c-fauve-bright: #e6bd7c;
+  --c-fauve-soft: #2a2216;
+  --c-primary: #ece8df;
+  --c-on-primary: #0b1113;
+  --c-dock: #142226;
+  --c-danger: #e0877b;
+  --c-danger-soft: #331e1b;
+  --c-success: #6db58f;
+  --c-success-soft: #172a21;
+  --c-warning: #d4a75f;
+  --c-warning-soft: #2c2416;
+  --t-maison: #6cb8c4;
+  --t-maison-fill: #17697a;
+  --t-immeuble: #98a6d0;
+  --t-immeuble-fill: #3a4870;
+  --t-hotel: #c298bc;
+  --t-hotel-fill: #5e3d5c;
+  --voile: 18%;
+  --voile-fort: 27%;
+  --liseret: 55%;
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh-2: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 28px -16px rgba(0, 0, 0, 0.8);
+  --sh-3: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 48px -22px rgba(0, 0, 0, 0.9);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--c-brand) 38%, transparent);
+  --fill-text: #ffffff;
+}
+:root[data-theme='light'] { color-scheme: light; }
+
+/* --- tablette et ordinateur : la typographie respire un cran plus haut ---- */
+@media (min-width: 768px) {
+  :root {
+    --fs-h1: 34px;
+    --fs-display: 46px;
+    --gutter: 28px;
+  }
+}

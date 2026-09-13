@@ -5,7 +5,7 @@
 // l'onglet dit ce qui a ete remis aux clients, pas ce qui est en cours de saisie.
 
 import { esc } from '../ui/dom.js'
-import { sectionIcon } from '../ui/icons.js'
+import { ICONS, sectionIcon } from '../ui/icons.js'
 import { ilYA } from './envois.js'
 
 const TYPES = { detection: 'Détection', immeuble: 'Immeuble', hotel: 'Hôtel' }
@@ -25,7 +25,7 @@ const AIDE_BASE = `
 function entete() {
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Administration</h1>
         <p class="muted">Équipe et envois</p>

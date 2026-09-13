@@ -14,7 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- Outil interne : accessible par lien, jamais par un moteur de recherche. -->
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#111111" />
+    <meta name="theme-color" content="#0d1b1e" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -24,16 +24,6 @@
     <title>Atout Flair — Rapports de détection</title>
   </head>
   <body>
-    <!-- Photo de fond de l'accueil : posee ici plutot que dans l'ecran, pour
-         qu'elle ne soit ni rechargee ni redessinee a chaque rendu. Deux fois
-         le meme fichier (une seule requete, un seul decodage) : une copie
-         floutee qui remplit l'ecran, et la photo nette en haut, ou les deux
-         chiens tiennent en entier. Le voile par-dessus garde le texte lisible. -->
-    <div class="app-bg" aria-hidden="true">
-      <img class="app-bg-blur" src="/hero-dog.webp" alt="" />
-      <img class="app-bg-photo" src="/hero-dog.webp" alt="" />
-      <span class="app-bg-veil"></span>
-    </div>
     <!-- Bandeau reseau : pose hors de #app pour qu'il traverse les changements
          d'ecran sans etre redessine. Il ne s'affiche que hors ligne. -->
     <div class="hors-ligne" role="status">Hors ligne — tout reste enregistré sur l'appareil</div>

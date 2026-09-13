@@ -1,0 +1,338 @@
+/* ==========================================================================
+   Le cadre de l'app : en-tete des ecrans, navigation du bas, barre d'actions
+   du rapport, ecran du code d'acces
+   ========================================================================== */
+
+/* --- En-tete d'un ecran -----------------------------------------------------
+   Fond plein plutot que flou : il reste colle en haut pendant tout le
+   defilement, et le flou se recalculerait a chaque image. Un filet apparait
+   des qu'on a quitte le haut de page (body.defile, pose par app.js). */
+.top {
+  position: sticky;
+  top: var(--bandeau, 0px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: calc(env(safe-area-inset-top) + 10px) var(--gutter) 10px;
+  background: var(--c-bg);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
+}
+body.defile .top {
+  border-bottom-color: var(--c-line);
+  box-shadow: 0 12px 24px -22px rgba(21, 25, 26, 0.5);
+}
+.top-title { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; }
+.top-title h1 {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.top-title p {
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.top-title p b { color: var(--c-ink-2); font-weight: 650; }
+.top-title .mono { font-size: 12px; color: var(--c-brand-ink); }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Le retour : un vrai bouton rond, visible, a portee de pouce. */
+.top .back {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  color: var(--c-ink);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  box-shadow: var(--sh-1);
+}
+.top .back svg { width: 20px; height: 20px; }
+
+/* Les ecrans du dock sont de premier niveau : pas de retour, la porte suffit. */
+body[data-screen='agenda'] .top .back,
+body[data-screen='contacts'] .top .back,
+body[data-screen='envois'] .top .back { display: none; }
+
+/* --- Navigation du bas (dock) ----------------------------------------------
+   Quatre portes et l'action principale au centre, sous le pouce - le
+   technicien a souvent une seule main de libre. La barre est de la nuit de la
+   maison, les icones sont celles dessinees pour l'app ; la porte ouverte se
+   reconnait a sa couleur, les autres se mettent en retrait. */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 45;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto 1fr 1fr;
+  align-items: end;
+  width: min(calc(100% - 20px), 460px);
+  height: var(--dock-h);
+  padding: 0 6px 8px;
+  color: var(--c-on-night-2);
+  background: color-mix(in srgb, var(--c-dock) 97%, transparent);
+  border: 1px solid var(--c-night-line);
+  border-radius: 26px;
+  box-shadow: var(--sh-float);
+  transform: translateX(-50%);
+  transition: transform var(--d-3) var(--ease), opacity var(--d-2) var(--ease);
+}
+.dock.sans-carnet { grid-template-columns: 1fr auto 1fr 1fr; }
+.dock-item {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 6px 0 0;
+  border: 0;
+  background: none;
+  font-family: var(--f-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: inherit;
+  cursor: pointer;
+  transition: color var(--d-2) var(--ease);
+}
+.dock-ico {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 34px;
+  border-radius: 12px;
+  transition: background-color var(--d-2) var(--ease), transform var(--d-2) var(--ease-spring);
+}
+.dock-ico svg {
+  width: 30px;
+  height: 30px;
+  filter: saturate(0.3) brightness(0.8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+  opacity: 0.72;
+  transition: filter var(--d-2) var(--ease), opacity var(--d-2) var(--ease);
+}
+.dock-item.actif { color: var(--c-on-night); }
+.dock-item.actif .dock-ico { background: rgba(255, 255, 255, 0.09); }
+.dock-item.actif .dock-ico svg { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); opacity: 1; }
+.dock-item:active .dock-ico { transform: scale(0.9); }
+@media (hover: hover) {
+  .dock-item:hover .dock-ico svg { opacity: 0.95; filter: saturate(0.8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); }
+}
+.dock-badge {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #1b1206;
+  background: var(--c-fauve-bright);
+  border: 2px solid var(--c-night);
+  border-radius: var(--r-pill);
+}
+.dock-badge:empty { display: none; }
+.dock-badge.echec { color: #fff; background: #c9483a; }
+
+/* L'action principale : le seul objet dore de l'ecran. */
+.dock-new {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 8px 4px;
+  border: 0;
+  border-radius: 22px;
+  color: #1b1206;
+  background: linear-gradient(155deg, #f1cf93 0%, #d29b50 55%, #b77d35 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+    0 12px 26px -10px rgba(197, 139, 63, 0.75);
+  transform: translateY(-16px);
+  cursor: pointer;
+  transition: transform var(--d-2) var(--ease-spring), box-shadow var(--d-2) var(--ease);
+}
+.dock-new svg { width: 28px; height: 28px; }
+.dock-new:active { transform: translateY(-16px) scale(0.93); }
+@media (hover: hover) {
+  .dock-new:hover { transform: translateY(-18px); }
+}
+.dock-new::after {
+  content: 'Nouveau';
+  position: absolute;
+  bottom: -20px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--c-on-night);
+}
+
+/* Le dock ne vit que sur les ecrans de premier niveau. Ailleurs - un rapport
+   ouvert, une fiche, les reglages - il laisse la place, et se retire aussi
+   quand le clavier monte pour une recherche. */
+body:not([data-screen='home']):not([data-screen='agenda']):not([data-screen='contacts']):not([data-screen='envois']) .dock,
+body.verrouille .dock {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 150%);
+}
+@media (max-width: 719px) {
+  body:has(#app input:focus, #app textarea:focus) .dock {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 150%);
+  }
+}
+
+/* --- Barre d'actions du rapport ---------------------------------------------- */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom));
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-line);
+  box-shadow: 0 -12px 30px -24px rgba(21, 25, 26, 0.45);
+  transition: transform var(--d-3) var(--ease);
+}
+.bottom-bar .btn { flex: 1 1 0; min-width: 0; padding: 0 12px; }
+.bottom-bar .btn.etroit { flex: 0 0 auto; }
+@media (max-width: 719px) {
+  /* Clavier ouvert : la barre descend, le champ garde toute la hauteur. */
+  body:has(#app input:focus, #app textarea:focus) .bottom-bar { transform: translateY(115%); }
+}
+@media (min-width: 720px) {
+  .bottom-bar {
+    left: 50%;
+    right: auto;
+    bottom: 16px;
+    width: min(calc(100% - 40px), var(--lecture-max));
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-3);
+    transform: translateX(-50%);
+  }
+}
+
+/* --- Ecran du code d'acces --------------------------------------------------
+   La premiere chose qu'on voit de l'app : les chiens, en grand, et la maison.
+   La photo occupe tout l'ecran ; la nuit monte du bas pour porter le code. */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  overflow: hidden;
+  background: var(--c-night) url('/hero-dog.webp') 50% 30% / cover no-repeat;
+}
+.lock-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 12, 14, 0.25) 0%, rgba(6, 12, 14, 0) 30%, rgba(6, 12, 14, 0.2) 45%, rgba(6, 12, 14, 0.9) 68%, #060c0e 86%);
+}
+body.verrouille { overflow: hidden; }
+.lock-card {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: min(100%, 440px);
+  padding: 28px 26px calc(30px + env(safe-area-inset-bottom));
+  text-align: left;
+  color: var(--c-on-night);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lock-card > * { animation: bloc-entre var(--d-4) var(--ease) backwards; }
+  .lock-card > :nth-child(2) { animation-delay: 60ms; }
+  .lock-card > :nth-child(3) { animation-delay: 120ms; }
+  .lock-card > :nth-child(n + 4) { animation-delay: 180ms; }
+}
+/* Le logo officiel, detoure a la volee : noir sur blanc devient blanc sur la
+   nuit. */
+.lock-logo {
+  width: 92px;
+  height: auto;
+  margin-bottom: 4px;
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+.lock-card h1 {
+  font-family: var(--f-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.lock-card h1::after {
+  content: 'Détection canine professionnelle';
+  display: block;
+  margin-top: 10px;
+  font-family: var(--f-ui);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+}
+.lock-card p.muted { color: var(--c-on-night-2); font-size: 14px; }
+.lock-input {
+  min-height: 54px;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.lock-input::placeholder { color: rgba(255, 255, 255, 0.45); letter-spacing: 0.04em; }
+.lock-input:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--c-fauve-bright);
+  box-shadow: 0 0 0 3px rgba(222, 176, 107, 0.28);
+}
+.lock-error { min-height: 18px; font-size: 13px; font-weight: 600; color: #f2a497; }
+.lock-souvenir {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-on-night);
+  cursor: pointer;
+}
+.lock-souvenir input { accent-color: var(--c-fauve-bright); }
+.lock-card .btn.primary {
+  --btn-bg: var(--c-fauve);
+  --btn-fg: #1b1206;
+  --btn-bd: var(--c-fauve);
+  min-height: 54px;
+  font-size: 16px;
+}

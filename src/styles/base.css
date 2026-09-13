@@ -1,0 +1,178 @@
+/* ==========================================================================
+   Base : remise a zero, texte, page
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--c-bg);
+}
+
+html,
+body {
+  margin: 0;
+  color: var(--c-ink);
+  background: var(--c-bg);
+}
+
+body {
+  font-family: var(--f-ui);
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Un element masque l'est vraiment, meme quand sa classe le met en flex. */
+[hidden] { display: none !important; }
+
+:focus-visible {
+  outline: 2px solid var(--c-brand);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--c-fauve) 38%, transparent);
+}
+
+/* --- petits utilitaires, les memes partout ------------------------------- */
+.muted { color: var(--c-muted); }
+.small { font-size: var(--fs-small); }
+.mono {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* --- la page ---------------------------------------------------------------
+   #app porte la reserve qui degage la navigation du bas (dock) ou la barre
+   d'actions du rapport : rien ne passe jamais sous le pouce sans pouvoir en
+   sortir. */
+#app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--dock-h) + 40px + env(safe-area-inset-bottom));
+}
+body[data-screen='editor'] #app,
+body[data-screen='fiche'] #app,
+body[data-screen='reglages'] #app,
+body[data-screen='admin'] #app {
+  padding-bottom: calc(var(--barre-h) + 32px + env(safe-area-inset-bottom));
+}
+
+.pad {
+  width: 100%;
+  max-width: var(--lecture-max);
+  margin: 0 auto;
+  padding: 10px var(--gutter) 36px;
+}
+
+/* --- bandeau reseau --------------------------------------------------------
+   Il ne previent pas d'une panne - l'app est faite pour travailler hors ligne -
+   il dit seulement ou l'on en est. */
+:root { --bandeau-h: 32px; }
+.hors-ligne {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--bandeau-h);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--c-on-night);
+  background: var(--c-night);
+}
+.hors-ligne::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-fauve-bright);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-fauve-bright) 25%, transparent);
+}
+body[data-reseau='hors-ligne'] { --bandeau: var(--bandeau-h); }
+body[data-reseau='hors-ligne'] .hors-ligne { display: flex; }
+
+/* --- entree d'un ecran --------------------------------------------------
+   L'animation porte sur les blocs de l'ecran, jamais sur #app lui-meme : un
+   element anime en transform devient le repere de ses enfants "fixed", et la
+   barre d'actions du rapport se retrouvait collee au bas de la page au lieu du
+   bas de l'ecran. */
+@media (prefers-reduced-motion: no-preference) {
+  #app.view-enter > :not(.bottom-bar) { animation: ecran-entre var(--d-3) var(--ease) backwards; }
+  #app.view-enter > .bottom-bar { animation: barre-entre var(--d-3) var(--ease) backwards; }
+}
+@keyframes barre-entre {
+  from { opacity: 0; }
+}
+@keyframes ecran-entre {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Les blocs d'un ecran entrent l'un apres l'autre, a l'arrivee seulement. */
+@media (prefers-reduced-motion: no-preference) {
+  #app.entree .reveal {
+    animation: bloc-entre var(--d-4) var(--ease) backwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+}
+@keyframes bloc-entre {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes compteur-pulse {
+    30% { transform: scale(1.22); }
+  }
+  .pulse { display: inline-block; animation: compteur-pulse 0.26s var(--ease); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

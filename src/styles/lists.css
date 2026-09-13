@@ -1,0 +1,231 @@
+/* ==========================================================================
+   Listes : rapports, clients, rendez-vous, envois
+   --------------------------------------------------------------------------
+   Une meme silhouette pour tout ce qui se liste : une pastille a gauche qu'on
+   reconnait sans lire, ce qui identifie en gras, le detail dessous, le geste a
+   droite. Les rapports y ajoutent leur tete de document : numero, date, etat.
+   ========================================================================== */
+
+.report-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.report-list > * { min-width: 0; }
+
+.rapport-ligne {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 68px;
+  padding: 12px 8px 12px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  transition: transform var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease), border-color var(--d-2) var(--ease);
+}
+.rapport-ligne:active { transform: scale(0.985); }
+@media (hover: hover) {
+  .rapport-ligne:hover { border-color: var(--c-line-2); box-shadow: var(--sh-2); }
+}
+
+.rapport-type {
+  --ton: var(--t-maison);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: var(--ton);
+  background: color-mix(in srgb, var(--ton) var(--voile), transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ton) 18%, transparent);
+}
+.rapport-type svg { width: 22px; height: 22px; }
+.rapport-type.icon-immeuble { --ton: var(--t-immeuble); }
+.rapport-type.icon-hotel { --ton: var(--t-hotel); }
+
+.rapport-corps { flex: 1 1 0; min-width: 0; display: grid; gap: 3px; }
+.rapport-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.rapport-meta .mono { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
+.rapport-meta .pill { height: 21px; padding: 0 8px; font-size: 11px; margin-left: auto; }
+.rapport-quand { white-space: nowrap; }
+.rapport-nom {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.006em;
+  color: var(--c-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rapport-detail {
+  font-size: 13px;
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rapport-ligne.fini .rapport-nom { color: var(--c-ink-2); font-weight: 600; }
+
+/* La tranche du document : la couleur de son type. */
+.dossier-ligne { padding-left: 15px; }
+.dossier-ligne::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ton-tranche, var(--t-maison));
+}
+.dossier-ligne.t-immeuble { --ton-tranche: var(--t-immeuble); }
+.dossier-ligne.t-hotel { --ton-tranche: var(--t-hotel); }
+
+/* La corbeille est la seule chose irreversible de la liste : discrete, et
+   rouge seulement quand on la vise. */
+.rapport-suppr { flex-shrink: 0; min-width: 40px; min-height: 40px; color: var(--c-faint); }
+.rapport-suppr svg { width: 19px; height: 19px; }
+@media (hover: hover) {
+  .rapport-suppr:hover { color: var(--c-danger); background: var(--c-danger-soft); }
+}
+.rapport-go,
+.contact-go { flex-shrink: 0; display: grid; place-items: center; width: 26px; color: var(--c-faint); }
+.rapport-go svg,
+.contact-go svg { width: 17px; height: 17px; }
+.rapport-ligne .pill { flex-shrink: 0; }
+
+/* --- Clients du carnet ------------------------------------------------------ */
+.contact-avatar {
+  --ton: var(--c-brand);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ton);
+  background: color-mix(in srgb, var(--ton) var(--voile), transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ton) 22%, transparent);
+}
+.contact-avatar.t-gerance { --ton: var(--t-immeuble); }
+.contact-avatar.t-proprietaire { --ton: var(--t-hotel); }
+.contact-avatar.t-locataire { --ton: var(--c-fauve-ink); }
+.contact-avatar.t-aucun { --ton: var(--c-muted); }
+.contact-activite {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.carnet-lettre {
+  list-style: none;
+  margin: 14px 4px 0;
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-muted);
+}
+.carnet-lettre:first-child { margin-top: 2px; }
+.carnet-favoris { color: var(--c-fauve-ink); }
+
+/* Etoile des favoris : creuse et discrete, pleine et doree une fois cochee. */
+.contact-etoile {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--c-faint);
+  cursor: pointer;
+  transition: transform var(--d-2) var(--ease-spring), color var(--d-2);
+}
+.contact-etoile:active { transform: scale(0.82); }
+.contact-etoile svg { width: 21px; height: 21px; }
+.contact-etoile.on { color: #d9a12e; }
+.contact-etoile.on svg path { fill: currentColor; }
+span.contact-etoile { width: 18px; height: 18px; }
+span.contact-etoile svg { width: 15px; height: 15px; }
+
+/* --- Rendez-vous ------------------------------------------------------------------ */
+.rdv-heure {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+.rdv-heure b { font-family: var(--f-mono); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--c-ink); }
+.rdv-heure i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--c-muted); }
+.rdv-ligne.fait .rapport-nom { color: var(--c-ink-2); font-weight: 600; }
+.rdv-ligne.annule { opacity: 0.62; }
+.rdv-ligne.annule .rapport-nom,
+.rdv-ligne.annule .rdv-heure b { text-decoration: line-through; }
+
+/* --- Envois et journal ------------------------------------------------------------ */
+.envoi-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 12px 13px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+}
+/* La tranche dit l'etat : en attente (ocre), refuse (brique), parti (sapin).
+   Une ligne sans etat - un membre de l'equipe, une entree du journal - reste
+   neutre. */
+.envoi-row::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--c-line-2);
+}
+.envoi-row[data-envoi]::before { background: var(--c-warning); }
+.envoi-row[data-open] { cursor: pointer; }
+.envoi-row[data-open]::before { background: var(--c-success); }
+.envoi-row.echec::before { background: var(--c-danger); }
+.envoi-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.envoi-main strong { font-size: 15px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.envoi-main .muted { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Le motif du refus, en entier : c'est la seule chose qui permet de corriger. */
+.envoi-motif {
+  margin-top: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+  border-radius: 10px;
+}
+.envoi-side { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }

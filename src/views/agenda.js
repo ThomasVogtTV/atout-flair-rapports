@@ -85,7 +85,7 @@ export function rdvAccueilHTML(view) {
   const qui = pasAMoi(a)
   return `
     <h2 class="section-title">
-      <span class="section-title-main">${sectionIcon('calendrier', 'amber')}${esc(titre)}</span>
+      <span class="section-title-main">${esc(titre)}</span>
       <span class="section-title-trailer">
         ${duJour.length > 4 ? `<span class="count-pill"><b>${duJour.length}</b></span>` : ''}
         <button class="link" data-act="open-agenda">Agenda</button>
@@ -313,7 +313,7 @@ export function agendaView(view) {
 
   return `
     <header class="top editor-top">
-      <button class="icon-btn back" data-act="home">‹</button>
+      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Agenda</h1>
         <p class="muted">${avenir} rendez-vous à venir</p>

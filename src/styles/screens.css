@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Les autres ecrans : carnet et fiche client, envois, reglages, administration,
+   recuperation d'une sauvegarde
+   ========================================================================== */
+
+/* En-tete des ecrans de lecture : le contenu se centre sur une colonne lisible. */
+.editor-top:not(.rapport-tete) {
+  padding-left: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter)));
+  padding-right: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter)));
+}
+.editor-top:not(.rapport-tete) .top-title h1 { font-size: 24px; }
+
+/* Hors du rapport, un titre de rubrique est un chapitre en Fraunces : il se
+   suffit, sans pastille d'icone - comme sur l'accueil. */
+body:not([data-screen='editor']) .section-title .section-icon { display: none; }
+
+/* Une carte de reglage : son texte respire, ses boutons se tiennent en bas. */
+.card > .muted.small { line-height: 1.55; }
+.card > * + .muted.small { margin-top: 8px; }
+.card .row-actions { display: flex; gap: 8px; margin-top: 14px; }
+.card .row-actions .btn { flex: 1; }
+.card > input + .reglage-note { margin-top: 10px; }
+
+/* --- Fiche client ------------------------------------------------------------------ */
+.fiche-tete { display: flex; align-items: center; gap: 16px; padding: 20px; }
+.fiche-tete .contact-avatar { width: 62px; height: 62px; font-size: 21px; }
+.fiche-ident { display: grid; gap: 4px; min-width: 0; }
+.fiche-nom {
+  font-family: var(--f-display);
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.016em;
+  overflow-wrap: anywhere;
+}
+.fiche-etoile { margin-left: auto; width: 48px; height: 48px; }
+.fiche-etoile svg { width: 27px; height: 27px; }
+.fiche-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.fiche-btn {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 13px 4px 11px;
+  font-family: var(--f-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--c-ink);
+  text-decoration: none;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  transition: transform var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease);
+}
+.fiche-btn svg { width: 23px; height: 23px; color: var(--c-brand); }
+.fiche-btn:active { transform: scale(0.95); }
+@media (hover: hover) {
+  .fiche-btn:hover { box-shadow: var(--sh-2); }
+}
+.fiche-coord { display: grid; gap: 16px; }
+.fiche-coord div { display: grid; gap: 3px; min-width: 0; }
+.fiche-coord span { font-size: 10.5px; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted); }
+.fiche-coord b { font-size: 15.5px; font-weight: 560; overflow-wrap: anywhere; }
+.fiche-suppr { margin-top: 28px; }
+
+/* Les trois types, pour un nouveau rapport au nom du client. */
+.type-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.type-chip {
+  --teinte: var(--t-maison);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 6px 12px;
+  font-family: var(--f-ui);
+  text-align: center;
+  color: inherit;
+  background: var(--c-surface);
+  border: 1px solid color-mix(in srgb, var(--teinte) 26%, var(--c-line));
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  transition: transform var(--d-2) var(--ease-spring), box-shadow var(--d-2) var(--ease);
+}
+.type-chip.card-immeuble { --teinte: var(--t-immeuble); }
+.type-chip.card-hotel { --teinte: var(--t-hotel); }
+.type-chip:active { transform: scale(0.96); }
+@media (hover: hover) {
+  .type-chip:hover { transform: translateY(-2px); box-shadow: var(--sh-2); }
+}
+.type-chip-icon {
+  --ton: var(--t-maison-fill);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--ton) 82%, #fff), var(--ton));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 14px -8px color-mix(in srgb, var(--ton) 80%, transparent);
+}
+.type-chip-icon.icon-immeuble { --ton: var(--t-immeuble-fill); }
+.type-chip-icon.icon-hotel { --ton: var(--t-hotel-fill); }
+.type-chip-icon svg { width: 23px; height: 23px; }
+.type-chip-name { font-size: 13px; font-weight: 650; line-height: 1.2; }
+
+.picker-liste { max-height: 56vh; overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+.carnet-choisir + .section-title { margin-top: 26px; }
+
+/* --- Reglages ---------------------------------------------------------------------- */
+.etat-sauvegarde { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--c-ink); }
+.etat-sauvegarde.tard { color: var(--c-warning); }
+.etat-place { margin: 16px 0 8px; font-size: 13.5px; font-weight: 600; color: var(--c-ink-2); }
+.etat-place.tard { color: var(--c-warning); }
+.jauge { height: 8px; margin-bottom: 14px; overflow: hidden; border-radius: var(--r-pill); background: var(--c-bg-2); }
+.jauge span { display: block; height: 100%; border-radius: inherit; background: var(--c-brand); }
+.jauge.tard span { background: var(--c-warning); }
+.reglage-note { margin: 10px 0 0; }
+.reglage-titre { margin-top: 16px; }
+[data-theme-choice] { margin-bottom: 2px; }
+
+/* --- Administration ------------------------------------------------------------- */
+.admin-ajout { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-bottom: 12px; }
+.admin-ajout input[type='text'] { min-width: 0; }
+.admin-fin {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-ink-2);
+}
+.admin-fin input { flex: 1; min-width: 0; }
+.admin-aide { grid-column: 1 / -1; margin: 0; }
+.admin-code {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  text-align: center;
+  color: var(--c-on-night);
+  background: var(--c-night);
+  border-color: var(--c-night);
+}
+.admin-code .muted { color: var(--c-on-night-2); }
+.admin-code b { color: var(--c-on-night); }
+.admin-code strong {
+  font-family: var(--f-mono);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--c-fauve-bright);
+  user-select: all;
+}
+.admin-code .btn.ghost { --btn-bg: transparent; --btn-fg: var(--c-on-night); --btn-bd: var(--c-night-line); }
+.admin-emp { flex-direction: column; align-items: stretch; gap: 10px; }
+.admin-emp .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-emp .row-actions .btn { flex: 1; }
+.admin-filtres { margin: 0 0 10px; }
+
+/* --- Recuperation depuis la sauvegarde en ligne ------------------------------------- */
+.restau-liste {
+  display: grid;
+  gap: 6px;
+  max-height: 50vh;
+  margin: 4px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+.restau-ligne {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  font-size: 14.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-ink);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.restau-ligne input { margin-top: 2px; }
+.restau-ligne span { display: grid; gap: 2px; min-width: 0; }
+.restau-ligne b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.restau-ligne small { font-size: 12.5px; color: var(--c-muted); }
+.restau-groupe {
+  margin: 10px 2px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  list-style: none;
+}

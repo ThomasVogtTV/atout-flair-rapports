@@ -27,6 +27,20 @@ export const ICONS = {
   calendrier: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="5.5" width="16" height="15" rx="2.2"/><rect x="4" y="5.5" width="16" height="15" rx="2.2"/><path d="M4 10.2h16M8.5 3.5v4M15.5 3.5v4"/><circle cx="12" cy="15.2" r="1.2" fill="currentColor" stroke="none"/></svg>`,
   // Etoile des favoris : pleine quand le client est coche (voir .contact-etoile.on).
   etoile: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>`,
+  // --- les glyphes de l'interface : navigation, gestes, etats -------------
+  retour: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>`,
+  suivant: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+  precedent: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`,
+  coche: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+  ajout: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>`,
+  poubelle: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M4.5 7h15M10 4h4M6.5 7l.9 12a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12M10 11v6M14 11v6"/></svg>`,
+  oeil: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  plusmenu: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>`,
+  copie: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg>`,
+  envoyer: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/></svg>`,
+  alerte: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="1.9"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.1"/></svg>`,
+  horloge: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+  cadenas: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
 }
 

@@ -1,0 +1,17 @@
+/* ==========================================================================
+   Atout Flair — feuille de style
+   --------------------------------------------------------------------------
+   Un design system plutot qu'un ecran stylise a la fois : les jetons d'abord,
+   les composants ensuite, puis le cadre de l'app et chaque ecran.
+   ========================================================================== */
+
+@import './tokens.css';
+@import './base.css';
+@import './components.css';
+@import './shell.css';
+@import './lists.css';
+@import './home.css';
+@import './editor.css';
+@import './screens.css';
+@import './agenda.css';
+@import './overlays.css';
