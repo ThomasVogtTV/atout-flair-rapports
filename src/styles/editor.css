@@ -5,7 +5,7 @@
 
 /* --- En-tete : le client en titre, le numero, l'etat de l'enregistrement ---- */
 .rapport-tete { flex-wrap: wrap; row-gap: 10px; padding-bottom: 12px; }
-.rapport-tete .top-title h1 { font-size: 17px; }
+.rapport-tete .top-title h1 { font-size: 15.5px; }
 
 .save-etat {
   display: inline-flex;
@@ -13,7 +13,7 @@
   gap: 5px;
   height: 26px;
   padding: 0 9px 0 7px;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 650;
   color: var(--c-success);
   background: var(--c-success-soft);
@@ -86,7 +86,7 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--c-muted);
@@ -101,7 +101,7 @@
     box-shadow var(--d-3) var(--ease);
 }
 .etape-pastille svg { width: 16px; height: 16px; }
-.etape-nom { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; transition: color var(--d-2); }
+.etape-nom { font-size: 10px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; transition: color var(--d-2); }
 .etape.faite .etape-pastille { color: #fff; background: var(--c-brand-fill); border-color: var(--c-brand-fill); }
 .etape.faite .etape-nom { color: var(--c-ink-2); }
 .etape.courante .etape-pastille {
@@ -152,7 +152,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px 8px 11px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--c-fauve-ink);
   background: var(--c-fauve-soft);
@@ -166,7 +166,7 @@
 .etape-corps .section-title-main {
   gap: 10px;
   font-family: var(--f-ui);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -216,8 +216,8 @@
 }
 .carnet-choisir-ico svg { width: 20px; height: 20px; }
 .carnet-choisir-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.carnet-choisir-txt b { font-size: 14.5px; font-weight: 650; }
-.carnet-choisir-txt span { font-size: 12.5px; color: var(--c-muted); }
+.carnet-choisir-txt b { font-size: 13.5px; font-weight: 650; }
+.carnet-choisir-txt span { font-size: 11.5px; color: var(--c-muted); }
 .carnet-choisir-go { color: var(--c-faint); }
 .carnet-choisir-go svg { width: 18px; height: 18px; }
 
@@ -235,7 +235,7 @@
 .verdicts-tete { display: flex; align-items: baseline; gap: 10px; }
 .verdicts-compte {
   font-family: var(--f-display);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -243,7 +243,7 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 .verdicts-compte b { font-weight: 600; color: var(--c-ink); }
-.verdicts-mot { font-size: 13px; color: var(--c-muted); }
+.verdicts-mot { font-size: 12px; color: var(--c-muted); }
 .verdicts-barre {
   display: flex;
   gap: 3px;
@@ -257,7 +257,7 @@
 .verdicts-barre .v-non { background: var(--c-success); }
 .verdicts-barre .v-inconnu { background: var(--c-fauve); }
 .verdicts-barre .v-afaire { background: repeating-linear-gradient(135deg, var(--c-bg-2) 0 4px, var(--c-line-2) 4px 7px); }
-.verdicts-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12px; color: var(--c-muted); }
+.verdicts-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 11px; color: var(--c-muted); }
 .verdicts-legende span { display: inline-flex; align-items: center; gap: 6px; }
 .verdicts-legende span::before { content: ''; width: 9px; height: 9px; border-radius: 3px; }
 .verdicts-legende b { color: var(--c-ink); font-weight: 700; }
@@ -309,7 +309,7 @@
   gap: 5px;
   width: 40px;
   height: 34px;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--c-ink-2);
@@ -374,12 +374,12 @@
 .row-card.repliee .row-head:active { background: var(--c-veil); }
 .resume { flex: 1 1 0; min-width: 0; display: grid; gap: 2px; }
 .resume-ligne { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-.resume-nom { font-size: 14.5px; font-weight: 650; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resume-etat { margin-left: auto; flex-shrink: 0; font-size: 12px; font-weight: 650; color: var(--c-muted); }
+.resume-nom { font-size: 13.5px; font-weight: 650; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-etat { margin-left: auto; flex-shrink: 0; font-size: 11px; font-weight: 650; color: var(--c-muted); }
 .row-card.repliee[data-status='oui'] .resume-etat { color: var(--c-danger); }
 .row-card.repliee[data-status='non'] .resume-etat { color: var(--c-success); }
 .row-card.repliee[data-status='inconnu'] .resume-etat { color: var(--c-fauve-ink); }
-.resume-detail { font-size: 12.5px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-detail { font-size: 11.5px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Bouton de repliage : rond, visible - une rubrique qu'on ne sait pas rouvrir
    est une rubrique perdue. */
@@ -424,8 +424,8 @@
   cursor: pointer;
 }
 .rubrique-repliee:active { background: var(--c-surface-2); }
-.rubrique-resume { flex: 1; min-width: 0; font-size: 15px; font-weight: 560; color: var(--c-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rubrique-ouvrir { flex-shrink: 0; font-size: 13.5px; font-weight: 600; color: var(--c-brand-ink); }
+.rubrique-resume { flex: 1; min-width: 0; font-size: 14px; font-weight: 560; color: var(--c-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rubrique-ouvrir { flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: var(--c-brand-ink); }
 
 /* --- Glisser une carte ----------------------------------------------------------- */
 .row-card.row-dragging {
@@ -480,7 +480,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   width: 28px;
   height: 28px;
   padding: 0;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
   color: #fff;
   background: var(--c-night);
@@ -503,9 +503,9 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
-.thumb-move { width: 26px; height: 24px; padding: 0; border: 0; background: none; color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+.thumb-move { width: 26px; height: 24px; padding: 0; border: 0; background: none; color: #fff; font-size: 14.5px; line-height: 1; cursor: pointer; }
 .thumb-move:disabled { opacity: 0.3; cursor: default; }
-.thumb-rank { font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; color: #fff; }
+.thumb-rank { font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; color: #fff; }
 
 /* --- Remarques ----------------------------------------------------------------------- */
 .quick-notes-titre { display: block; margin: 16px 0 8px; }
@@ -527,8 +527,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 }
 .depose.survol { border-color: var(--c-brand); background: color-mix(in srgb, var(--c-brand) 10%, transparent); }
 .depose.rempli { border-style: solid; border-color: var(--c-line); background: #fff; }
-.depose-mot { font-size: 14px; font-weight: 600; }
-.depose-sous { font-size: 13px; color: var(--c-muted); }
+.depose-mot { font-size: 13px; font-weight: 600; }
+.depose-sous { font-size: 12px; color: var(--c-muted); }
 .depose-nom { display: flex; margin-top: 14px; }
 .depose-titre { display: block; margin: 16px 0 8px; }
 .logo-partenaire { max-width: 100%; max-height: 80px; }
@@ -554,7 +554,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   gap: 6px;
   width: 100%;
   padding: 14px 12px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--c-muted);
   border: 1.5px dashed var(--c-line-2);
   border-radius: var(--r-md);
@@ -580,12 +580,12 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   color: var(--c-on-night);
   background: var(--c-night);
 }
-.bilan-ref { font-family: var(--f-mono); font-size: 13px; font-weight: 500; letter-spacing: 0.08em; color: var(--c-fauve-bright); }
+.bilan-ref { font-family: var(--f-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--c-fauve-bright); }
 .bilan-tete .pill { color: var(--c-on-night); background: rgba(241, 237, 228, 0.12); }
 .bilan-titre {
   padding: 15px 16px 2px;
   font-family: var(--f-display);
-  font-size: 20px;
+  font-size: 18.5px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.016em;
@@ -600,8 +600,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 .bilan-faits div { min-width: 0; }
 .bilan-faits div:nth-child(1),
 .bilan-faits div:nth-child(2) { grid-column: 1 / -1; }
-.bilan-faits dt { font-size: 10.5px; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted); }
-.bilan-faits dd { margin: 3px 0 0; font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--c-ink); overflow-wrap: anywhere; }
+.bilan-faits dt { font-size: 9.5px; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted); }
+.bilan-faits dd { margin: 3px 0 0; font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--c-ink); overflow-wrap: anywhere; }
 .bilan-verdict {
   display: flex;
   align-items: center;
@@ -623,8 +623,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   background: currentColor;
 }
 .bilan-verdict-ico svg { width: 17px; height: 17px; color: var(--c-surface); }
-.bilan-verdict b { display: block; font-size: 14.5px; font-weight: 700; }
-.bilan-verdict > span:last-child > span { font-size: 13px; opacity: 0.9; }
+.bilan-verdict b { display: block; font-size: 13.5px; font-weight: 700; }
+.bilan-verdict > span:last-child > span { font-size: 12px; opacity: 0.9; }
 .bilan-manques { margin: 14px 16px 16px; padding-top: 12px; border-top: 1px dashed var(--c-line-2); }
 .bilan-manques ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .bilan-manques button {
@@ -636,7 +636,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   min-height: 40px;
   padding: 0 12px 0 14px;
   font-family: var(--f-ui);
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
   text-align: left;
   color: var(--c-fauve-ink);
@@ -648,7 +648,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 }
 .bilan-manques button:active { transform: scale(0.98); }
 .bilan-manques button svg { width: 16px; height: 16px; flex-shrink: 0; }
-.bilan-pret { display: flex; align-items: center; gap: 8px; margin: 16px 18px 18px; font-size: 14.5px; font-weight: 650; color: var(--c-success); }
+.bilan-pret { display: flex; align-items: center; gap: 8px; margin: 16px 18px 18px; font-size: 13.5px; font-weight: 650; color: var(--c-success); }
 .bilan-pret svg { width: 19px; height: 19px; }
 
 /* --- La barre du bas du rapport ------------------------------------------------------- */
@@ -662,7 +662,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 /* --- Tablette et ordinateur : la frise respire ------------------------------------ */
 @media (min-width: 720px) {
   .rapport-tete { padding-left: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter))); padding-right: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter))); }
-  .etape-nom { font-size: 12.5px; }
+  .etape-nom { font-size: 11.5px; }
   .etape-pastille { width: 38px; height: 38px; }
   .etapes-liste::before,
   .etapes-liste::after { top: 18px; }

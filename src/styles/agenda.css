@@ -6,7 +6,7 @@
 .agenda-jour {
   margin: 22px 4px 8px;
   font-family: var(--f-display);
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 600;
   letter-spacing: -0.012em;
   color: var(--c-ink);
@@ -60,11 +60,11 @@
 /* --- Le calendrier du mois ---------------------------------------------------- */
 .calendrier { padding: 12px 10px; }
 .cal-tete { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
-.cal-titre { font-family: var(--f-display); font-size: 17px; font-weight: 600; letter-spacing: -0.012em; }
-.cal-nav { font-size: 22px; line-height: 1; color: var(--c-ink-2); }
+.cal-titre { font-family: var(--f-display); font-size: 15.5px; font-weight: 600; letter-spacing: -0.012em; }
+.cal-nav { font-size: 20px; line-height: 1; color: var(--c-ink-2); }
 .cal-semaine,
 .cal-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-semaine span { padding-bottom: 4px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--c-muted); }
+.cal-semaine span { padding-bottom: 4px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: var(--c-muted); }
 .cal-case {
   aspect-ratio: 1 / 1.04;
   display: flex;
@@ -88,7 +88,7 @@
 .cal-case.aujourdhui .cal-num { color: var(--c-brand-ink); font-weight: 800; }
 .cal-case.choisi { color: var(--c-on-primary); background: var(--c-primary); box-shadow: 0 8px 16px -10px rgba(8, 16, 18, 0.7); }
 .cal-case.choisi .cal-num { color: var(--c-on-primary); font-weight: 800; }
-.cal-num { font-size: 15px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.cal-num { font-size: 14px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .cal-points { display: flex; align-items: center; gap: 2px; height: 5px; }
 .cal-point { width: 5px; height: 5px; border-radius: 50%; background: var(--t-maison); }
 .cal-point.t-immeuble { background: var(--t-immeuble); }
@@ -106,7 +106,7 @@
 .sem-grille { display: grid; grid-template-columns: 34px repeat(7, minmax(42px, 1fr)); min-width: 100%; }
 .sem-coin,
 .sem-lab-jour { grid-column: 1; }
-.sem-lab-jour { align-self: center; padding-right: 4px; text-align: right; font-size: 9.5px; font-weight: 700; color: var(--c-faint); }
+.sem-lab-jour { align-self: center; padding-right: 4px; text-align: right; font-size: 9px; font-weight: 700; color: var(--c-faint); }
 .sem-jour {
   display: flex;
   flex-direction: column;
@@ -120,8 +120,8 @@
   border-radius: 10px 10px 0 0;
   cursor: pointer;
 }
-.sem-jour i { font-style: normal; font-size: 10px; font-weight: 700; color: var(--c-muted); }
-.sem-jour b { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sem-jour i { font-style: normal; font-size: 9px; font-weight: 700; color: var(--c-muted); }
+.sem-jour b { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .sem-jour.aujourdhui b {
   display: grid;
   place-items: center;
@@ -138,7 +138,7 @@
   overflow: hidden;
   padding: 2px 4px;
   font-family: var(--f-ui);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   text-align: left;
   white-space: nowrap;
@@ -156,7 +156,7 @@
   right: 4px;
   transform: translateY(-50%);
   font-family: var(--f-mono);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--c-faint);
 }
@@ -199,11 +199,11 @@
   transition: transform var(--d-1) var(--ease);
 }
 .sem-bloc:active { transform: scale(0.97); }
-.sem-bloc b { font-size: 9.5px; font-weight: 800; line-height: 1.15; color: var(--ton); font-variant-numeric: tabular-nums; }
+.sem-bloc b { font-size: 9px; font-weight: 800; line-height: 1.15; color: var(--ton); font-variant-numeric: tabular-nums; }
 .sem-bloc span {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   line-height: 1.15;
   -webkit-box-orient: vertical;
@@ -234,7 +234,7 @@
 .sem-bloc.annule .sem-n,
 .sem-bloc.annule .sem-h { text-decoration: line-through; }
 .sem-legende { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 2px 0; }
-.sem-nom { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; color: var(--c-muted); }
+.sem-nom { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; color: var(--c-muted); }
 .sem-nom::before { content: ''; width: 9px; height: 9px; margin-right: 6px; border-radius: 50%; background: var(--ton); }
 
 /* --- Fiche et formulaire d'un rendez-vous ------------------------------------------ */
@@ -242,10 +242,10 @@
 .rdv-tete .rapport-type { width: 42px; height: 42px; border-radius: 13px; }
 .rdv-tete h2 { margin: 0; }
 .rdv-tete p { margin: 3px 0 0; }
-.rdv-adresse { margin: 4px 0 0; font-size: 14.5px; font-weight: 600; }
+.rdv-adresse { margin: 4px 0 0; font-size: 13.5px; font-weight: 600; }
 .rdv-note {
   padding: 10px 12px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   white-space: pre-wrap;
   background: var(--c-surface-2);
   border: 1px solid var(--c-line);

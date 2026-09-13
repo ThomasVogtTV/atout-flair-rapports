@@ -28,7 +28,7 @@ body.defile .top {
 .top-title { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; }
 .top-title h1 {
   font-family: var(--f-display);
-  font-size: 18px;
+  font-size: 16.5px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.015em;
@@ -45,7 +45,7 @@ body.defile .top {
   text-overflow: ellipsis;
 }
 .top-title p b { color: var(--c-ink-2); font-weight: 650; }
-.top-title .mono { font-size: 12px; color: var(--c-brand-ink); }
+.top-title .mono { font-size: 11px; color: var(--c-brand-ink); }
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 /* Le retour : un vrai bouton rond, visible, a portee de pouce. */
@@ -67,9 +67,10 @@ body[data-screen='envois'] .top .back { display: none; }
 
 /* --- Navigation du bas (dock) ----------------------------------------------
    Quatre portes et l'action principale au centre, sous le pouce - le
-   technicien a souvent une seule main de libre. La barre est de la nuit de la
-   maison, les icones sont celles dessinees pour l'app ; la porte ouverte se
-   reconnait a sa couleur, les autres se mettent en retrait. */
+   technicien a souvent une seule main de libre. La barre est un verre fume,
+   semi-lumineux : les icones dessinees pour l'app gardent leurs couleurs dans
+   un halo leger, la porte ouverte s'allume, et l'or de l'action principale
+   laisse passer la lumiere. */
 .dock {
   position: fixed;
   left: 50%;
@@ -81,11 +82,13 @@ body[data-screen='envois'] .top .back { display: none; }
   width: min(calc(100% - 20px), 460px);
   height: var(--dock-h);
   padding: 0 6px 6px;
-  color: var(--c-on-night-2);
-  background: color-mix(in srgb, var(--c-dock) 97%, transparent);
-  border: 1px solid var(--c-night-line);
+  color: rgba(241, 237, 228, 0.78);
+  background: color-mix(in srgb, var(--c-dock) 60%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 22px;
-  box-shadow: var(--sh-float);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), var(--sh-float);
   transform: translateX(-50%);
   transition: transform var(--d-3) var(--ease), opacity var(--d-2) var(--ease);
 }
@@ -100,7 +103,7 @@ body[data-screen='envois'] .top .back { display: none; }
   border: 0;
   background: none;
   font-family: var(--f-ui);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: inherit;
@@ -119,16 +122,19 @@ body[data-screen='envois'] .top .back { display: none; }
 .dock-ico svg {
   width: 26px;
   height: 26px;
-  filter: saturate(0.3) brightness(0.8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
-  opacity: 0.72;
+  filter: saturate(0.85) drop-shadow(0 0 6px rgba(241, 237, 228, 0.16));
+  opacity: 0.82;
   transition: filter var(--d-2) var(--ease), opacity var(--d-2) var(--ease);
 }
 .dock-item.actif { color: var(--c-on-night); }
-.dock-item.actif .dock-ico { background: rgba(255, 255, 255, 0.09); }
-.dock-item.actif .dock-ico svg { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); opacity: 1; }
+.dock-item.actif .dock-ico {
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 0 18px rgba(241, 237, 228, 0.14);
+}
+.dock-item.actif .dock-ico svg { filter: drop-shadow(0 0 8px rgba(241, 237, 228, 0.34)); opacity: 1; }
 .dock-item:active .dock-ico { transform: scale(0.9); }
 @media (hover: hover) {
-  .dock-item:hover .dock-ico svg { opacity: 0.95; filter: saturate(0.8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); }
+  .dock-item:hover .dock-ico svg { opacity: 1; filter: drop-shadow(0 0 8px rgba(241, 237, 228, 0.28)); }
 }
 .dock-badge {
   position: absolute;
@@ -139,7 +145,7 @@ body[data-screen='envois'] .top .back { display: none; }
   padding: 0 5px;
   display: grid;
   place-items: center;
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #1b1206;
@@ -158,14 +164,16 @@ body[data-screen='envois'] .top .back { display: none; }
   width: 54px;
   height: 54px;
   margin: 0 6px 4px;
-  border: 0;
+  border: 1px solid rgba(255, 236, 204, 0.5);
   border-radius: 18px;
   color: #1b1206;
-  background: linear-gradient(155deg, #f1cf93 0%, #d29b50 55%, #b77d35 100%);
+  background: linear-gradient(155deg, rgba(243, 214, 160, 0.9) 0%, rgba(214, 160, 86, 0.8) 55%, rgba(186, 128, 56, 0.76) 100%);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.1),
-    0 12px 26px -10px rgba(197, 139, 63, 0.75);
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 22px rgba(222, 176, 107, 0.42),
+    0 12px 26px -12px rgba(197, 139, 63, 0.7);
   transform: translateY(-14px);
   cursor: pointer;
   transition: transform var(--d-2) var(--ease-spring), box-shadow var(--d-2) var(--ease);
@@ -179,7 +187,7 @@ body[data-screen='envois'] .top .back { display: none; }
   content: 'Nouveau';
   position: absolute;
   bottom: -18px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--c-on-night);
@@ -288,7 +296,7 @@ body.verrouille { overflow: hidden; }
 .lock-card > .lock-logo { animation: none; }
 .lock-card h1 {
   font-family: var(--f-display);
-  font-size: 34px;
+  font-size: 31.5px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -298,16 +306,16 @@ body.verrouille { overflow: hidden; }
   display: block;
   margin-top: 10px;
   font-family: var(--f-ui);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--c-fauve-bright);
 }
-.lock-card p.muted { color: var(--c-on-night-2); font-size: 14px; }
+.lock-card p.muted { color: var(--c-on-night-2); font-size: 13px; }
 .lock-input {
   min-height: 48px;
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0.12em;
   text-align: center;
   color: #fff;
@@ -320,12 +328,12 @@ body.verrouille { overflow: hidden; }
   border-color: var(--c-fauve-bright);
   box-shadow: 0 0 0 3px rgba(222, 176, 107, 0.28);
 }
-.lock-error { min-height: 18px; font-size: 13px; font-weight: 600; color: #f2a497; }
+.lock-error { min-height: 18px; font-size: 12px; font-weight: 600; color: #f2a497; }
 .lock-souvenir {
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 550;
   letter-spacing: 0;
   text-transform: none;
@@ -338,5 +346,5 @@ body.verrouille { overflow: hidden; }
   --btn-fg: #1b1206;
   --btn-bd: var(--c-fauve);
   min-height: 48px;
-  font-size: 15px;
+  font-size: 14px;
 }

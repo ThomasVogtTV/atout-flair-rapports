@@ -39,16 +39,16 @@
   --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* --- echelle typographique (mobile d'abord) --------------------------- */
-  --fs-micro: 11px;     /* libelles en capitales espacees */
-  --fs-caption: 12px;   /* mentions, dates, compteurs */
-  --fs-small: 13px;     /* texte secondaire */
-  --fs-body: 14.5px;    /* texte courant */
+  --fs-micro: 10px;     /* libelles en capitales espacees */
+  --fs-caption: 11px;   /* mentions, dates, compteurs */
+  --fs-small: 12px;     /* texte secondaire */
+  --fs-body: 13.5px;    /* texte courant */
   --fs-input: 16px;     /* valeur saisie (seuil sous lequel iOS zoome) */
-  --fs-lead: 15.5px;    /* nom d'un client, titre de carte */
-  --fs-h3: 17px;
-  --fs-h2: 20px;
-  --fs-h1: 24px;
-  --fs-display: 32px;   /* grands chiffres */
+  --fs-lead: 14.5px;    /* nom d'un client, titre de carte */
+  --fs-h3: 15.5px;
+  --fs-h2: 18.5px;
+  --fs-h1: 22px;
+  --fs-display: 29.5px;   /* grands chiffres */
 
   /* --- couleurs : fond et surfaces --------------------------------------- */
   --c-bg: #f3f0e8;
@@ -297,8 +297,8 @@
 /* --- tablette et ordinateur : la typographie respire un cran plus haut ---- */
 @media (min-width: 768px) {
   :root {
-    --fs-h1: 28px;
-    --fs-display: 38px;
+    --fs-h1: 26px;
+    --fs-display: 35px;
     --gutter: 24px;
   }
 }

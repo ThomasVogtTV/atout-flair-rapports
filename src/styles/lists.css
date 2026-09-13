@@ -56,14 +56,14 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--c-muted);
 }
-.rapport-meta .mono { font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
-.rapport-meta .pill { height: 20px; padding: 0 7px; font-size: 10.5px; margin-left: auto; }
+.rapport-meta .mono { font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
+.rapport-meta .pill { height: 20px; padding: 0 7px; font-size: 9.5px; margin-left: auto; }
 .rapport-quand { white-space: nowrap; }
 .rapport-nom {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 650;
   letter-spacing: -0.006em;
   color: var(--c-ink);
@@ -72,7 +72,7 @@
   text-overflow: ellipsis;
 }
 .rapport-detail {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -117,7 +117,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--ton);
@@ -130,7 +130,7 @@
 .contact-avatar.t-aucun { --ton: var(--c-muted); }
 .contact-activite {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--c-muted);
   white-space: nowrap;
@@ -140,7 +140,7 @@
   list-style: none;
   margin: 14px 4px 0;
   font-family: var(--f-display);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--c-muted);
 }
@@ -179,8 +179,8 @@ span.contact-etoile svg { width: 15px; height: 15px; }
   min-width: 44px;
   font-variant-numeric: tabular-nums;
 }
-.rdv-heure b { font-family: var(--f-mono); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--c-ink); }
-.rdv-heure i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--c-muted); }
+.rdv-heure b { font-family: var(--f-mono); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--c-ink); }
+.rdv-heure i { font-style: normal; font-size: 10px; font-weight: 600; color: var(--c-muted); }
 .rdv-ligne.fait .rapport-nom { color: var(--c-ink-2); font-weight: 600; }
 .rdv-ligne.annule { opacity: 0.62; }
 .rdv-ligne.annule .rapport-nom,
@@ -216,13 +216,13 @@ span.contact-etoile svg { width: 15px; height: 15px; }
 .envoi-row[data-open]::before { background: var(--c-success); }
 .envoi-row.echec::before { background: var(--c-danger); }
 .envoi-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.envoi-main strong { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.envoi-main .muted { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.envoi-main strong { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.envoi-main .muted { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Le motif du refus, en entier : c'est la seule chose qui permet de corriger. */
 .envoi-motif {
   margin-top: 6px;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
   color: var(--c-danger);
   background: var(--c-danger-soft);

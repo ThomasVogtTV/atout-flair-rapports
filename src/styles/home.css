@@ -55,7 +55,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 .marque { display: grid; gap: 6px; min-width: 0; }
 .marque-nom {
   font-family: var(--f-display);
-  font-size: 23px;
+  font-size: 21px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.022em;
@@ -122,7 +122,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--c-on-night-2);
 }
@@ -166,15 +166,15 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   gap: 6px;
   margin: 0 0 8px;
   font-family: var(--f-ui);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-on-night-2);
 }
 .tableau-titre svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
-.tableau-vide { margin: 0; font-size: 12.5px; color: var(--c-on-night-2); }
-.tableau-note { margin: 0 0 8px; font-size: 11px; color: var(--c-on-night-2); }
+.tableau-vide { margin: 0; font-size: 11.5px; color: var(--c-on-night-2); }
+.tableau-note { margin: 0 0 8px; font-size: 10px; color: var(--c-on-night-2); }
 
 /* La carte du jour. Le rapport de forme tient la place avant que l'iframe ne
    charge : sans lui, le tableau sauterait a l'arrivee de la carte. */
@@ -199,7 +199,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   gap: 6px;
   padding: 4px 10px;
   font-family: var(--f-ui);
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--c-on-night-2);
   border: 1px solid var(--c-night-line);
@@ -214,7 +214,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   border-radius: 50%;
   background: var(--ton, var(--c-fauve-bright));
 }
-.tournee-onglet i { font-style: normal; font-size: 10.5px; opacity: 0.7; }
+.tournee-onglet i { font-style: normal; font-size: 9.5px; opacity: 0.7; }
 .tournee-onglet.on {
   color: var(--c-on-night);
   border-color: rgba(241, 237, 228, 0.3);
@@ -226,7 +226,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
   color: var(--c-on-night);
 }
@@ -237,14 +237,14 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   border-radius: 50%;
   background: var(--ton, var(--c-fauve-bright));
 }
-.tournee-compte { font-size: 11px; color: var(--c-on-night-2); }
+.tournee-compte { font-size: 10px; color: var(--c-on-night-2); }
 .tournee-route {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   margin-left: auto;
   padding: 3px 9px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--c-on-night);
   border: 1px solid rgba(241, 237, 228, 0.2);
@@ -267,13 +267,13 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .arret-heure {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--c-fauve-bright);
 }
 .arret-corps { display: grid; gap: 1px; min-width: 0; }
 .arret-qui {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--c-on-night);
   overflow: hidden;
@@ -281,7 +281,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   white-space: nowrap;
 }
 .arret-ou {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--c-on-night-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -289,7 +289,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 }
 .arret-pin svg { width: 13px; height: 13px; color: var(--c-on-night-2); }
 .arret-fait {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -307,14 +307,14 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   background: var(--ton, var(--c-fauve-bright));
 }
 .equipier-nom {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--c-on-night);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.equipier-vu { margin-left: auto; font-size: 11px; color: var(--c-on-night-2); white-space: nowrap; }
+.equipier-vu { margin-left: auto; font-size: 10px; color: var(--c-on-night-2); white-space: nowrap; }
 
 .incidents { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .incident {
@@ -326,10 +326,10 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   background: rgba(170, 60, 48, 0.3);
   color: #ffdcd5;
 }
-.incident-tete { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.incident-tete { display: flex; align-items: center; gap: 6px; font-size: 11px; }
 .incident-tete svg { width: 13px; height: 13px; flex-shrink: 0; }
-.incident-tete i { margin-left: auto; font-style: normal; font-size: 10.5px; opacity: 0.8; }
-.incident-motif { font-size: 11px; opacity: 0.9; overflow-wrap: anywhere; }
+.incident-tete i { margin-left: auto; font-style: normal; font-size: 9.5px; opacity: 0.8; }
+.incident-motif { font-size: 10px; opacity: 0.9; overflow-wrap: anywhere; }
 
 /* --- Le prochain rendez-vous ----------------------------------------------------
    L'outil du poste : ou je vais, et les gestes qui vont avec. Le bouton du
@@ -346,7 +346,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -370,13 +370,13 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .prochain-quand { display: grid; gap: 3px; max-width: 84px; }
 .prochain-heure {
   font-family: var(--f-mono);
-  font-size: 18px;
+  font-size: 16.5px;
   font-weight: 600;
   line-height: 1;
   color: var(--c-fauve-bright);
 }
 .prochain-jour {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 650;
   line-height: 1.3;
   letter-spacing: 0.06em;
@@ -386,7 +386,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .prochain-corps { display: grid; gap: 3px; min-width: 0; padding-left: 14px; border-left: 1px solid var(--c-night-line); }
 .prochain-nom {
   font-family: var(--f-display);
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.015em;
@@ -395,7 +395,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.prochain-ou { font-size: 12.5px; color: var(--c-on-night-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prochain-ou { font-size: 11.5px; color: var(--c-on-night-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prochain-go svg { width: 16px; height: 16px; color: var(--c-on-night-2); }
 .prochain-gestes { display: flex; gap: 8px; }
 .prochain-btn {
@@ -408,7 +408,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   min-height: 38px;
   padding: 0 10px;
   font-family: var(--f-ui);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 650;
   white-space: nowrap;
   color: var(--c-on-night);
@@ -427,7 +427,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   .prochain-btn:hover { background: rgba(241, 237, 228, 0.13); }
   .prochain-btn.principal:hover { background: #fff; }
 }
-.prochain-rien { margin: 0; font-size: 14px; color: var(--c-on-night-2); }
+.prochain-rien { margin: 0; font-size: 13px; color: var(--c-on-night-2); }
 .prochain.vide .prochain-btn { justify-self: start; flex: none; padding: 0 16px; }
 
 .poste-alertes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
@@ -438,7 +438,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   min-height: 34px;
   padding: 0 14px 0 12px;
   font-family: var(--f-ui);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--c-on-night);
   background: rgba(241, 237, 228, 0.07);
@@ -512,7 +512,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   transition: transform var(--d-3) var(--ease-spring);
 }
 .type-tuile-illu svg { display: block; width: 100%; height: 100%; }
-.type-tuile-nom { position: relative; font-size: 13px; font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
+.type-tuile-nom { position: relative; font-size: 12px; font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
 .type-tuile-plus {
   position: absolute;
   top: 8px;
@@ -568,10 +568,10 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   align-items: center;
   gap: 10px;
   min-width: 0;
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--c-muted);
 }
-.dossier-ref { font-family: var(--f-mono); font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
+.dossier-ref { font-family: var(--f-mono); font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
 .dossier-type { display: inline-flex; align-items: center; gap: 5px; font-weight: 650; color: var(--ton); }
 .dossier-type svg { width: 14px; height: 14px; }
 .dossier-quand { margin-left: auto; white-space: nowrap; }
@@ -579,7 +579,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   grid-column: 1;
   margin-top: 5px;
   font-family: var(--f-display);
-  font-size: 18px;
+  font-size: 16.5px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.016em;
@@ -590,7 +590,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .dossier-lieu {
   grid-column: 1;
   margin-top: 2px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -632,7 +632,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   background: linear-gradient(90deg, var(--ton, var(--c-brand)), color-mix(in srgb, var(--ton, var(--c-brand)) 55%, #fff));
   transition: width var(--d-4) var(--ease);
 }
-.dossier-compte { font-size: 12px; font-weight: 650; color: var(--c-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dossier-compte { font-size: 11px; font-weight: 650; color: var(--c-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* --- Tablette et ordinateur : le poste a gauche, le travail a droite -------- */
 @media (min-width: 1024px) {
