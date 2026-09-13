@@ -2,8 +2,8 @@
 //
 // Il repond, dans cet ordre, a ce qu'on vient chercher en ouvrant l'app sur le
 // terrain : ou j'en suis (ce qui reste sur les bras), je commence (le choix du
-// lieu), aujourd'hui (les rendez-vous), je continue (les rapports en cours),
-// je cherche (les archives).
+// lieu), je continue (les rapports en cours), ou va l'equipe (la carte de la
+// tournee pour l'administrateur, puis les rendez-vous), je cherche (les archives).
 //
 // La photo des chiens tient le haut de l'ecran, nette et en entier : c'est
 // l'identite de la maison. Elle se fond dans la nuit du poste de controle, ou
@@ -307,7 +307,6 @@ function posteHTML(view) {
     <div class="poste reveal" style="--i:0">
       ${LIGNES_FLAIR}
       ${sessionHTML()}
-      <div class="tableau-zone">${tableauAdminHTML(view)}</div>
       <div class="releve" role="group" aria-label="Activité">
         ${mesure(brouillons, 'en cours', brouillons > 0)}
         ${mesure(crees, 'créés ce mois')}
@@ -343,9 +342,10 @@ export function homeView(view) {
       ${posteHTML(view)}
       <section class="accueil-feuille">
         <div class="reveal bloc-nouveau" style="--i:1">${nouveauHTML()}</div>
-        <div class="reveal rdv-accueil-zone" style="--i:2">${rdvAccueilHTML(view)}</div>
-        <div class="reveal" style="--i:3">${enCoursHTML(view.reports)}</div>
-        <div class="reveal" style="--i:4">${mesRapportsHTML(view)}</div>
+        <div class="reveal" style="--i:2">${enCoursHTML(view.reports)}</div>
+        <div class="reveal tableau-zone" style="--i:3">${tableauAdminHTML(view)}</div>
+        <div class="reveal rdv-accueil-zone" style="--i:4">${rdvAccueilHTML(view)}</div>
+        <div class="reveal" style="--i:5">${mesRapportsHTML(view)}</div>
       </section>
     </div>`
 }

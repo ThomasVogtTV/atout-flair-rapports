@@ -1,4 +1,5 @@
-// Le tableau de l'administrateur, en tete de l'accueil. Reserve a l'admin : un
+// Le tableau de l'administrateur, sur l'accueil, sous les rapports en cours :
+// le travail a lancer ou a reprendre passe avant la carte. Reserve a l'admin : un
 // technicien a son agenda, il n'a pas a savoir depuis son accueil ce que fait
 // le voisin.
 //

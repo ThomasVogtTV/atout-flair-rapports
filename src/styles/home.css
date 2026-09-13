@@ -139,13 +139,18 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 .poste-session.invite::before { background: #f1c27d; }
 
 /* --- Le tableau de l'administrateur ------------------------------------------
-   Une fenetre a soi, qui defile : l'equipe peut grandir sans que le tableau
-   repousse le reste de l'accueil hors de l'ecran. */
+   Pose sur la feuille, sous les rapports en cours : une carte de la nuit de la
+   maison, ou ses textes clairs gardent leur contraste. Une fenetre a soi, qui
+   defile : l'equipe peut grandir sans repousser le reste de l'accueil. */
+.tableau-zone:empty { display: none; }
 .tableau {
-  margin-top: 14px;
+  margin-top: 36px;
+  color: var(--c-on-night);
   border: 1px solid var(--c-night-line);
-  border-radius: var(--r-md);
-  background: rgba(241, 237, 228, 0.04);
+  border-radius: var(--r-lg);
+  background: var(--c-night);
+  box-shadow: var(--sh-2);
+  overflow: hidden;
 }
 .tableau-defile {
   display: grid;
