@@ -159,6 +159,8 @@
   border-radius: var(--r-pill);
 }
 .etape-alerte svg { width: 17px; height: 17px; }
+/* Le motif d'un refus de l'administrateur : brique, comme ce qui a echoue. */
+.etape-alerte.refus { color: var(--c-danger); background: var(--c-danger-soft); border-radius: var(--r-md); }
 
 /* Dans une etape, les rubriques reprennent la signature du PDF : petites
    capitales et filet jusqu'au bord. L'etape, elle, se lit dans la frise. */

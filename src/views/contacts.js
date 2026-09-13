@@ -13,6 +13,7 @@ import { esc } from '../ui/dom.js'
 import { MANDANT_TYPES, mandantTypeLabel } from '../ui/chips.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { reportRowHTML } from './home.js'
+import { estAdmin } from '../lock.js'
 
 const sansAccent = (s) => (s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '')
 
@@ -248,6 +249,9 @@ export function ficheContactView(view) {
           : '<li class="empty">Les rapports faits pour ce client apparaîtront ici.</li>'
       }</ul>
 
-      <button type="button" class="btn ghost danger wide fiche-suppr" data-act="supprimer-contact">Supprimer ce contact</button>
+      ${
+        // Retirer un client du carnet de l'equipe revient a l'administrateur.
+        estAdmin() ? '<button type="button" class="btn ghost danger wide fiche-suppr" data-act="supprimer-contact">Supprimer ce contact</button>' : ''
+      }
     </section>`
 }

@@ -90,19 +90,120 @@ function ligneEmploye(e) {
     </li>`
 }
 
+// Ce que dit une ligne du journal : parti, refuse par le serveur de mail, en
+// attente de relecture, ou refuse par l'administrateur.
+const ETATS_JOURNAL = {
+  envoye: ['sent', 'Envoyé'],
+  echec: ['off', 'Échec'],
+  'a-valider': ['queued', 'À valider'],
+  refuse: ['off', 'Refusé'],
+}
+
 function ligneJournal(j) {
-  const echec = j.statut === 'echec'
+  const [pastille, mot] = ETATS_JOURNAL[j.statut] ?? ETATS_JOURNAL.envoye
+  const rouge = j.statut === 'echec' || j.statut === 'refuse'
   const quoi = [j.ref, TYPES[j.type] ?? j.type, j.adresse].filter(Boolean).join(' · ')
+  const motif = j.statut === 'echec' ? j.erreur || 'Échec sans explication.' : j.statut === 'refuse' ? j.erreur : ''
   return `
-    <li class="envoi-row${echec ? ' echec' : ''}">
+    <li class="envoi-row${rouge ? ' echec' : ''}">
       <div class="envoi-main">
         <strong>${esc(j.qui || '?')}</strong>
         <span class="muted">${esc(quoi || j.fichier || 'Rapport')}</span>
-        <span class="muted">→ ${esc(j.destinataire || '?')} · ${esc(ilYA(j.date))}</span>
-        ${echec ? `<span class="envoi-motif">${esc(j.erreur || 'Échec sans explication.')}</span>` : ''}
+        <span class="muted">→ ${esc(j.destinataire || '?')} · ${esc(ilYA(j.date))}${j.validePar ? ' · relu par l’administrateur' : ''}</span>
+        ${motif ? `<span class="envoi-motif">${esc(motif)}</span>` : ''}
       </div>
-      <div class="envoi-side"><span class="pill ${echec ? 'off' : 'sent'}">${echec ? 'Échec' : 'Envoyé'}</span></div>
+      <div class="envoi-side"><span class="pill ${pastille}">${mot}</span></div>
     </li>`
+}
+
+// Le rapport d'un invite qui attend d'etre relu : son PDF, puis l'envoi au
+// client ou le refus, dont l'invite lira le motif.
+function ligneValidation(v) {
+  const quoi = [v.meta?.ref, TYPES[v.meta?.type] ?? v.meta?.type, v.meta?.adresse].filter(Boolean).join(' · ')
+  return `
+    <li class="envoi-row admin-emp a-valider">
+      <div class="envoi-main">
+        <strong>${esc(v.par?.nom || 'Invité')} <span class="pill invite">Invité</span></strong>
+        <span class="muted">${esc(quoi || v.filename || 'Rapport')}</span>
+        <span class="muted">→ ${esc(v.to || '?')} · ${esc(ilYA(v.date))}</span>
+      </div>
+      <div class="row-actions">
+        <button class="btn ghost btn-mini" data-act="valid-voir" data-id="${esc(v.id)}">Voir le PDF</button>
+        <button class="btn ghost danger btn-mini" data-act="valid-refuser" data-id="${esc(v.id)}">Refuser</button>
+        <button class="btn primary btn-mini" data-act="valid-envoyer" data-id="${esc(v.id)}">Envoyer</button>
+      </div>
+    </li>`
+}
+
+// --- les rapports de l'equipe ------------------------------------------------------
+// Chaque rapport vit sur le telephone de celui qui l'a fait ; sa copie en ligne
+// (la sauvegarde automatique) permet a l'administrateur de le relire. En
+// lecture seule : il s'ouvre en PDF, et rien ne se pose sur ce telephone.
+
+const ETATS_RAPPORT = {
+  sent: ['sent', 'Envoyé'],
+  done: ['done', 'Terminé'],
+  queued: ['queued', 'En attente'],
+  validation: ['queued', 'À valider'],
+  draft: ['encours', 'En cours'],
+}
+
+function ligneRapportEquipe(s) {
+  const [pastille, mot] = ETATS_RAPPORT[s.status] ?? ETATS_RAPPORT.draft
+  const quoi = [s.ref, TYPES[s.type] ?? s.type, s.nPhotos ? `${s.nPhotos} photo${s.nPhotos > 1 ? 's' : ''}` : '']
+    .filter(Boolean)
+    .join(' · ')
+  return `
+    <li class="envoi-row rapport-equipe" data-act="equipe-rapport" data-id="${esc(s.id)}">
+      <div class="envoi-main">
+        <strong>${esc(s.titre || s.ref || 'Rapport')}</strong>
+        <span class="muted">${esc(quoi)}</span>
+        <span class="muted">${esc(s.par?.nom || '?')} · ${esc(ilYA(s.maj))}</span>
+      </div>
+      <div class="envoi-side"><span class="pill ${pastille}">${mot}</span>${ICONS.chevron}</div>
+    </li>`
+}
+
+// Les plus recents d'abord ; au-dela, le filtre par personne suffit a retrouver.
+const RAPPORTS_MONTRES = 40
+
+function rapportsEquipeHTML(view) {
+  const e = view.adminRapports
+  if (!e) return ''
+  const tous = (e.liste ?? []).filter((s) => !s.parentId).sort((a, b) => (b.maj ?? 0) - (a.maj ?? 0))
+  const titre = `
+    <h2 class="section-title">
+      <span class="section-title-main">${sectionIcon('folder', 'accent')}Rapports de l’équipe</span>
+      ${tous.length ? `<span class="section-title-trailer"><span class="count-pill"><b>${tous.length}</b></span></span>` : ''}
+    </h2>`
+  if (e.erreur) return `${titre}<p class="muted small">${esc(e.erreur)}</p>`
+
+  const noms = [...new Set(tous.map((s) => s.par?.nom).filter(Boolean))]
+  const actif = noms.includes(view.adminRapportsQui) ? view.adminRapportsQui : 'Tous'
+  const montres = (actif === 'Tous' ? tous : tous.filter((s) => s.par?.nom === actif)).slice(0, RAPPORTS_MONTRES)
+  const chips =
+    noms.length > 1
+      ? `<div class="quick-rooms admin-filtres">${['Tous', ...noms]
+          .map(
+            (n) =>
+              `<button type="button" class="chip chip-sm${actif === n ? ' on' : ''}" data-act="equipe-filtre" data-val="${esc(n)}">${esc(n)}</button>`
+          )
+          .join('')}</div>`
+      : ''
+  return `${titre}${chips}
+    <ul class="report-list">${
+      montres.map(ligneRapportEquipe).join('') || `<li class="empty">Aucun rapport sauvegardé en ligne pour l’instant.</li>`
+    }</ul>`
+}
+
+function aValiderHTML(validations) {
+  if (!validations.length) return ''
+  return `
+    <h2 class="section-title">
+      <span class="section-title-main">${sectionIcon('note', 'amber')}À valider</span>
+      <span class="section-title-trailer"><span class="count-pill"><b>${validations.length}</b></span></span>
+    </h2>
+    <ul class="report-list">${validations.map(ligneValidation).join('')}</ul>`
 }
 
 // Un filtre par personne presente dans le journal. Inutile tant qu'une seule
@@ -134,6 +235,7 @@ export function adminView(view) {
   return `${entete()}
     <section class="pad">
       ${codeRevele(view.adminCodeRevele)}
+      ${aValiderHTML(a.validations ?? [])}
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'accent')}Équipe</span></h2>
       <div class="card admin-ajout">
@@ -147,6 +249,8 @@ export function adminView(view) {
         ${a.employes.map(ligneEmploye).join('')}
       </ul>
       ${a.employes.length ? '' : `<p class="muted small">Aucun employé pour l'instant. Ajoutez-en un : un code personnel lui sera attribué.</p>`}
+
+      ${rapportsEquipeHTML(view)}
 
       <h2 class="section-title"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>
       ${filtres(a.journal, filtre)}

@@ -60,6 +60,26 @@ body.defile .top {
 }
 .top .back svg { width: 18px; height: 18px; }
 
+/* --- La couleur du role -------------------------------------------------------
+   Un filet en haut de l'ecran dit sous quelle session le telephone est ouvert,
+   sur tous les ecrans : fauve pour l'administrateur, petrole pour un employe,
+   ocre pour un invite. Rien derriere l'ecran du code. */
+body[data-role]::before {
+  content: '';
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  height: 3px;
+  background: var(--role, transparent);
+  pointer-events: none;
+}
+body[data-role='admin'] { --role: var(--c-fauve); }
+body[data-role='employe'] { --role: var(--c-brand); }
+body[data-role='invite'] { --role: var(--c-warning); }
+body.verrouille::before { display: none; }
+
 /* --- Navigation du bas (dock) ----------------------------------------------
    Quatre portes et l'action principale au centre, sous le pouce - le
    technicien a souvent une seule main de libre. La barre est un verre fume,

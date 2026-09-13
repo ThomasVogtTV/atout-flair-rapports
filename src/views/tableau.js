@@ -196,11 +196,23 @@ function equipeHTML(view) {
   return `<ul class="equipiers">${equipiers}</ul>${incidents}`
 }
 
+// Les rapports d'invites qui attendent une relecture : la seule chose du tableau
+// qui reclame un geste de l'administrateur, donc la premiere.
+function aValiderHTML(view) {
+  const n = view.admin?.validations?.length ?? 0
+  if (!n) return ''
+  return `
+    <button type="button" class="tableau-valider" data-act="open-admin">
+      ${ICONS.alerte}<span>${n} rapport${n > 1 ? 's' : ''} d’invité à valider</span>${ICONS.chevron}
+    </button>`
+}
+
 export function tableauAdminHTML(view) {
   if (!estAdmin()) return ''
   return `
     <section class="tableau" aria-label="Tableau de l’équipe">
       <div class="tableau-defile">
+        ${aValiderHTML(view)}
         <div class="tableau-bloc">
           <h3 class="tableau-titre">${ICONS.pin}Tournée du jour</h3>
           ${tourneeHTML(view)}

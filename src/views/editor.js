@@ -18,6 +18,7 @@ import { mandantPicker } from '../ui/chips.js'
 import { srcVignette } from '../ui/vignettes.js'
 import { etapesDuRapport, manques, adresseDuLieu } from '../etapes.js'
 import { etatRapport } from './home.js'
+import { estInvite } from '../lock.js'
 
 // Champs d'adresse du bloc "Lieu d'intervention" : un seul champ combine
 // pour le rapport de detection, deux champs separes (comme le mandant)
@@ -671,7 +672,7 @@ function barreHTML(r, courante, etapes) {
           ? ''
           : `<button class="btn ghost" data-act="${fini ? 'rouvrir' : 'terminer'}">${fini ? 'Rouvrir' : 'Terminer'}</button>`
       }
-      <button class="btn primary" data-act="send">${ICONS.envoyer}<span>${fini ? 'Renvoyer' : 'Envoyer'}</span></button>
+      <button class="btn primary" data-act="send">${ICONS.envoyer}<span>${estInvite() ? 'Transmettre' : fini ? 'Renvoyer' : 'Envoyer'}</span></button>
     </div>`
 }
 
@@ -713,6 +714,15 @@ export function editorView(view) {
     </header>
 
     <section class="pad etape-corps${view.etapeSens ? ` vers-${view.etapeSens}` : ''}" data-etape-id="${e.id}">
+      ${
+        // Refuse par l'administrateur : le motif reste sous les yeux tant que le
+        // rapport n'est pas retransmis.
+        r.refus && !fini
+          ? `<div class="etape-tete"><p class="etape-alerte refus">${ICONS.alerte}${esc(
+              `Refusé par l’administrateur${r.refus.motif ? ` : ${r.refus.motif}` : ''}`
+            )}</p></div>`
+          : ''
+      }
       ${
         // La frise en tete suffit a dire ou l'on est : seul ce qui manque
         // vraiment s'ecrit encore au-dessus du contenu.

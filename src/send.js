@@ -6,6 +6,7 @@ import { recompress } from './photo.js'
 import { sendReport } from './mailer.js'
 import { esc, toast, showLoading, hideLoading } from './ui/dom.js'
 import { openOverlay, confirmRemise } from './ui/dialogs.js'
+import { estInvite } from './lock.js'
 
 // Boite mail de l'entreprise : copie par defaut proposee dans le dialogue.
 const COPY_DEFAULT = 'info@atout-flair.ch'
@@ -55,21 +56,26 @@ async function currentPdf(report, children) {
   return { blob, oversized: blob.size > PDF_MAX }
 }
 
+/** Montre un PDF : dans un nouvel onglet, ou a defaut en le telechargeant. */
+export function ouvrirPdf(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  // En app installée (iOS notamment) l'ouverture d'onglet est parfois bloquée :
+  // on retombe alors sur un téléchargement, que le téléphone ouvre tout seul.
+  const win = window.open(url, '_blank')
+  if (!win) {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
 export async function previewPdf(report, children) {
   showLoading('Génération du PDF…')
   try {
     const { blob } = await currentPdf(report, children)
-    const url = URL.createObjectURL(blob)
-    // En app installée (iOS notamment) l'ouverture d'onglet est parfois bloquée :
-    // on retombe alors sur un téléchargement, que le téléphone ouvre tout seul.
-    const win = window.open(url, '_blank')
-    if (!win) {
-      const a = document.createElement('a')
-      a.href = url
-      a.download = S.reportFilename(report)
-      a.click()
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
+    ouvrirPdf(blob, S.reportFilename(report))
   } catch (err) {
     console.error('Génération du PDF impossible', err)
     toast('Impossible de générer le PDF. Réessayez.')
@@ -126,8 +132,12 @@ async function remisALaMain(report, blob, filename, onSent) {
  */
 export function openSendDialog(report, children, onSent) {
   const filename = S.reportFilename(report)
+  // Un invite ne parle pas au client : son rapport part chez l'administrateur,
+  // qui le relit avant de l'envoyer. Pas de partage par le telephone, qui
+  // contournerait cette relecture.
+  const invite = estInvite()
   const overlay = openOverlay(`
-    <h2>Envoyer le rapport</h2>
+    <h2>${invite ? 'Transmettre pour validation' : 'Envoyer le rapport'}</h2>
     <label>Destinataire<input id="send-to" type="email" value="${esc(report.mandant.email)}" /></label>
     <label>Copie à<input id="send-cc" type="email" value="${esc(localStorage.getItem('af-copy') ?? COPY_DEFAULT)}" placeholder="votre adresse" /></label>
     <label>Objet<input id="send-subject" value="${esc(filename.replace(/\.pdf$/, ''))}" /></label>
@@ -140,8 +150,8 @@ Atout Flair</textarea></label>
     <p class="muted small">Pièce jointe : ${esc(filename)}</p>
     <div class="dialog-actions">
       <button class="btn ghost" data-close>Annuler</button>
-      <button class="btn ghost" data-share>Partager / Enregistrer</button>
-      <button class="btn primary" data-send>Envoyer</button>
+      ${invite ? '' : '<button class="btn ghost" data-share>Partager / Enregistrer</button>'}
+      <button class="btn primary" data-send>${invite ? 'Transmettre' : 'Envoyer'}</button>
     </div>`)
 
   overlay.addEventListener('click', async (ev) => {
@@ -152,7 +162,7 @@ Atout Flair</textarea></label>
     // moins puissant : sans ce filet, l'ecran de chargement restait bloque
     // indefiniment puisque hideLoading() n'etait jamais atteint.
     try {
-      if (ev.target.hasAttribute?.('data-share')) {
+      if (ev.target.hasAttribute?.('data-share') && !invite) {
         showLoading('Génération du PDF…')
         const { blob } = await currentPdf(report, children)
         hideLoading()
@@ -182,17 +192,19 @@ Atout Flair</textarea></label>
         // Au-dela de la limite du serveur, l'envoi automatique echouerait sans
         // qu'on puisse rien y faire : on passe la main a l'application mail.
         hideLoading()
+        if (invite) return toast('Rapport trop lourd pour être transmis : retirez quelques photos.')
         toast('Rapport trop lourd pour l’envoi automatique : je le passe à votre messagerie.')
         await remisALaMain(report, blob, filename, onSent)
         return
       }
 
-      showLoading('Envoi en cours…')
-      const { etat, motif } = await sendReport(report, payload, blob)
+      showLoading(invite ? 'Transmission en cours…' : 'Envoi en cours…')
+      const { etat, motif, id } = await sendReport(report, payload, blob)
       hideLoading()
       if (etat === 'non-configure') {
         // La boite mail n'est pas branchee cote serveur. Mettre le rapport en
         // attente donnerait l'illusion d'un envoi a venir.
+        if (invite) return toast('Transmission impossible pour le moment : le rapport reste enregistré, réessayez plus tard.')
         toast('Envoi automatique pas encore activé : je passe le PDF à votre messagerie.')
         await remisALaMain(report, blob, filename, onSent)
         return
@@ -203,15 +215,21 @@ Atout Flair</textarea></label>
       // qu'on veut eviter, et rouvrir d'office un rapport deja declare terminé
       // en serait un autre - c'est l'envoi qui a echoue, pas le travail. Il
       // reste modifiable, et l'ecran Envois porte le motif.
-      report.status = etat === 'envoye' ? 'sent' : etat === 'attente' ? 'queued' : report.status
+      report.status =
+        etat === 'envoye' ? 'sent' : etat === 'validation' ? 'validation' : etat === 'attente' ? 'queued' : report.status
       report.sentAt = etat === 'envoye' ? Date.now() : null
+      if (etat === 'validation') report.validationId = id
+      // Un rapport refuse par l'administrateur, corrige puis retransmis.
+      if (etat === 'validation' || etat === 'attente') delete report.refus
       await S.saveReport(report)
       toast(
         etat === 'envoye'
           ? 'Rapport envoyé.'
-          : etat === 'attente'
-            ? 'Pas de réseau : envoi mis en attente, il partira tout seul.'
-            : `Envoi refusé : ${motif}`
+          : etat === 'validation'
+            ? 'Rapport transmis à l’administrateur.'
+            : etat === 'attente'
+              ? 'Pas de réseau : envoi mis en attente, il partira tout seul.'
+              : `Envoi refusé : ${motif}`
       )
       onSent()
     } catch (err) {

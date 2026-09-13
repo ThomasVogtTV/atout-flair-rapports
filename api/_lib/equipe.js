@@ -116,10 +116,10 @@ export async function pourquoiRefuse(code) {
 }
 
 /** Note une ouverture de l'app, et le cas echeant un rapport parti. */
-export async function noterActivite(ident, { envoi = false } = {}) {
+export async function noterActivite(ident, { envoi = false, vu = true } = {}) {
   if (!ident || !baseConfiguree()) return
   const cle = ident.role === 'admin' ? ADMIN : cleEmp(ident.id)
-  await r('HSET', cle, 'vu', Date.now())
+  if (vu) await r('HSET', cle, 'vu', Date.now())
   if (envoi) await r('HINCRBY', cle, 'envois', 1)
 }
 
@@ -186,7 +186,7 @@ async function exiger(id) {
   return e
 }
 
-const nouvelId = () => Date.now().toString(36) + randomInt(36 ** 4).toString(36)
+export const nouvelId = () => Date.now().toString(36) + randomInt(36 ** 4).toString(36)
 
 // Date de fin d'un invite : dans le futur, et pas au-dela de deux ans.
 const DEUX_ANS = 2 * 365 * 24 * 60 * 60 * 1000
@@ -279,6 +279,19 @@ export async function lireSauvegardes() {
 export const lireSauvegarde = async (id) => lireJson(await r('HGET', SAUVEGARDES, id))
 export const indexerSauvegarde = (entree) => r('HSET', SAUVEGARDES, entree.id, JSON.stringify(entree))
 export const retirerSauvegarde = (id) => r('HDEL', SAUVEGARDES, id)
+
+// --- rapports d'invites a valider ------------------------------------------------
+// Un invite (sous-traitant, interimaire) ne parle pas au client au nom de la
+// maison sans que l'administrateur ait relu : sa demande d'envoi attend ici, et
+// son PDF dans le stockage prive (voir api/send.js et api/admin.js).
+// Un hash : id de la demande -> demande en JSON.
+const VALIDATIONS = 'af:validations'
+
+export const lireValidations = async () =>
+  Object.values(enObjet(await r('HGETALL', VALIDATIONS))).map(lireJson).filter(Boolean)
+export const lireValidation = async (id) => lireJson(await r('HGET', VALIDATIONS, id))
+export const ecrireValidation = (v) => r('HSET', VALIDATIONS, v.id, JSON.stringify(v))
+export const retirerValidation = (id) => r('HDEL', VALIDATIONS, id)
 
 // --- agenda de l'equipe ------------------------------------------------------
 // Un hash : id du rendez-vous -> rendez-vous en JSON.

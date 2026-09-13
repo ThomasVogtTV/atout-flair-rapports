@@ -159,6 +159,12 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .admin-emp .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-emp .row-actions .btn { flex: 1; }
 .admin-filtres { margin: 0 0 10px; }
+/* Un rapport d'invite en attente de relecture : la tranche ocre de l'attente. */
+.envoi-row.a-valider::before { background: var(--c-warning); }
+/* Un rapport de l'equipe : il s'ouvre en PDF d'un tap. */
+.envoi-row.rapport-equipe { cursor: pointer; }
+.envoi-row.rapport-equipe::before { background: var(--c-brand); }
+.envoi-side > svg { width: 15px; height: 15px; color: var(--c-faint); }
 
 /* --- Recuperation depuis la sauvegarde en ligne ------------------------------------- */
 .restau-liste {

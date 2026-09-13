@@ -129,8 +129,9 @@ async function post(job, { code = storedCode(), retried = false, demander = true
  *   non-configure  - aucune boite branchee, rien ne partira jamais
  */
 export async function sendReport(report, payload, blob) {
+  const id = uid()
   const job = {
-    id: uid(),
+    id,
     reportId: report.id,
     reportRef: report.ref,
     destinataire: payload.to,
@@ -148,6 +149,11 @@ export async function sendReport(report, payload, blob) {
         adresse:
           report.lieu?.adresseIntervention ||
           [report.lieu?.adresse, report.lieu?.npaLieu].filter(Boolean).join(', '),
+        // Le rapport d'un invite attend l'administrateur : a quel rapport du
+        // telephone sa reponse se rapporte, et une demande rejouee par la file
+        // ne s'empile pas en double.
+        rapportId: report.id,
+        envoiId: id,
       },
     },
   }
@@ -160,7 +166,9 @@ export async function sendReport(report, payload, blob) {
   }
 
   try {
-    await post(job)
+    const reponse = await post(job)
+    // Rapport d'invite : il n'est pas parti chez le client, il attend l'administrateur.
+    if (reponse?.validation) return { etat: 'validation', id }
     return { etat: 'envoye' }
   } catch (err) {
     if (err instanceof NotConfiguredError) return { etat: 'non-configure' }
@@ -216,13 +224,22 @@ export async function deleteJob(id) {
   fileChangee()
 }
 
-/** Marque le rapport correspondant comme envoye, et retire l'envoi de la file. */
-async function marquerEnvoye(job) {
+/**
+ * Marque le rapport correspondant comme envoye - ou transmis a l'administrateur,
+ * pour le rapport d'un invite - et retire l'envoi de la file.
+ */
+async function marquerEnvoye(job, reponse) {
   await deleteJob(job.id)
   const report = await db.get('reports', job.reportId)
   if (report) {
-    report.status = 'sent'
-    report.sentAt = Date.now()
+    if (reponse?.validation) {
+      report.status = 'validation'
+      report.validationId = job.id
+      report.sentAt = null
+    } else {
+      report.status = 'sent'
+      report.sentAt = Date.now()
+    }
     // Rapport et resume ensemble : sinon la liste le dirait encore en attente.
     await ecrireRapport(report)
   }
@@ -239,8 +256,7 @@ export async function retryJob(id) {
   if (!job) return { ok: false, motif: 'Envoi introuvable.' }
   if (!navigator.onLine) return { ok: false, motif: 'Pas de réseau pour l’instant.' }
   try {
-    await post(job)
-    await marquerEnvoye(job)
+    await marquerEnvoye(job, await post(job))
     return { ok: true }
   } catch (err) {
     job.essais = (job.essais ?? 0) + 1
@@ -268,8 +284,7 @@ export async function flushQueue() {
       // Sans dialogue : la vidange se declenche toute seule (demarrage, retour
       // du reseau). Un code manquant fait passer l'envoi en "a corriger", et
       // l'ecran Envois le dit - c'est la que l'utilisateur le reprendra.
-      await post(job, { demander: false })
-      await marquerEnvoye(job)
+      await marquerEnvoye(job, await post(job, { demander: false }))
       envoyes++
     } catch (err) {
       job.essais = (job.essais ?? 0) + 1

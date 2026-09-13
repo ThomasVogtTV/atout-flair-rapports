@@ -9,41 +9,30 @@
 //   MAIL_REPLY_TO  defaut : info@atout-flair.ch
 //   MAIL_BCC       (optionnel) copie systematique pour l'archivage
 //
-// Boite mail de l'entreprise : info@atout-flair.ch. Il reste a fournir
-// SMTP_HOST / SMTP_PORT / SMTP_PASS chez l'hebergeur du domaine.
-//
 // Tant que ces variables ne sont pas definies, l'API repond 503 et l'app bascule
 // automatiquement sur la file d'attente / le partage manuel.
+//
+// Un invite ne parle pas directement au client : son rapport attend la
+// validation de l'administrateur (rubrique "A valider" de l'onglet
+// Administration), et l'adresse lui dit ou en sont ses demandes (GET).
+//
+// POST {to, cc, subject, body, filename, pdfBase64, meta}  envoie, ou transmet pour validation
+// GET                                                       les demandes de l'invite
 
 // Rappel : la plateforme plafonne le corps d'une requete a 4,5 Mo. Le client
 // reduit les photos pour rester sous cette limite et bascule sur le partage
 // manuel si un rapport reste trop lourd (voir PDF_MAX dans src/send.js).
 
-import { identifier, noterActivite, journaliser } from './_lib/equipe.js'
+import { identifier, baseConfiguree, lireValidation, lireValidations, ecrireValidation, nouvelId } from './_lib/equipe.js'
+import { boiteIndisponible, envoyerMail, demandeDEnvoi, consigner, cheminPdfValidation } from './_lib/mail.js'
+import { stockageConfigure, ecrireFichier } from './_lib/stockage.js'
 
-const MAILBOX = 'info@atout-flair.ch'
-// APP_CODE est obligatoire : sans lui, l'URL du site suffirait a n'importe qui
-// pour envoyer des mails depuis la boite de l'entreprise.
-const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'APP_CODE']
+const ID_OK = /^[\w-]{1,64}$/
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, POST')
     return res.status(405).json({ error: 'Méthode non autorisée' })
-  }
-
-  // Interrupteur volontaire. Tant que le mot de passe de la boite n'est pas
-  // retrouve, chaque envoi finirait sur un refus 535 d'Infomaniak : un rapport
-  // en echec, un motif obscur, et le technicien qui recommence pour rien. Coupe
-  // franchement, l'app dit la verite et passe le PDF a la messagerie du
-  // telephone. Retirer MAIL_OFF dans Vercel remet l'envoi en service.
-  if (process.env.MAIL_OFF === '1') {
-    return res.status(503).json({ error: 'Envoi automatique désactivé' })
-  }
-
-  const missing = required.filter((k) => !process.env[k])
-  if (missing.length) {
-    return res.status(503).json({ error: `Boîte mail non configurée (${missing.join(', ')})` })
   }
 
   // Comparaison sur les valeurs nettoyees des deux cotes. Un en-tete HTTP ne peut
@@ -60,7 +49,7 @@ export default async function handler(req, res) {
   // mail, et non un mot de passe, la casse ne protegeait rien et bloquait tout.
   // La comparaison elle-meme vit dans _lib/equipe.js : code administrateur
   // (APP_CODE), ou code d'un employe actif. Le code dit aussi QUI envoie, ce que
-  // le journal de l'onglet Administration retient.
+  // le journal de l'onglet Administration retient - et si c'est un invite.
   let ident = null
   try {
     ident = await identifier(req.headers['x-app-code'])
@@ -74,64 +63,57 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Code d'accès invalide" })
   }
 
-  const { to, cc, subject, body, filename, pdfBase64, meta } = req.body ?? {}
+  if (req.method === 'GET') return suivre(ident, res)
+
+  const { to, cc, subject, body, filename, pdfBase64 } = req.body ?? {}
+
+  if (ident.role === 'invite') {
+    if (!to || !pdfBase64) return res.status(400).json({ error: 'Destinataire ou PDF manquant' })
+    return transmettre(ident, req.body, res)
+  }
+
+  const indisponible = boiteIndisponible()
+  if (indisponible) return res.status(503).json({ error: indisponible })
   if (!to || !pdfBase64) return res.status(400).json({ error: 'Destinataire ou PDF manquant' })
 
+  const demande = demandeDEnvoi(req.body)
   try {
-    const nodemailer = (await import('nodemailer')).default
-    const transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    })
-
-    const info = await transport.sendMail({
-      from: process.env.MAIL_FROM || `Atout Flair <${MAILBOX}>`,
-      to,
-      cc: cc || undefined,
-      bcc: process.env.MAIL_BCC || undefined,
-      replyTo: process.env.MAIL_REPLY_TO || MAILBOX,
-      subject: subject || 'Rapport de détection',
-      text: body || '',
-      attachments: [
-        {
-          filename: filename || 'rapport.pdf',
-          content: Buffer.from(pdfBase64, 'base64'),
-          contentType: 'application/pdf',
-        },
-      ],
-    })
-
-    await consigner(ident, req.body, 'envoye')
+    const info = await envoyerMail({ to, cc, subject, body, filename, pdf: Buffer.from(pdfBase64, 'base64') })
+    await consigner(ident, demande, 'envoye')
     return res.status(200).json({ ok: true, messageId: info.messageId })
   } catch (err) {
     console.error('Envoi impossible', err)
-    await consigner(ident, req.body, 'echec', String(err?.message ?? err))
+    await consigner(ident, demande, 'echec', { erreur: String(err?.message ?? err) })
     return res.status(502).json({ error: String(err?.message ?? err) })
   }
 }
 
-// Ligne du journal de l'onglet Administration. Un journal en panne ne doit jamais
-// faire echouer un envoi reussi : l'erreur est notee, le rapport part quand meme.
-async function consigner(ident, corps, statut, erreur) {
-  const court = (v, n = 200) => String(v ?? '').slice(0, n)
-  const m = corps?.meta ?? {}
-  try {
-    await journaliser({
-      qui: ident.nom,
-      role: ident.role,
-      statut,
-      ref: court(m.ref, 40),
-      type: court(m.type, 20),
-      adresse: court(m.adresse),
-      destinataire: court(corps?.to),
-      cc: court(corps?.cc),
-      fichier: court(corps?.filename),
-      ...(erreur ? { erreur: court(erreur, 300) } : {}),
-    })
-    if (statut === 'envoye') await noterActivite(ident, { envoi: true })
-  } catch (e) {
-    console.error('Journal non ecrit', e)
+/**
+ * Le rapport d'un invite : rien ne part chez le client. La demande et son PDF
+ * attendent l'administrateur, qui les relit, puis les envoie ou les refuse.
+ */
+async function transmettre(ident, corps, res) {
+  if (!baseConfiguree() || !stockageConfigure()) {
+    return res.status(503).json({ error: 'Validation des rapports non configurée' })
   }
+  const demande = demandeDEnvoi(corps)
+  // L'identifiant vient du telephone (celui de l'envoi dans sa file) : une
+  // demande rejouee apres une reponse perdue en route ne s'empile pas en double.
+  const envoiId = corps?.meta?.envoiId
+  const id = ID_OK.test(envoiId ?? '') ? envoiId : nouvelId()
+  if (await lireValidation(id)) return res.status(202).json({ ok: true, validation: true, id })
+
+  await ecrireFichier(cheminPdfValidation(id), Buffer.from(String(corps.pdfBase64), 'base64'), 'application/pdf')
+  await ecrireValidation({ id, statut: 'attente', date: Date.now(), par: { id: ident.id, nom: ident.nom }, ...demande })
+  await consigner(ident, demande, 'a-valider')
+  return res.status(202).json({ ok: true, validation: true, id })
+}
+
+/** Ou en sont les demandes d'un invite : en attente, envoyees, ou refusees et pourquoi. */
+async function suivre(ident, res) {
+  if (ident.role !== 'invite' || !baseConfiguree()) return res.status(200).json({ validations: [] })
+  const miennes = (await lireValidations())
+    .filter((v) => v.par?.id === ident.id)
+    .map((v) => ({ id: v.id, statut: v.statut, motif: v.motif ?? '', date: v.date, traite: v.traite ?? null, rapportId: v.meta?.rapportId ?? '' }))
+  return res.status(200).json({ validations: miennes })
 }

@@ -20,8 +20,9 @@ import { adminView } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS, etapesNavHTML, verdictsHTML } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
-import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
-import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
+import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload, ouvrirPdf } from './send.js'
+import { suivreValidations } from './validations.js'
+import { installerVerrou, seDeconnecter, estInvite, estAdmin, identite } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
 import { tableauAdminHTML } from './views/tableau.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, marquerStatut, ajouterAuCalendrier } from './agenda.js'
@@ -30,7 +31,7 @@ import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe, plusJours,
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
-import { sauvegarder, listerSauvegardes, restaurer } from './sauvegarde.js'
+import { sauvegarder, listerSauvegardes, restaurer, sauvegardesEnLigne, rapportEnLigne } from './sauvegarde.js'
 import { choisirRestauration } from './restauration.js'
 import { etapesDuRapport, etapeDeReprise, ETAPES } from './etapes.js'
 import { installerDock, majDock } from './ui/dock.js'
@@ -190,6 +191,7 @@ async function goHome() {
   // Retour a l'accueil : le rapport qu'on vient de quitter part en ligne.
   planifierSauvegarde()
   rafraichirTableau()
+  suivreMesValidations()
 }
 
 async function openEnvois() {
@@ -237,8 +239,8 @@ async function openReglages() {
 
 // --- administration -------------------------------------------------------
 
-async function adminAppel(methode, corps) {
-  const res = await fetch('/api/admin', {
+async function adminAppel(methode, corps, query) {
+  const res = await fetch(`/api/admin${query ? `?${new URLSearchParams(query)}` : ''}`, {
     method: methode,
     headers: { 'x-app-code': currentCode(), ...(corps ? { 'Content-Type': 'application/json' } : {}) },
     body: corps ? JSON.stringify(corps) : undefined,
@@ -251,7 +253,7 @@ async function adminAppel(methode, corps) {
 // Le code revele a la creation d'un employe ne survit pas a une sortie de
 // l'onglet : il ne doit s'afficher qu'une fois.
 async function openAdmin() {
-  view = { ...view, screen: 'admin', report: null, admin: { chargement: true }, adminCodeRevele: null }
+  view = { ...view, screen: 'admin', report: null, admin: { chargement: true }, adminRapports: null, adminCodeRevele: null }
   render()
   await rechargerAdmin()
 }
@@ -260,13 +262,103 @@ async function rechargerAdmin() {
   if (!navigator.onLine) {
     view.admin = { erreur: "Hors ligne : l'administration a besoin du réseau." }
   } else {
-    try {
-      view.admin = await adminAppel('GET')
-    } catch (err) {
-      view.admin = { erreur: err.message, base: err.base }
-    }
+    // L'equipe et le journal, puis les rapports de l'equipe depuis la sauvegarde
+    // en ligne : deux lectures independantes, menees ensemble.
+    const [admin, rapports] = await Promise.all([
+      adminAppel('GET').catch((err) => ({ erreur: err.message, base: err.base })),
+      sauvegardesEnLigne()
+        .then((liste) => ({ liste }))
+        .catch((err) => ({ erreur: err.message })),
+    ])
+    view.admin = admin
+    view.adminRapports = rapports
   }
   if (view.screen === 'admin') render()
+}
+
+// Un rapport de l'equipe, tel qu'il est sauvegarde en ligne : son PDF, en lecture
+// seule. Rien ne se pose sur le telephone de l'administrateur.
+async function voirRapportEquipe(id) {
+  const liste = view.adminRapports?.liste ?? []
+  showLoading('Chargement du rapport…')
+  try {
+    const { rapport } = await rapportEnLigne(id)
+    // Les rapports d'appartement d'un immeuble font partie de son PDF.
+    const enfants = await Promise.all(
+      liste.filter((s) => s.parentId === id).map(async (s) => (await rapportEnLigne(s.id)).rapport)
+    )
+    hideLoading()
+    await previewPdf(rapport, enfants)
+  } catch (err) {
+    hideLoading()
+    toast(err.message || 'Rapport illisible.')
+  }
+}
+
+// --- rapports d'invites a valider ------------------------------------------------
+
+async function voirPdfValidation(id) {
+  const v = view.admin?.validations?.find((x) => x.id === id)
+  showLoading('Ouverture du PDF…')
+  try {
+    const { pdfBase64 } = await adminAppel('GET', null, { pdf: id })
+    const octets = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0))
+    ouvrirPdf(new Blob([octets], { type: 'application/pdf' }), v?.filename || 'rapport.pdf')
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    hideLoading()
+  }
+}
+
+// Envoyer au client, ou refuser avec un motif que l'invite lira sur son telephone.
+async function traiterValidation(act, id) {
+  const v = view.admin?.validations?.find((x) => x.id === id)
+  if (!v) return
+  const quoi = [`le rapport${v.meta?.ref ? ` ${v.meta.ref}` : ''}`, `de ${v.par?.nom || 'l’invité'}`].join(' ')
+  let corps
+  if (act === 'valid-envoyer') {
+    if (!confirm(`Envoyer ${quoi} à ${v.to} ?`)) return
+    corps = { action: 'valider', id }
+  } else {
+    const motif = prompt(`Refuser ${quoi} ?\nMotif, que l’invité lira :`)
+    if (motif === null) return
+    corps = { action: 'refuser', id, motif }
+  }
+  showLoading(act === 'valid-envoyer' ? 'Envoi au client…' : 'Refus en cours…')
+  try {
+    await adminAppel('POST', corps)
+    toast(act === 'valid-envoyer' ? 'Rapport envoyé au client.' : 'Rapport refusé : l’invité verra le motif.')
+  } catch (err) {
+    toast(err.message)
+  } finally {
+    hideLoading()
+  }
+  await rechargerAdmin()
+}
+
+// Le telephone d'un invite : les decisions de l'administrateur sur ses rapports
+// transmis. Relu au plus une fois par minute - on revient souvent a l'accueil.
+let validationsLues = 0
+
+async function suivreMesValidations({ force = false } = {}) {
+  if (!estInvite() || !navigator.onLine) return
+  if (!force && Date.now() - validationsLues < 60_000) return
+  validationsLues = Date.now()
+  const changes = await suivreValidations().catch(() => [])
+  if (!changes.length) return
+  const refus = changes.find((c) => c.statut === 'refuse')
+  toast(
+    refus
+      ? `Rapport ${refus.ref} refusé par l’administrateur${refus.motif ? ` : ${refus.motif}` : ''}`
+      : changes.length > 1
+        ? `${changes.length} rapports envoyés au client.`
+        : `Rapport ${changes[0].ref} envoyé au client.`
+  )
+  if (view.screen === 'home' || view.screen === 'envois') {
+    view.reports = (await S.listReports()).filter((r) => !r.parentId)
+    render()
+  }
 }
 
 // Le tableau de l'accueil lit au meme endroit que l'onglet Administration, et
@@ -677,6 +769,8 @@ function render() {
   // L'ecran courant, pour le CSS : le dock ne vit que sur les ecrans de premier
   // niveau, la barre d'actions que dans un rapport.
   document.body.dataset.screen = view.screen
+  // Le role de la session, pour le filet de couleur en haut de l'ecran.
+  document.body.dataset.role = identite()?.role ?? ''
   ajusterGarde()
   if (view.screen === 'editor' && view.report) {
     const faites = etapesDuRapport(view.report).filter((e) => e.fait).map((e) => e.id)
@@ -1408,7 +1502,9 @@ root.addEventListener('click', async (ev) => {
   }
   if (act === 'supprimer-contact') {
     const c = view.fiche
-    if (!c) return
+    // Retirer un client du carnet de l'equipe revient a l'administrateur (le
+    // serveur ignore de toute facon la suppression d'un autre).
+    if (!c || !estAdmin()) return
     const nom = S.fullName(c) || 'ce contact'
     if (!confirm(`Supprimer « ${nom} » du carnet ?\nIl disparaîtra aussi du carnet de l’équipe. Ses rapports, eux, restent.`)) return
     await S.deleteContact(c.id)
@@ -1454,7 +1550,7 @@ root.addEventListener('click', async (ev) => {
     return render()
   }
   if (act === 'menu-rapport') {
-    const choix = await ouvrirMenuRapport({ fini: !S.enCours(view.report), sousRapport: !!view.report?.parentId })
+    const choix = await ouvrirMenuRapport({ fini: !S.enCours(view.report), sousRapport: !!view.report?.parentId, invite: estInvite() })
     if (choix) declencher(choix)
     return
   }
@@ -1468,6 +1564,13 @@ root.addEventListener('click', async (ev) => {
     return seDeconnecter()
   }
   if (act === 'admin-ajouter') return adminAjouter()
+  if (act === 'valid-voir') return voirPdfValidation(el.closest('[data-act]').dataset.id)
+  if (act === 'equipe-rapport') return voirRapportEquipe(el.closest('[data-act]').dataset.id)
+  if (act === 'equipe-filtre') {
+    view.adminRapportsQui = el.closest('[data-act]').dataset.val
+    return render()
+  }
+  if (act === 'valid-envoyer' || act === 'valid-refuser') return traiterValidation(act, el.closest('[data-act]').dataset.id)
   if (act === 'admin-action') {
     const b = el.closest('[data-act]')
     return adminAction(b.dataset.action, b.dataset.id)
@@ -1923,12 +2026,14 @@ export async function boot() {
   window.addEventListener('online', () => {
     rafraichirAgenda()
     rafraichirTableau({ force: true })
+    suivreMesValidations({ force: true })
   })
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
   window.addEventListener('af-deverrouille', () => {
     reserverNumeros()
     rafraichirAgenda()
     rafraichirTableau({ force: true })
+    suivreMesValidations({ force: true })
     syncCarnet()
     planifierSauvegarde()
   })

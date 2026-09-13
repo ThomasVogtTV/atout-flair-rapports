@@ -131,11 +131,39 @@ export function sauvegarder() {
   return enCours
 }
 
+/**
+ * Les sauvegardes que ce code peut lire : les siennes - et pour l'administrateur,
+ * celles de toute l'equipe (voir api/sauvegarde.js).
+ */
+export async function sauvegardesEnLigne() {
+  const { sauvegardes } = await appel('GET', { query: { liste: '1' } })
+  return sauvegardes ?? []
+}
+
 /** Les rapports sauvegardes en ligne qui manquent sur ce telephone. */
 export async function listerSauvegardes() {
-  const { sauvegardes } = await appel('GET', { query: { liste: '1' } })
   const presents = new Set(await db.keys('reports'))
-  return (sauvegardes ?? []).filter((s) => !presents.has(s.id))
+  return (await sauvegardesEnLigne()).filter((s) => !presents.has(s.id))
+}
+
+/**
+ * Un rapport tel qu'il est sauvegarde en ligne, photos comprises, sans le poser
+ * sur le telephone.
+ * @returns {Promise<{rapport: object, fichiers: string[]}>} le rapport, et les empreintes de ses photos
+ */
+export async function rapportEnLigne(id) {
+  const { rapport } = await appel('GET', { query: { rapport: id } })
+  const images = new Map()
+  for (const p of rapport.photos ?? []) {
+    for (const h of [p.hOriginal, p.hImage]) {
+      if (h && !images.has(h)) images.set(h, (await appel('GET', { query: { photo: `${id}/${h}` } })).dataUrl)
+    }
+    p.original = images.get(p.hOriginal) ?? images.get(p.hImage) ?? null
+    p.dataUrl = images.get(p.hImage) ?? p.original
+    delete p.hOriginal
+    delete p.hImage
+  }
+  return { rapport, fichiers: [...images.keys()] }
 }
 
 /**
@@ -146,20 +174,10 @@ export async function restaurer(ids) {
   const etat = lireEtat()
   let n = 0
   for (const id of ids) {
-    const { rapport } = await appel('GET', { query: { rapport: id } })
-    const images = new Map()
-    for (const p of rapport.photos ?? []) {
-      for (const h of [p.hOriginal, p.hImage]) {
-        if (h && !images.has(h)) images.set(h, (await appel('GET', { query: { photo: `${id}/${h}` } })).dataUrl)
-      }
-      p.original = images.get(p.hOriginal) ?? images.get(p.hImage) ?? null
-      p.dataUrl = images.get(p.hImage) ?? p.original
-      delete p.hOriginal
-      delete p.hImage
-    }
+    const { rapport, fichiers } = await rapportEnLigne(id)
     await S.ecrireRapport(rapport)
     // Deja en ligne a l'identique : rien a redeposer.
-    etat[id] = { version: version(rapport), fichiers: [...images.keys()] }
+    etat[id] = { version: version(rapport), fichiers }
     ecrireEtat(etat)
     n++
   }

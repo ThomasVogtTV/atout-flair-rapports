@@ -13,10 +13,14 @@ import { esc } from './ui/dom.js'
  * @param {{fini: boolean, sousRapport: boolean}} etat
  * @returns {Promise<string|null>} l'action choisie (meme nom que les data-act de l'app)
  */
-export function ouvrirMenuRapport({ fini, sousRapport }) {
+export function ouvrirMenuRapport({ fini, sousRapport, invite = false }) {
+  // Un invite transmet a l'administrateur, qui envoie au client apres relecture.
+  const envoi = invite
+    ? { titre: 'Transmettre', sous: 'À l’administrateur, qui l’enverra au client' }
+    : { titre: fini ? 'Renvoyer' : 'Envoyer', sous: 'Par mail, ou par la messagerie du téléphone' }
   const actions = [
     { act: 'preview', icone: ICONS.oeil, titre: 'Aperçu du PDF', sous: 'Le document tel qu’il partira' },
-    { act: 'send', icone: ICONS.envoyer, titre: fini ? 'Renvoyer' : 'Envoyer', sous: 'Par mail, ou par la messagerie du téléphone' },
+    { act: 'send', icone: ICONS.envoyer, ...envoi },
     !sousRapport && {
       act: fini ? 'rouvrir' : 'terminer',
       icone: ICONS.coche,

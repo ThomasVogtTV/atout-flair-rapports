@@ -32,7 +32,10 @@ export default async function handler(req, res) {
     const carnet = await lireCarnet()
     if (req.method === 'POST') {
       const { contacts, supprimes } = req.body ?? {}
-      await ecrireCarnet(fusionnerCarnet(carnet, contacts, supprimes, Date.now()))
+      // Seul l'administrateur retire un client du carnet de l'equipe : un employe
+      // ajoute et corrige, mais ne fait pas disparaitre une fiche pour tous. Sa
+      // suppression est ignoree, et la fiche lui revient au passage suivant.
+      await ecrireCarnet(fusionnerCarnet(carnet, contacts, ident.role === 'admin' ? supprimes : [], Date.now()))
     }
     return res.status(200).json({ contacts: contactsVivants(carnet) })
   } catch (err) {

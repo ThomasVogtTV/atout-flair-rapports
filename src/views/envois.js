@@ -65,11 +65,40 @@ function ligneEnvoye(r) {
     </li>`
 }
 
+// Le rapport d'un invite, chez l'administrateur : ni en attente de reseau, ni
+// parti. Il partira chez le client une fois relu.
+function ligneAValider(r) {
+  return `
+    <li class="envoi-row a-valider" data-open="${r.id}">
+      <div class="envoi-main">
+        <strong>${esc(r.mandant?.email || r.lieu?.locataire || 'Rapport transmis')}</strong>
+        <span class="muted">${esc(r.ref)} · chez l’administrateur</span>
+      </div>
+      <div class="envoi-side"><span class="pill queued">À valider</span></div>
+    </li>`
+}
+
+// Refuse par l'administrateur : le motif, et le rapport a corriger d'un tap.
+function ligneRefuse(r) {
+  return `
+    <li class="envoi-row echec" data-open="${r.id}">
+      <div class="envoi-main">
+        <strong>${esc(r.mandant?.email || r.lieu?.locataire || 'Rapport refusé')}</strong>
+        <span class="muted">${esc(r.ref)} · ${esc(ilYA(r.refus?.date))}</span>
+        ${r.refus?.motif ? `<span class="envoi-motif">${esc(r.refus.motif)}</span>` : ''}
+      </div>
+      <div class="envoi-side"><span class="pill off">Refusé</span></div>
+    </li>`
+}
+
 export function envoisView(view) {
   const jobs = view.queue ?? []
   const attente = jobs.filter((j) => j.etat !== 'echec')
   const echecs = jobs.filter((j) => j.etat === 'echec')
   const envoyes = (view.reports ?? []).filter((r) => r.status === 'sent').slice(0, 10)
+  // Les rapports d'un invite : chez l'administrateur, ou refuses par lui.
+  const aValider = (view.reports ?? []).filter((r) => r.status === 'validation')
+  const refuses = (view.reports ?? []).filter((r) => r.refus && r.status === 'draft')
 
   const bloc = (icone, ton, titre, compte, contenu, action = '') => `
     <h2 class="section-title"><span class="section-title-main">${sectionIcon(icone, ton)}${titre}</span>
@@ -105,6 +134,18 @@ export function envoisView(view) {
               `<ul class="report-list">${echecs.map(ligneEchec).join('')}</ul>`,
               `<button class="link" data-retry-all>Tout réessayer</button>`
             )
+          : ''
+      }
+
+      ${
+        refuses.length
+          ? bloc('note', 'red', 'Refusés par l’administrateur', refuses.length, `<ul class="report-list">${refuses.map(ligneRefuse).join('')}</ul>`)
+          : ''
+      }
+
+      ${
+        aValider.length
+          ? bloc('folder', 'amber', 'À valider', aValider.length, `<ul class="report-list">${aValider.map(ligneAValider).join('')}</ul>`)
           : ''
       }
 

@@ -132,8 +132,9 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   height: 7px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #7fcf9f;
-  box-shadow: 0 0 0 3px rgba(127, 207, 159, 0.18);
+  /* Les couleurs du filet de role (voir shell.css), eclaircies pour la nuit. */
+  background: #6cb8c4;
+  box-shadow: 0 0 0 3px rgba(108, 184, 196, 0.2);
 }
 .poste-session.admin::before { background: var(--c-fauve-bright); box-shadow: 0 0 0 3px rgba(222, 176, 107, 0.2); }
 .poste-session.invite::before { background: #f1c27d; }
@@ -315,6 +316,27 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   white-space: nowrap;
 }
 .equipier-vu { margin-left: auto; font-size: 10px; color: var(--c-on-night-2); white-space: nowrap; }
+
+/* Des rapports d'invites a relire : fauve, comme ce qui reclame un geste. */
+.tableau-valider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+  color: #1b1206;
+  background: var(--c-fauve-bright);
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.tableau-valider span { flex: 1; }
+.tableau-valider svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 .incidents { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .incident {

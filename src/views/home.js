@@ -74,6 +74,10 @@ export function etatRapport(r) {
   if (r.status === 'sent') return { cle: 'sent', mot: 'Envoyé' }
   if (r.status === 'done') return { cle: 'done', mot: 'Terminé' }
   if (r.status === 'queued') return { cle: 'queued', mot: 'En attente' }
+  // Le rapport d'un invite, chez l'administrateur qui le relit.
+  if (r.status === 'validation') return { cle: 'queued', mot: 'À valider' }
+  // Refuse par l'administrateur, et revenu en cours de saisie.
+  if (r.refus) return { cle: 'off', mot: 'Refusé' }
   if (r.sentAt) return { cle: 'amodifier', mot: 'Rouvert' }
   return { cle: 'encours', mot: 'En cours' }
 }

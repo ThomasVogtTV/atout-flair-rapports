@@ -91,6 +91,15 @@ describe('/api/carnet', () => {
     assert.deepEqual(r.corps.contacts.map((c) => c.nom).sort(), ['Favre', 'Rochat'])
   })
 
+  test("seul l'administrateur retire un client du carnet de l'equipe", async () => {
+    const { code } = await E.creerEmploye('Marc')
+    await appel('stessyoberli', { contacts: [{ id: 'a1', nom: 'Favre', maj: Date.now() - 10 }, { id: 'a2', nom: 'Rochat', maj: Date.now() - 10 }] })
+    const parEmploye = await appel(code, { contacts: [], supprimes: ['a1'] })
+    assert.deepEqual(parEmploye.corps.contacts.map((c) => c.nom).sort(), ['Favre', 'Rochat'])
+    const parAdmin = await appel('stessyoberli', { contacts: [], supprimes: ['a1'] })
+    assert.deepEqual(parAdmin.corps.contacts.map((c) => c.nom), ['Rochat'])
+  })
+
   test("un invite est refuse, un code faux aussi", async () => {
     const { code } = await E.creerEmploye('Sous-traitant', { fin: Date.now() + 86_400_000 })
     assert.equal((await appel(code)).statut, 403)
