@@ -63,6 +63,24 @@ npm run dev
 
 Puis `npm run build` pour la version de production (dossier `dist/`).
 
+`npm run dev` ne sert que le site : Vite ne connaît pas le dossier `api/`, et tous les
+appels au serveur répondent alors 404. C'est sans conséquence pour dessiner un écran ou
+travailler le PDF, mais l'écran de code devient infranchissable sur un appareil qui n'a
+pas encore été déverrouillé.
+
+```bash
+npm run dev:api
+```
+
+`dev-server.mjs` lance Vite **et** les fonctions `api/` dans le même processus, en lisant
+les variables du fichier `.env` (copié de `.env.example`). C'est l'équivalent local de
+`vercel dev`, qui lui échoue sous Windows faute de pouvoir créer les liens symboliques
+dont il a besoin.
+
+Ce qui dépend de la base d'équipe (agenda, carnet commun, numéros, administration)
+répondra quand même « Base de données non configurée » tant que les variables Upstash
+ne sont pas dans le `.env` : le code administrateur, lui, se vérifie sans la base.
+
 ## Tests
 
 ```bash
@@ -98,7 +116,8 @@ défaut qui passerait inaperçu : c'est un test à écrire.
 
 ## Mise en ligne (Vercel)
 
-Le projet est un site statique + une fonction serveur (`api/send.js`).
+Le projet est un site statique + les fonctions serveur du dossier `api/` (envoi du mail,
+verrou, équipe, agenda, carnet, numéros, sauvegarde en ligne).
 
 1. Créer le projet sur Vercel, framework « Vite ».
 2. Définir les variables d'environnement (Settings → Environment Variables) :
@@ -122,11 +141,16 @@ disponible pour envoyer le PDF depuis l'application mail du téléphone.
 
 `APP_CODE` n'est pas un confort mais une nécessité : le site est public, et sans ce code
 l'adresse suffirait à n'importe qui pour envoyer des mails depuis `info@atout-flair.ch`.
-Il ne protège que l'envoi, pas l'ouverture de l'app : celle-ci s'ouvre directement sur
-l'accueil, sans rien demander. Le code n'est demandé qu'au premier envoi refusé par le
-serveur, une seule fois par appareil, et il n'apparaît nulle part dans le code envoyé au
-navigateur. Pour le changer, modifier la variable dans Vercel : les appareils le
-redemanderont au premier envoi refusé.
+C'est le code administrateur ; chaque employé a le sien, créé depuis l'onglet
+Administration.
+
+Il **ferme l'app elle-même**, et pas seulement l'envoi : le code est demandé à l'ouverture,
+vérifié auprès du serveur la première fois puis retenu sur l'appareil, pour que l'app
+s'ouvre aussi dans une cave qu'au bureau (voir `src/lock.js`). « Se souvenir de moi », coché
+par défaut, en dispense pendant trente jours. Il n'apparaît nulle part dans le code envoyé
+au navigateur. Pour le changer, modifier la variable dans Vercel : les appareils le
+redemanderont à leur prochaine ouverture avec du réseau — ce qui rend aussi une révocation
+effective.
 
 **Laisser `APP_CODE` en variable ordinaire, jamais en « Sensitive ».** Une variable
 sensible chez Vercel s'écrit mais ne se relit plus — ni dans le tableau de bord, ni en
@@ -211,17 +235,20 @@ rouvrir.
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
 | `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
-| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js`, `envois.js` |
+| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js`, `envois.js`, `agenda.js`, `admin.js`, `tableau.js` (le tableau de l'administrateur) |
 | `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js`, `dragsort.js` (glissement des cartes) |
+| `src/lock.js` | Le verrou : code demandé à l'ouverture, mémorisation, révocation |
+| `src/agenda.js`, `src/agenda-outils.js` | L'agenda de l'équipe : lecture en ligne et cache, puis ce qui se calcule sans réseau |
 | `src/send.js` | Aperçu PDF, dialogue d'envoi, partage vers la messagerie |
 | `src/contact-dialog.js` | Formulaire d'ajout/modification d'un contact |
 | `src/photo.js` | Capture, compression, éditeur d'annotations |
 | `src/signature.js` | Pad de signature |
 | `src/pdf.js` | Génération du PDF (mise en page Atout Flair) |
 | `src/mailer.js` | Envoi, file d'attente, et motif de chaque refus |
-| `src/style.css` | Toute la mise en forme, jetons de couleur en tête de fichier |
-| `api/send.js` | Fonction serveur d'envoi du mail |
+| `src/styles/` | Toute la mise en forme, un fichier par domaine ; les jetons de couleur sont dans `tokens.css` |
+| `api/` | Fonctions serveur : `send.js` (mail), `check-code.js` (verrou), `admin.js` (équipe et journal), `agenda.js`, `carnet.js`, `numeros.js`, `sauvegarde.js` |
 | `public/sw.js` | Service worker (fonctionnement hors ligne) |
+| `dev-server.mjs` | Développement seulement : Vite et les fonctions `api/` dans un même processus |
 | `test/` | Tests et harnais de lecture du PDF (voir « Tests » plus haut) |
 
 Le PDF est écrit avec les polices standard, encodées en WinAnsi. `san()` dans
@@ -263,12 +290,12 @@ et au type « Immeuble » ; le magenta aux photos et au type « Hôtel ».
 Les trois types portent leur couleur sur l'accueil, là où l'on choisit — donc là où elle
 sert à reconnaître. Leurs pastilles y sont traitées en relief : dégradé, tache spéculaire,
 biseau, lumière rasante du bas et ombre portée teintée, empilés en CSS (voir le bloc
-`.type-icon, .type-chip-icon` dans `src/style.css`). L'hôtel y prend un rubis à liseret
+`.type-icon, .type-chip-icon` dans `src/styles/home.css`). L'hôtel y prend un rubis à liseret
 champagne, qui ne sort pas de l'accueil : dans un rapport, ce bordeaux se prendrait pour le
 rouge de la contamination — la rubrique Photos garde donc le magenta. Dans un rapport ouvert, les rubriques suivent leur propre ordre de
 couleurs : y rappeler le type ne faisait qu'un doublon avec la rubrique voisine.
 
-Les teintes sont dans `--accent`, `--violet` et `--magenta` (`src/style.css`), `ACCENT` et
+Les teintes sont dans `--accent`, `--violet` et `--magenta` (`src/styles/tokens.css`), `ACCENT` et
 `RED` (`src/pdf.js`), `MARK` (`src/photo.js`). Le cyan du PDF est volontairement assombri
 pour tenir la photocopie ; celui des annotations sur photo est franc, pour ressortir sur un
 matelas clair comme sur un sommier sombre — et il ne suit pas l'habillage de l'app, puisque

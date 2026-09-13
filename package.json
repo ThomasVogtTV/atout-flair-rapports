@@ -6,6 +6,7 @@
   "description": "Rapports de detection canine de punaises de lit - saisie, photos annotees, signature et envoi PDF sur le terrain",
   "scripts": {
     "dev": "vite",
+    "dev:api": "node --env-file-if-exists=.env dev-server.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test \"test/*.test.js\"",
