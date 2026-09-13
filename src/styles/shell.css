@@ -89,7 +89,7 @@ body[data-screen='envois'] .top .back { display: none; }
   transform: translateX(-50%);
   transition: transform var(--d-3) var(--ease), opacity var(--d-2) var(--ease);
 }
-.dock.sans-carnet { grid-template-columns: 1fr auto 1fr 1fr; }
+.dock-item.efface { visibility: hidden; pointer-events: none; }
 .dock-item {
   position: relative;
   display: grid;
@@ -274,14 +274,18 @@ body.verrouille { overflow: hidden; }
   .lock-card > :nth-child(n + 4) { animation-delay: 180ms; }
 }
 /* Le logo officiel, detoure a la volee : noir sur blanc devient blanc sur la
-   nuit. */
+   nuit. Pose en haut de l'ecran, dans la foret floue : dans la carte, il
+   montait sur le poitrail du malinois - et les chiens se voient en entier. */
 .lock-logo {
-  width: 92px;
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 20px);
+  left: 24px;
+  width: 76px;
   height: auto;
-  margin-bottom: 4px;
-  filter: invert(1);
+  filter: invert(1) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.35));
   mix-blend-mode: screen;
 }
+.lock-card > .lock-logo { animation: none; }
 .lock-card h1 {
   font-family: var(--f-display);
   font-size: 40px;

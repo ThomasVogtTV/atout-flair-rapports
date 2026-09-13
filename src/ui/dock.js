@@ -53,9 +53,12 @@ export function majDock({ ecran, invite = false, enAttente = 0, enEchec = 0 }) {
     if (ouverte) porte.setAttribute('aria-current', 'page')
     else porte.removeAttribute('aria-current')
   }
+  // Pas de carnet pour un invite : la porte s'efface mais garde sa place, pour
+  // que l'action principale reste au centre, sous le pouce.
   const carnet = el.querySelector('[data-dock-carnet]')
-  carnet.hidden = !!invite
-  el.classList.toggle('sans-carnet', !!invite)
+  carnet.classList.toggle('efface', !!invite)
+  carnet.disabled = !!invite
+  carnet.setAttribute('aria-hidden', invite ? 'true' : 'false')
   const badge = el.querySelector('.dock-badge')
   const n = enEchec || enAttente || 0
   badge.textContent = n ? String(n) : ''

@@ -552,7 +552,10 @@ input[type='radio'] {
   display: flex;
   align-items: center;
   gap: 10px;
-  max-width: min(92vw, 520px);
+  /* Place de l'ecran entier : ancre a 50 %, le message n'avait droit qu'a la
+     moitie de la largeur, et un texte de deux lignes en faisait quatre. */
+  width: max-content;
+  max-width: min(calc(100vw - 32px), 520px);
   padding: 12px 18px 12px 14px;
   font-size: 14px;
   font-weight: 550;

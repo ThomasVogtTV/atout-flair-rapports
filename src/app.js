@@ -554,8 +554,11 @@ async function changerStatutRdv(rdv, statut) {
 let lastViewKey = null
 let entreeTimer = null
 // Les etapes deja faites du rapport ouvert, pour cocher avec un rebond celle qui
-// vient de se completer.
+// vient de se completer. Un verdict "Rien trouve" replie la piece et redessine
+// l'ecran juste apres avoir coche l'etape : les coches recentes survivent donc
+// a ce rendu, sans quoi le rebond disparaitrait avant d'avoir ete vu.
 let etapesFaites = null
+let finiesRecentes = { ids: [], t: 0 }
 
 function render() {
   const key = `${view.screen}:${view.report?.id ?? ''}`
@@ -566,7 +569,9 @@ function render() {
   document.body.dataset.screen = view.screen
   if (view.screen === 'editor' && view.report) {
     const faites = etapesDuRapport(view.report).filter((e) => e.fait).map((e) => e.id)
-    view.vientDeFinir = !navigated && etapesFaites ? faites.filter((id) => !etapesFaites.includes(id)) : []
+    const nouvelles = !navigated && etapesFaites ? faites.filter((id) => !etapesFaites.includes(id)) : []
+    const recentes = !navigated && Date.now() - finiesRecentes.t < 700 ? finiesRecentes.ids.filter((id) => faites.includes(id)) : []
+    view.vientDeFinir = [...new Set([...nouvelles, ...recentes])]
     etapesFaites = faites
   }
   root.innerHTML =
@@ -782,6 +787,7 @@ function rafraichirEtapes() {
   const faites = etapesDuRapport(view.report).filter((e) => e.fait).map((e) => e.id)
   const nouvelles = etapesFaites ? faites.filter((id) => !etapesFaites.includes(id)) : []
   etapesFaites = faites
+  if (nouvelles.length) finiesRecentes = { ids: nouvelles, t: Date.now() }
   const nav = root.querySelector('[data-etapes]')
   if (nav) nav.innerHTML = etapesNavHTML(view, { vientDeFinir: nouvelles })
   const verdicts = root.querySelector('[data-verdicts]')

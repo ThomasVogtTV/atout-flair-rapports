@@ -49,7 +49,7 @@ export function sectionIcon(key, tone) {
 }
 
 // Les teintes des trois types vivent sur l'accueil, portees par les classes
-// card-<type> / icon-<type> de style.css : c'est la qu'on choisit, et donc la
+// card-<type> / icon-<type> des feuilles de src/styles : c'est la qu'on choisit, et donc la
 // que la couleur sert a reconnaitre. Dans un rapport ouvert, les rubriques
 // suivent leur propre ordre de couleurs (mandant, lieu, lignes, photos...) -
 // y rappeler le type ne creait qu'un doublon avec la rubrique voisine.

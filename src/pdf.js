@@ -21,7 +21,7 @@ const CW = PAGE.W - 2 * M         // largeur utile
 const RIGHT = M + CW
 const BOTTOM = 74                 // plancher du contenu (au-dessus du pied de page)
 
-// Palette calee sur les tokens de style.css, pour que le PDF s'accorde avec
+// Palette calee sur les jetons de src/styles/tokens.css, pour que le PDF s'accorde avec
 // l'app plutot que d'utiliser du noir pur partout.
 const INK = rgb(0.110, 0.110, 0.118)        // = --ink #1c1c1e : texte principal
 const INK_SOFT = rgb(0.282, 0.282, 0.298)   // = --ink-soft #48484c : libelles
