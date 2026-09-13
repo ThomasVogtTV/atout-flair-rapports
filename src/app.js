@@ -232,15 +232,23 @@ async function rafraichirTableau({ force = false } = {}) {
 
 // Rendu chirurgical, comme pour les rendez-vous : un rendu complet ferait
 // perdre son curseur a une recherche en cours.
+let tableauRendu = ''
+
 function majTableau() {
   if (view.screen !== 'home') return
   const zone = root.querySelector('.tableau-zone')
   if (!zone) return
+  const neuf = tableauAdminHTML(view)
+  // Rien n'a change depuis le dernier rendu : ne pas reecrire. Refaire le HTML
+  // detruit l'iframe de la carte, que Google recharge alors entierement pour
+  // redessiner exactement la meme - a chaque retour a l'accueil.
+  if (neuf === tableauRendu) return
   // Le tableau se relit pendant qu'on le parcourt : refaire son contenu le
   // ramenait en haut, et la ligne qu'on etait en train de lire disparaissait
   // sous les yeux.
   const ou = zone.querySelector('.tableau-defile')?.scrollTop ?? 0
-  zone.innerHTML = tableauAdminHTML(view)
+  zone.innerHTML = neuf
+  tableauRendu = neuf
   const defile = zone.querySelector('.tableau-defile')
   if (defile) defile.scrollTop = ou
 }
