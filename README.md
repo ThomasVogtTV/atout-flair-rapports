@@ -114,6 +114,7 @@ Le projet est un site statique + une fonction serveur (`api/send.js`).
    | `MAIL_REPLY_TO` | `info@atout-flair.ch` *(optionnel, valeur par défaut)* |
    | `MAIL_BCC` | copie d'archivage *(optionnel)* |
    | `MAIL_OFF` | `1` coupe l'envoi automatique — voir ci-dessous |
+   | `VITE_GOOGLE_MAPS_KEY` | clé Google Maps Embed, pour la carte du tableau — voir ci-dessous *(optionnel)* |
 
 Tant que ces variables ne sont pas renseignées, `/api/send` répond 503 : l'app bascule
 alors toute seule sur la file d'attente, et le bouton « Partager / Enregistrer » reste
@@ -150,6 +151,22 @@ Retirer `MAIL_OFF` dans Vercel remet l'envoi en service, une fois `SMTP_PASS` co
 Attention : `SMTP_USER` attend l'adresse complète, et le mot de passe demandé est celui
 **de la boîte mail**, pas celui du compte Infomaniak. Les confondre donne exactement ce
 `535`.
+
+### La carte du tableau
+
+Le tableau de l'accueil (réservé à l'administrateur) affiche la tournée du jour sur une
+carte Google Maps intégrée. Elle prend les **adresses telles qu'elles sont saisies** :
+l'app ne stocke aucune coordonnée, et il n'y a donc rien à géocoder.
+
+`VITE_GOOGLE_MAPS_KEY` n'est pas une variable serveur comme les autres : le préfixe
+`VITE_` la fait entrer dans le code envoyé au navigateur, où n'importe qui peut la lire.
+**Il faut donc la restreindre au domaine du site** (console Google Cloud → Identifiants →
+Restrictions d'application → Sites web) et n'activer que l'API « Maps Embed ». Sans cette
+restriction, une clé recopiée se dépense sur le compte d'Atout-Flair.
+
+Sans clé, ou hors ligne, la carte disparaît et le tableau garde sa liste d'arrêts — le
+bouton « Itinéraire », lui, ouvre l'application de cartes du téléphone et n'a jamais
+besoin de clé.
 
 ### Pas de moteur de recherche
 

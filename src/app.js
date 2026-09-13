@@ -23,6 +23,7 @@ import { choisirContact } from './contact-picker.js'
 import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 import { installerVerrou, seDeconnecter, estInvite, estAdmin } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
+import { tableauAdminHTML } from './views/tableau.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, marquerStatut, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
 import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe, plusJours, libelleJour } from './agenda-outils.js'
@@ -130,6 +131,7 @@ async function goHome() {
   render()
   // Retour a l'accueil : le rapport qu'on vient de quitter part en ligne.
   planifierSauvegarde()
+  rafraichirTableau()
 }
 
 async function openEnvois() {
@@ -207,6 +209,40 @@ async function rechargerAdmin() {
     }
   }
   if (view.screen === 'admin') render()
+}
+
+// Le tableau de l'accueil lit au meme endroit que l'onglet Administration, et
+// garde sa reponse dans le meme cache : deux lectures de la meme chose a une
+// seconde d'intervalle ne diraient rien de plus.
+const TABLEAU_FRAIS_MS = 60_000
+let tableauLu = 0
+
+async function rafraichirTableau({ force = false } = {}) {
+  if (!estAdmin() || !navigator.onLine) return
+  if (!force && Date.now() - tableauLu < TABLEAU_FRAIS_MS) return
+  try {
+    view.admin = await adminAppel('GET')
+    tableauLu = Date.now()
+  } catch (err) {
+    // Le tableau dit pourquoi il est vide ; le reste de l'accueil continue.
+    view.admin = { erreur: err.message, base: err.base }
+  }
+  majTableau()
+}
+
+// Rendu chirurgical, comme pour les rendez-vous : un rendu complet ferait
+// perdre son curseur a une recherche en cours.
+function majTableau() {
+  if (view.screen !== 'home') return
+  const zone = root.querySelector('.tableau-zone')
+  if (!zone) return
+  // Le tableau se relit pendant qu'on le parcourt : refaire son contenu le
+  // ramenait en haut, et la ligne qu'on etait en train de lire disparaissait
+  // sous les yeux.
+  const ou = zone.querySelector('.tableau-defile')?.scrollTop ?? 0
+  zone.innerHTML = tableauAdminHTML(view)
+  const defile = zone.querySelector('.tableau-defile')
+  if (defile) defile.scrollTop = ou
 }
 
 const CONFIRMATIONS = {
@@ -392,6 +428,8 @@ async function rafraichirAgenda() {
   if (view.screen === 'home') {
     const zone = root.querySelector('.rdv-accueil-zone')
     if (zone) zone.innerHTML = rdvAccueilHTML(view)
+    // La tournee du tableau se lit dans le meme agenda.
+    majTableau()
   } else if (view.screen === 'agenda') {
     render()
   }
@@ -1020,6 +1058,13 @@ root.addEventListener('click', async (ev) => {
   if (btnQui) {
     view.agendaQui = btnQui.dataset.agendaQui
     return render()
+  }
+  // La tournee montree par le tableau de l'accueil : seul le tableau change,
+  // pour ne pas redessiner l'accueil entier a chaque bascule.
+  const btnTournee = el.closest('[data-tableau-qui]')
+  if (btnTournee) {
+    view.tableauQui = btnTournee.dataset.tableauQui
+    return majTableau()
   }
 
   // Un rendez-vous de l'agenda (ou de l'accueil) : sa fiche.
@@ -1781,11 +1826,15 @@ export async function boot() {
   reserverNumeros()
   // L'agenda de l'equipe : a l'ouverture, au deverrouillage, au retour du reseau.
   rafraichirAgenda()
-  window.addEventListener('online', () => rafraichirAgenda())
+  window.addEventListener('online', () => {
+    rafraichirAgenda()
+    rafraichirTableau({ force: true })
+  })
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
   window.addEventListener('af-deverrouille', () => {
     reserverNumeros()
     rafraichirAgenda()
+    rafraichirTableau({ force: true })
     syncCarnet()
     planifierSauvegarde()
   })

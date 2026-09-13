@@ -1,14 +1,14 @@
 // Ecran d'accueil : le poste de travail du technicien.
 //
 // Il repond, dans cet ordre, a ce qu'on vient chercher en ouvrant l'app sur le
-// terrain : ou j'en suis (le jour, ce qui reste sur les bras), je commence (le
-// choix du lieu), aujourd'hui (les rendez-vous), je continue (les rapports en
-// cours), je cherche (les archives).
+// terrain : ou j'en suis (ce qui reste sur les bras), je commence (le choix du
+// lieu), aujourd'hui (les rendez-vous), je continue (les rapports en cours),
+// je cherche (les archives).
 //
 // La photo des chiens tient le haut de l'ecran, nette et en entier : c'est
 // l'identite de la maison. Elle se fond dans la nuit du poste de controle, ou
-// se lisent le jour et les trois chiffres du mois. Le reste se pose sur le
-// papier, sans rien de flou ni de transparent derriere ce qu'on lit.
+// se lisent les trois chiffres du mois. Le reste se pose sur le papier, sans
+// rien de flou ni de transparent derriere ce qu'on lit.
 
 import { TYPE_LIST, typeOf } from '../templates.js'
 import * as S from '../state.js'
@@ -21,6 +21,7 @@ import { ILLUSTRATIONS } from '../ui/illustrations.js'
 import { ICONES_3D } from '../ui/icones3d.js'
 import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { rdvAccueilHTML } from './agenda.js'
+import { tableauAdminHTML } from './tableau.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -275,15 +276,12 @@ function sessionHTML() {
 }
 
 /**
- * Le poste de controle : le jour, qui tient le telephone, et les trois chiffres
- * qu'on vient chercher le matin - ce qui reste sur les bras, et ce que le mois a
+ * Le poste de controle : qui tient le telephone, et les trois chiffres qu'on
+ * vient chercher le matin - ce qui reste sur les bras, et ce que le mois a
  * deja produit. Seul ce qui reclame un geste porte une alerte.
  */
 function posteHTML(view) {
   const maintenant = new Date()
-  const semaine = maintenant.toLocaleDateString('fr-CH', { weekday: 'long' })
-  const quantieme = maintenant.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })
-
   const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).getTime()
   const brouillons = view.reports.filter(S.enCours).length
   const crees = view.reports.filter((r) => (r.createdAt ?? 0) >= debutMois).length
@@ -308,14 +306,8 @@ function posteHTML(view) {
   return `
     <div class="poste reveal" style="--i:0">
       ${LIGNES_FLAIR}
-      <button type="button" class="poste-jour" data-act="open-agenda" aria-label="Ouvrir l'agenda">
-        <span class="poste-date">
-          <span class="poste-semaine">${esc(semaine[0].toUpperCase() + semaine.slice(1))}</span>
-          <span class="poste-quantieme">${esc(quantieme)}</span>
-        </span>
-        ${sessionHTML()}
-        <span class="poste-agenda">${ICONS.calendrier}Agenda</span>
-      </button>
+      ${sessionHTML()}
+      <div class="tableau-zone">${tableauAdminHTML(view)}</div>
       <div class="releve" role="group" aria-label="Activité">
         ${mesure(brouillons, 'en cours', brouillons > 0)}
         ${mesure(crees, 'créés ce mois')}
