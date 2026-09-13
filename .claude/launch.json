@@ -4,7 +4,7 @@
     {
       "name": "atout-flair",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "dev:api"],
       "port": 5173
     }
   ]

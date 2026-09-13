@@ -13,6 +13,13 @@ import { createServer as createViteServer } from 'vite'
 
 const PORT = Number(process.env.PORT) || 5173
 
+// `vercel env pull` ne rend pas les valeurs protegees : il ecrit "[SENSITIVE]" a
+// leur place. Gardees telles quelles, elles cassaient la base (adresse
+// illisible) et faisaient surtout accepter "[SENSITIVE]" comme code
+// administrateur. Elles sont donc traitees comme absentes.
+const masquees = Object.keys(process.env).filter((k) => process.env[k] === '[SENSITIVE]')
+for (const k of masquees) delete process.env[k]
+
 async function lireCorps(req) {
   if (req.method === 'GET' || req.method === 'HEAD') return {}
   const morceaux = []
@@ -66,7 +73,10 @@ async function main() {
 
   server.listen(PORT, () => {
     console.log(`Atout Flair (dev local, vite + api/) -> http://localhost:${PORT}`)
+    if (masquees.length) console.warn(`Masquees par Vercel, ignorees : ${masquees.join(', ')} - a recopier a la main dans .env.`)
     if (!process.env.APP_CODE) console.warn('APP_CODE absent : le verrou refusera tous les codes.')
+    if (!process.env.KV_REST_API_URL && !process.env.UPSTASH_REDIS_REST_URL)
+      console.warn('Base Upstash absente : agenda, carnet commun, numeros et administration ne repondront pas.')
   })
 }
 
