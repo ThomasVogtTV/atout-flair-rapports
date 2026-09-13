@@ -180,7 +180,6 @@ function nouveauHTML() {
   return `
     <div class="bloc-tete">
       <h2 class="bloc-titre">Nouveau rapport</h2>
-      <p class="bloc-sous">Où a lieu la détection ?</p>
     </div>
     <div class="types-pleins">${tuilesTypesHTML()}</div>`
 }

@@ -19,12 +19,11 @@ export function ouvrirNouveauRapport({ contacts, choisirClient }) {
   let contact = null
   const overlay = openOverlay(`
     <h2>Nouveau rapport</h2>
-    <p class="muted small">Où a lieu la détection ?</p>
     ${
       contacts.length
         ? `<button type="button" class="nouveau-client" data-client>
              ${ICONS.contacts}
-             <span><b>Pour un client du carnet</b><small>Facultatif · le rapport naît déjà rempli</small></span>
+             <span><b>Pour un client du carnet</b><small></small></span>
              ${ICONS.chevron}
            </button>`
         : ''

@@ -471,7 +471,6 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   line-height: 1.1;
   letter-spacing: -0.018em;
 }
-.bloc-sous { font-size: var(--fs-small); color: var(--c-muted); }
 
 /* --- Les trois types : trois tuiles egales, pleines de leur couleur -------- */
 .types-pleins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

@@ -130,6 +130,7 @@
 .nouveau-client span { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .nouveau-client b { font-size: 15px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nouveau-client small { font-size: 12.5px; color: var(--c-muted); }
+.nouveau-client small:empty { display: none; }
 .nouveau-client.choisi { border-color: color-mix(in srgb, var(--c-brand) var(--liseret), transparent); background: color-mix(in srgb, var(--c-brand) var(--voile), var(--c-surface)); }
 
 /* --- Feuille "Autres actions" ---------------------------------------------------------- */

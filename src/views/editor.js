@@ -619,25 +619,6 @@ function clotureSection(view, r, t, replie) {
 
 // --- les etapes --------------------------------------------------------------
 
-const TITRES = {
-  client: () => 'Pour qui ?',
-  lieu: () => "Le lieu d'intervention",
-  detection: (t) => `${t.rowLabelPlural[0].toUpperCase()}${t.rowLabelPlural.slice(1)} contrôlé${accordE(t)}s`,
-  constats: () => 'Constats',
-  cloture: () => 'Clôture',
-}
-
-const AIDES = {
-  client: () => 'Le mandant, à qui le rapport sera remis.',
-  lieu: () => 'Où le chien a travaillé, et dans quelles conditions.',
-  detection: (t) =>
-    t.layout === 'pieces'
-      ? 'Pour chaque pièce, le verdict du chien. « Rien trouvé » range la pièce et passe à la suivante.'
-      : `Une ligne par ${t.rowLabel}, avec son verdict et ses constatations.`,
-  constats: () => 'Ce que le rapport conclut, et les photos d’ensemble.',
-  cloture: () => 'Vérifiez le bilan, faites signer, puis remettez le rapport.',
-}
-
 /** La frise des etapes. Exportee : l'app la redessine a mesure qu'on remplit. */
 export function etapesNavHTML(view, { vientDeFinir = [] } = {}) {
   const etapes = etapesDuRapport(view.report)
@@ -732,12 +713,13 @@ export function editorView(view) {
     </header>
 
     <section class="pad etape-corps${view.etapeSens ? ` vers-${view.etapeSens}` : ''}" data-etape-id="${e.id}">
-      <div class="etape-tete">
-        <p class="etape-numero"><span>Étape ${courante + 1}</span> sur ${etapes.length}</p>
-        <h2 class="etape-titre">${esc(TITRES[e.id](t))}</h2>
-        <p class="etape-aide">${esc(AIDES[e.id](t))}</p>
-        ${e.alerte && e.id !== 'detection' ? `<p class="etape-alerte">${ICONS.alerte}${esc(e.alerte)}</p>` : ''}
-      </div>
+      ${
+        // La frise en tete suffit a dire ou l'on est : seul ce qui manque
+        // vraiment s'ecrit encore au-dessus du contenu.
+        e.alerte && e.id !== 'detection'
+          ? `<div class="etape-tete"><p class="etape-alerte">${ICONS.alerte}${esc(e.alerte)}</p></div>`
+          : ''
+      }
       ${contenu}
     </section>
 
