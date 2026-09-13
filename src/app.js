@@ -7,7 +7,7 @@ import { typeOf, accordE, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, fileToLogo, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
-import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, setCode, currentCode } from './mailer.js'
+import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, currentCode } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
@@ -335,6 +335,39 @@ async function traiterValidation(act, id) {
     hideLoading()
   }
   await rechargerAdmin()
+}
+
+// --- une session a la fois -------------------------------------------------------
+//
+// Une session qui se ferme ne laisse rien a la suivante. Ce que l'administrateur
+// avait en memoire - l'equipe, un code tout juste revele, les rapports de
+// l'equipe, l'agenda de tout le monde - ne doit pas reapparaitre sous le code
+// d'un employe ou d'un invite qui prend le telephone.
+
+const cleSession = () => {
+  const i = identite()
+  return i ? `${i.role}:${i.id ?? ''}` : ''
+}
+// La session dont l'ecran montre les donnees.
+let sessionAffichee = ''
+
+function oublierSession() {
+  view.admin = null
+  view.adminRapports = null
+  view.adminCodeRevele = null
+  view.adminFiltre = undefined
+  view.adminRapportsQui = undefined
+  view.tableauQui = undefined
+  view.agenda = null
+  tableauLu = 0
+  tableauRendu = ''
+  validationsLues = 0
+  try {
+    // Le cache de l'agenda (voir src/agenda.js) : celui d'une autre session.
+    localStorage.removeItem('af-agenda')
+  } catch {
+    // Stockage indisponible : il n'y a rien a oublier.
+  }
 }
 
 // Le telephone d'un invite : les decisions de l'administrateur sur ses rapports
@@ -858,7 +891,6 @@ function rafraichirListeRapports() {
 
 root.addEventListener('input', (ev) => {
   const el = ev.target
-  if (el.dataset.appCode !== undefined) return setCode(el.value)
   if (el.dataset.recherche !== undefined) {
     view.recherche = el.value
     return rafraichirListeRapports()
@@ -1561,7 +1593,9 @@ root.addEventListener('click', async (ev) => {
   if (act === 'open-admin') return openAdmin()
   if (act === 'deconnexion') {
     if (!confirm('Se déconnecter ? Le code sera redemandé tout de suite, et à chaque ouverture tant que « Se souvenir de moi » ne sera pas coché.')) return
-    return seDeconnecter()
+    oublierSession()
+    seDeconnecter()
+    return goHome()
   }
   if (act === 'admin-ajouter') return adminAjouter()
   if (act === 'valid-voir') return voirPdfValidation(el.closest('[data-act]').dataset.id)
@@ -1997,6 +2031,7 @@ export async function boot() {
   // Le verrou se pose avant tout affichage : l'accueil se dessine dessous, sans
   // qu'une liste de rapports ne transparaisse une fraction de seconde avant le code.
   installerVerrou()
+  sessionAffichee = cleSession()
   // La navigation du bas, posee une fois : elle traverse les ecrans.
   installerDock(naviguer)
   // Le geste retour du telephone suit le bouton retour de l'ecran.
@@ -2030,6 +2065,14 @@ export async function boot() {
   })
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
   window.addEventListener('af-deverrouille', () => {
+    // Quelqu'un d'autre a pris le telephone : rien de la session precedente ne
+    // reste a l'ecran. Le meme qui revient apres le delai de grace, lui,
+    // retrouve son rapport la ou il l'avait laisse.
+    if (cleSession() !== sessionAffichee) {
+      sessionAffichee = cleSession()
+      oublierSession()
+      goHome()
+    }
     reserverNumeros()
     rafraichirAgenda()
     rafraichirTableau({ force: true })

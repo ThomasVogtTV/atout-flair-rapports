@@ -10,7 +10,6 @@ import { backupAge, enPoids, STOCKAGE_ALERTE } from '../state.js'
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { THEMES, themeChoice } from '../ui/theme.js'
-import { currentCode } from '../mailer.js'
 import { identite, souvenirJusqua } from '../lock.js'
 import { souvenirValide } from '../code.js'
 import { derniereSauvegarde, rapportsSauvegardes } from '../sauvegarde.js'
@@ -57,6 +56,24 @@ function jaugeHTML(place) {
     ${serre ? `<p class="muted small">Les prochaines photos risquent de ne plus tenir.</p>` : ''}`
 }
 
+/**
+ * Qui tient le telephone. Le code lui-meme ne s'affiche jamais : visible, il
+ * passait a quiconque ouvrait les reglages - le code administrateur ouvre tout.
+ * Et il ne se change qu'en passant par l'ecran du code, qui le verifie aupres du
+ * serveur : saisi ici, il s'enregistrait sans que personne ne sache a qui il
+ * appartenait.
+ */
+function sessionTexte() {
+  const i = identite()
+  if (!i) return 'Aucune session sur cet appareil.'
+  if (i.role === 'admin') return 'Administrateur'
+  if (i.role === 'invite') {
+    const fin = i.fin ? ` jusqu'au ${new Date(i.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}` : ''
+    return `${i.nom} · invité${fin}`
+  }
+  return `${i.nom} · employé`
+}
+
 export function reglagesView(view) {
   const sauvegarde = ageSauvegarde()
   const place = view?.stockage ?? null
@@ -79,16 +96,12 @@ export function reglagesView(view) {
         <p class="muted small reglage-note">« Système » suit le réglage du téléphone : sombre le soir s'il l'est.</p>
       </div>
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('mail', 'accent')}Code d'accès</span></h2>
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('person', 'accent')}Session</span></h2>
       <div class="card">
-        <input data-app-code type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
-               value="${esc(currentCode())}" placeholder="Non renseigné sur cet appareil" />
-        <p class="muted small reglage-note">Il ouvre l'application et autorise l'envoi des rapports depuis la boîte de
-        l'entreprise. Majuscules et minuscules sont indifférentes.</p>
-        ${identite()?.nom ? `<p class="muted small">Ce téléphone est au nom de <b>${esc(identite().nom)}</b>.</p>` : ''}
+        <p class="etat-sauvegarde">${esc(sessionTexte())}</p>
         ${
           souvenirValide(souvenirJusqua())
-            ? `<p class="muted small">Code mémorisé sur cet appareil jusqu'au ${esc(
+            ? `<p class="muted small">Mémorisée sur cet appareil jusqu'au ${esc(
                 new Date(souvenirJusqua()).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })
               )}.</p>`
             : ''
