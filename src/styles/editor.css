@@ -4,16 +4,16 @@
    ========================================================================== */
 
 /* --- En-tete : le client en titre, le numero, l'etat de l'enregistrement ---- */
-.rapport-tete { flex-wrap: wrap; row-gap: 12px; padding-bottom: 14px; }
-.rapport-tete .top-title h1 { font-size: 20px; }
+.rapport-tete { flex-wrap: wrap; row-gap: 10px; padding-bottom: 12px; }
+.rapport-tete .top-title h1 { font-size: 17px; }
 
 .save-etat {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
-  padding: 0 10px 0 8px;
-  font-size: 12px;
+  height: 26px;
+  padding: 0 9px 0 7px;
+  font-size: 11.5px;
   font-weight: 650;
   color: var(--c-success);
   background: var(--c-success-soft);
@@ -138,7 +138,7 @@
 .etapes-bilan { display: none; }
 
 /* --- Le contenu d'une etape ----------------------------------------------------- */
-.etape-corps { padding-top: 24px; }
+.etape-corps { padding-top: 18px; }
 @media (prefers-reduced-motion: no-preference) {
   .etape-corps.vers-avant { animation: etape-avant var(--d-3) var(--ease) backwards; }
   .etape-corps.vers-arriere { animation: etape-arriere var(--d-3) var(--ease) backwards; }
@@ -162,7 +162,7 @@
 
 /* Dans une etape, les rubriques reprennent la signature du PDF : petites
    capitales et filet jusqu'au bord. L'etape, elle, se lit dans la frise. */
-.etape-corps .section-title { margin: 30px 2px 12px; }
+.etape-corps .section-title { margin: 24px 2px 10px; }
 .etape-corps .section-title-main {
   gap: 10px;
   font-family: var(--f-ui);
@@ -179,17 +179,17 @@
   height: 1px;
   background: var(--c-line-2);
 }
-.etape-corps .section-icon { width: 28px; height: 28px; border-radius: 9px; }
-.etape-corps .section-icon svg { width: 16px; height: 16px; }
+.etape-corps .section-icon { width: 24px; height: 24px; border-radius: 8px; }
+.etape-corps .section-icon svg { width: 14px; height: 14px; }
 
 /* --- Choisir le client dans le carnet ------------------------------------------ */
 .carnet-choisir {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  margin-top: 22px;
-  padding: 14px 14px 14px 16px;
+  margin-top: 18px;
+  padding: 11px 12px 11px 14px;
   font-family: var(--f-ui);
   text-align: left;
   color: var(--c-ink);
@@ -208,16 +208,16 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   color: var(--c-brand);
   background: color-mix(in srgb, var(--c-brand) var(--voile), transparent);
 }
-.carnet-choisir-ico svg { width: 24px; height: 24px; }
+.carnet-choisir-ico svg { width: 20px; height: 20px; }
 .carnet-choisir-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.carnet-choisir-txt b { font-size: 16px; font-weight: 650; }
-.carnet-choisir-txt span { font-size: 13px; color: var(--c-muted); }
+.carnet-choisir-txt b { font-size: 14.5px; font-weight: 650; }
+.carnet-choisir-txt span { font-size: 12.5px; color: var(--c-muted); }
 .carnet-choisir-go { color: var(--c-faint); }
 .carnet-choisir-go svg { width: 18px; height: 18px; }
 
@@ -225,8 +225,8 @@
 
 /* --- La repartition des verdicts ----------------------------------------------- */
 .verdicts {
-  margin-top: 22px;
-  padding: 16px 16px 14px;
+  margin-top: 18px;
+  padding: 13px 14px 12px;
   background: var(--c-surface);
   border: 1px solid var(--c-line);
   border-radius: var(--r-lg);
@@ -235,7 +235,7 @@
 .verdicts-tete { display: flex; align-items: baseline; gap: 10px; }
 .verdicts-compte {
   font-family: var(--f-display);
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -243,12 +243,12 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 .verdicts-compte b { font-weight: 600; color: var(--c-ink); }
-.verdicts-mot { font-size: 14px; color: var(--c-muted); }
+.verdicts-mot { font-size: 13px; color: var(--c-muted); }
 .verdicts-barre {
   display: flex;
   gap: 3px;
-  height: 10px;
-  margin-top: 12px;
+  height: 8px;
+  margin-top: 10px;
   overflow: hidden;
   border-radius: var(--r-pill);
 }
@@ -257,7 +257,7 @@
 .verdicts-barre .v-non { background: var(--c-success); }
 .verdicts-barre .v-inconnu { background: var(--c-fauve); }
 .verdicts-barre .v-afaire { background: repeating-linear-gradient(135deg, var(--c-bg-2) 0 4px, var(--c-line-2) 4px 7px); }
-.verdicts-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 11px; font-size: 12.5px; color: var(--c-muted); }
+.verdicts-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12px; color: var(--c-muted); }
 .verdicts-legende span { display: inline-flex; align-items: center; gap: 6px; }
 .verdicts-legende span::before { content: ''; width: 9px; height: 9px; border-radius: 3px; }
 .verdicts-legende b { color: var(--c-ink); font-weight: 700; }
@@ -269,12 +269,12 @@
 /* --- Cartes des pieces, appartements, chambres ------------------------------------
    Le verdict remonte au niveau de la carte : la tranche et le badge prennent sa
    couleur, pour que la visite se scanne sans lire un mot. */
-.rows { position: relative; display: grid; gap: 10px; }
+.rows { position: relative; display: grid; gap: 8px; }
 .row-card {
   position: relative;
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 12px;
+  padding: 13px;
   background: var(--c-surface);
   border: 1px solid var(--c-line);
   border-radius: var(--r-lg);
@@ -285,9 +285,9 @@
   content: '';
   position: absolute;
   left: -1px;
-  top: 16px;
-  bottom: 16px;
-  width: 4px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
   border-radius: 0 4px 4px 0;
   background: transparent;
   transition: background-color var(--d-2) var(--ease);
@@ -307,15 +307,15 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: 44px;
-  height: 38px;
-  font-size: 13.5px;
+  width: 40px;
+  height: 34px;
+  font-size: 12.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--c-ink-2);
   background: var(--c-bg-2);
   border: 1px solid var(--c-line);
-  border-radius: 12px;
+  border-radius: 10px;
   transition: background-color var(--d-2) var(--ease), color var(--d-2) var(--ease), border-color var(--d-2) var(--ease);
 }
 .row-card[data-status='oui'] .piece-badge { color: #fff; background: var(--c-danger); border-color: var(--c-danger); }
@@ -348,38 +348,38 @@
 .piece-badge[data-grip]:active { cursor: grabbing; }
 
 .piece-name-wrap { flex: 1 1 0; min-width: 0; gap: 4px; }
-.piece-name { min-height: 44px; padding: 8px 11px; font-size: 17px; font-weight: 650; }
+.piece-name { min-height: 40px; padding: 7px 10px; font-size: 16px; font-weight: 650; }
 .row-name { font-weight: 650; }
 .field-info { gap: 7px; }
 .verdict { display: grid; gap: 8px; }
-.row-del { flex-shrink: 0; min-width: 40px; min-height: 40px; color: var(--c-faint); }
-.row-del svg { width: 19px; height: 19px; }
+.row-del { flex-shrink: 0; min-width: 36px; min-height: 36px; color: var(--c-faint); }
+.row-del svg { width: 17px; height: 17px; }
 @media (hover: hover) {
   .row-del:hover { color: var(--c-danger); background: var(--c-danger-soft); }
 }
 .row-actions { display: flex; gap: 8px; }
 .row-actions .btn { flex: 1; min-width: 0; padding: 0 12px; }
 .btn-photo svg { color: var(--t-hotel); }
-.btn-ajout { margin-top: 12px; border-style: dashed; color: var(--c-brand-ink); background: transparent; }
+.btn-ajout { margin-top: 10px; border-style: dashed; color: var(--c-brand-ink); background: transparent; }
 .btn-ajout svg { width: 17px; height: 17px; }
 
 /* Carte repliee : une ligne, le verdict en regard. */
 .row-card.repliee { padding: 0; }
 .row-card.repliee .row-head {
-  min-height: 66px;
-  padding: 10px 8px 10px 12px;
+  min-height: 56px;
+  padding: 8px 6px 8px 11px;
   border-radius: inherit;
   cursor: pointer;
 }
 .row-card.repliee .row-head:active { background: var(--c-veil); }
 .resume { flex: 1 1 0; min-width: 0; display: grid; gap: 2px; }
 .resume-ligne { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-.resume-nom { font-size: 16px; font-weight: 650; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.resume-etat { margin-left: auto; flex-shrink: 0; font-size: 12.5px; font-weight: 650; color: var(--c-muted); }
+.resume-nom { font-size: 14.5px; font-weight: 650; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-etat { margin-left: auto; flex-shrink: 0; font-size: 12px; font-weight: 650; color: var(--c-muted); }
 .row-card.repliee[data-status='oui'] .resume-etat { color: var(--c-danger); }
 .row-card.repliee[data-status='non'] .resume-etat { color: var(--c-success); }
 .row-card.repliee[data-status='inconnu'] .resume-etat { color: var(--c-fauve-ink); }
-.resume-detail { font-size: 13px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-detail { font-size: 12.5px; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Bouton de repliage : rond, visible - une rubrique qu'on ne sait pas rouvrir
    est une rubrique perdue. */
@@ -466,12 +466,12 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 .thumb { position: relative; flex: 0 0 auto; cursor: pointer; }
 .thumb img {
   display: block;
-  width: 94px;
-  height: 94px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   background: var(--c-bg-2);
   border: 1px solid var(--c-line);
-  border-radius: 14px;
+  border-radius: 12px;
 }
 .thumb-del {
   position: absolute;
@@ -516,8 +516,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   display: grid;
   place-items: center;
   gap: 4px;
-  min-height: 116px;
-  padding: 16px;
+  min-height: 96px;
+  padding: 14px;
   text-align: center;
   border: 1.5px dashed var(--c-line-2);
   border-radius: var(--r-md);
@@ -527,7 +527,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 }
 .depose.survol { border-color: var(--c-brand); background: color-mix(in srgb, var(--c-brand) 10%, transparent); }
 .depose.rempli { border-style: solid; border-color: var(--c-line); background: #fff; }
-.depose-mot { font-size: 15px; font-weight: 600; }
+.depose-mot { font-size: 14px; font-weight: 600; }
 .depose-sous { font-size: 13px; color: var(--c-muted); }
 .depose-nom { display: flex; margin-top: 14px; }
 .depose-titre { display: block; margin: 16px 0 8px; }
@@ -553,8 +553,8 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   justify-items: center;
   gap: 6px;
   width: 100%;
-  padding: 18px 14px;
-  font-size: 13.5px;
+  padding: 14px 12px;
+  font-size: 13px;
   color: var(--c-muted);
   border: 1.5px dashed var(--c-line-2);
   border-radius: var(--r-md);
@@ -564,7 +564,7 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 /* --- Le bilan : le rapport tel qu'il va partir ---------------------------------------- */
 .bilan {
   position: relative;
-  margin-top: 22px;
+  margin-top: 18px;
   overflow: hidden;
   background: var(--c-surface);
   border: 1px solid var(--c-line);
@@ -576,16 +576,16 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 13px 18px;
+  padding: 11px 16px;
   color: var(--c-on-night);
   background: var(--c-night);
 }
 .bilan-ref { font-family: var(--f-mono); font-size: 13px; font-weight: 500; letter-spacing: 0.08em; color: var(--c-fauve-bright); }
 .bilan-tete .pill { color: var(--c-on-night); background: rgba(241, 237, 228, 0.12); }
 .bilan-titre {
-  padding: 18px 18px 2px;
+  padding: 15px 16px 2px;
   font-family: var(--f-display);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.016em;
@@ -593,21 +593,21 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
 .bilan-faits {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px 14px;
+  gap: 12px 12px;
   margin: 0;
-  padding: 14px 18px 18px;
+  padding: 12px 16px 16px;
 }
 .bilan-faits div { min-width: 0; }
 .bilan-faits div:nth-child(1),
 .bilan-faits div:nth-child(2) { grid-column: 1 / -1; }
 .bilan-faits dt { font-size: 10.5px; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted); }
-.bilan-faits dd { margin: 4px 0 0; font-size: 15px; font-weight: 600; line-height: 1.3; color: var(--c-ink); overflow-wrap: anywhere; }
+.bilan-faits dd { margin: 3px 0 0; font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--c-ink); overflow-wrap: anywhere; }
 .bilan-verdict {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 18px;
-  padding: 13px 14px;
+  margin: 0 16px;
+  padding: 11px 12px;
   color: var(--c-success);
   background: var(--c-success-soft);
   border-radius: var(--r-md);
@@ -617,15 +617,15 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: currentColor;
 }
-.bilan-verdict-ico svg { width: 20px; height: 20px; color: var(--c-surface); }
-.bilan-verdict b { display: block; font-size: 15.5px; font-weight: 700; }
+.bilan-verdict-ico svg { width: 17px; height: 17px; color: var(--c-surface); }
+.bilan-verdict b { display: block; font-size: 14.5px; font-weight: 700; }
 .bilan-verdict > span:last-child > span { font-size: 13px; opacity: 0.9; }
-.bilan-manques { margin: 16px 18px 18px; padding-top: 14px; border-top: 1px dashed var(--c-line-2); }
+.bilan-manques { margin: 14px 16px 16px; padding-top: 12px; border-top: 1px dashed var(--c-line-2); }
 .bilan-manques ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
 .bilan-manques button {
   display: flex;
@@ -633,10 +633,10 @@ body.dragging-rows { user-select: none; -webkit-user-select: none; touch-action:
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  min-height: 46px;
+  min-height: 40px;
   padding: 0 12px 0 14px;
   font-family: var(--f-ui);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   text-align: left;
   color: var(--c-fauve-ink);

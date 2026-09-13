@@ -11,7 +11,7 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: min(86vw, 520px);
+  height: min(76vw, 460px);
   background: var(--c-night);
 }
 .accueil-photo {
@@ -55,7 +55,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 .marque { display: grid; gap: 6px; min-width: 0; }
 .marque-nom {
   font-family: var(--f-display);
-  font-size: 28px;
+  font-size: 23px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.022em;
@@ -63,7 +63,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 }
 .marque-metier {
   white-space: nowrap;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 650;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -74,18 +74,18 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 .porte {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
+  border-radius: 13px;
   background: rgba(8, 14, 16, 0.32);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   cursor: pointer;
   transition: transform var(--d-2) var(--ease-spring), background-color var(--d-2) var(--ease);
 }
-.porte svg { width: 32px; height: 32px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); pointer-events: none; }
+.porte svg { width: 28px; height: 28px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); pointer-events: none; }
 .porte:active { transform: scale(0.92); }
 @media (hover: hover) {
   .porte:hover { background: rgba(8, 14, 16, 0.5); transform: translateY(-1px); }
@@ -100,7 +100,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   margin-top: -92px;
   /* Les 92 px remontes sur la photo sont ceux que le degrade met a devenir
      opaque : rien ne s'y ecrit, la photo s'y eteint. Le texte commence apres. */
-  padding: 92px var(--gutter) 50px;
+  padding: 92px var(--gutter) 44px;
   color: var(--c-on-night);
   background: linear-gradient(180deg, transparent 0, var(--c-night) 92px);
   overflow: hidden;
@@ -144,7 +144,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
    defile : l'equipe peut grandir sans repousser le reste de l'accueil. */
 .tableau-zone:empty { display: none; }
 .tableau {
-  margin-top: 36px;
+  margin-top: 28px;
   color: var(--c-on-night);
   border: 1px solid var(--c-night-line);
   border-radius: var(--r-lg);
@@ -337,9 +337,9 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .prochain-zone:empty { display: none; }
 .prochain {
   display: grid;
-  gap: 12px;
-  margin-top: 18px;
-  padding-top: 16px;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--c-night-line);
 }
 .prochain-titre {
@@ -367,10 +367,10 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   border: 0;
   cursor: pointer;
 }
-.prochain-quand { display: grid; gap: 4px; max-width: 92px; }
+.prochain-quand { display: grid; gap: 3px; max-width: 84px; }
 .prochain-heure {
   font-family: var(--f-mono);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1;
   color: var(--c-fauve-bright);
@@ -386,7 +386,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .prochain-corps { display: grid; gap: 3px; min-width: 0; padding-left: 14px; border-left: 1px solid var(--c-night-line); }
 .prochain-nom {
   font-family: var(--f-display);
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.015em;
@@ -396,7 +396,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   text-overflow: ellipsis;
 }
 .prochain-ou { font-size: 12.5px; color: var(--c-on-night-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prochain-go svg { width: 18px; height: 18px; color: var(--c-on-night-2); }
+.prochain-go svg { width: 16px; height: 16px; color: var(--c-on-night-2); }
 .prochain-gestes { display: flex; gap: 8px; }
 .prochain-btn {
   display: inline-flex;
@@ -405,10 +405,10 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   justify-content: center;
   gap: 7px;
   min-width: 0;
-  min-height: 44px;
+  min-height: 38px;
   padding: 0 10px;
   font-family: var(--f-ui);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 650;
   white-space: nowrap;
   color: var(--c-on-night);
@@ -419,7 +419,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   cursor: pointer;
   transition: transform var(--d-1) var(--ease), background-color var(--d-2) var(--ease);
 }
-.prochain-btn svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--c-fauve-bright); }
+.prochain-btn svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--c-fauve-bright); }
 .prochain-btn:active { transform: scale(0.96); }
 .prochain-btn.principal { color: var(--c-night); background: var(--c-on-night); border-color: transparent; }
 .prochain-btn.principal svg { color: currentColor; }
@@ -454,16 +454,16 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .accueil-feuille {
   position: relative;
   z-index: 2;
-  margin-top: -28px;
-  padding: 30px var(--gutter) 28px;
+  margin-top: -24px;
+  padding: 22px var(--gutter) 24px;
   background: var(--c-bg);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
 }
 .accueil-feuille > .reveal:first-child .section-title:first-child,
-.rdv-accueil-zone > .section-title:first-child { margin-top: 34px; }
+.rdv-accueil-zone > .section-title:first-child { margin-top: 28px; }
 .rdv-accueil-zone:empty { display: none; }
 
-.bloc-tete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin: 0 2px 16px; }
+.bloc-tete { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin: 0 2px 12px; }
 .bloc-titre {
   font-family: var(--f-display);
   font-size: var(--fs-h2);
@@ -473,7 +473,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 }
 
 /* --- Les trois types : trois tuiles egales, pleines de leur couleur -------- */
-.types-pleins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.types-pleins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .type-tuile {
   --ton: var(--t-maison-fill);
   position: relative;
@@ -481,8 +481,8 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   display: grid;
   grid-template-rows: 1fr auto;
   align-items: end;
-  min-height: 158px;
-  padding: 12px 12px 14px;
+  min-height: 126px;
+  padding: 10px 10px 11px;
   border: 0;
   border-radius: var(--r-lg);
   font-family: var(--f-ui);
@@ -505,28 +505,28 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   align-self: center;
   justify-self: center;
   display: block;
-  width: 90px;
-  height: 86px;
-  margin-top: 6px;
+  width: 70px;
+  height: 66px;
+  margin-top: 4px;
   filter: drop-shadow(0 9px 8px rgba(0, 0, 0, 0.3));
   transition: transform var(--d-3) var(--ease-spring);
 }
 .type-tuile-illu svg { display: block; width: 100%; height: 100%; }
-.type-tuile-nom { position: relative; font-size: 14px; font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
+.type-tuile-nom { position: relative; font-size: 13px; font-weight: 700; line-height: 1.2; letter-spacing: -0.005em; }
 .type-tuile-plus {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.16);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
 }
-.type-tuile-plus svg { width: 14px; height: 14px; }
+.type-tuile-plus svg { width: 12px; height: 12px; }
 .type-tuile:active { transform: scale(0.96); }
 @media (hover: hover) {
   .type-tuile:hover { transform: translateY(-3px); }
@@ -534,7 +534,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 }
 
 /* --- Rapports en cours : des dossiers ------------------------------------------ */
-.lead-list { display: grid; gap: 12px; }
+.lead-list { display: grid; gap: 10px; }
 .dossier {
   --ton: var(--t-maison);
   position: relative;
@@ -542,7 +542,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   grid-template-columns: 1fr auto;
   column-gap: 14px;
   width: 100%;
-  padding: 15px 16px 15px 20px;
+  padding: 12px 14px 12px 18px;
   overflow: hidden;
   font-family: var(--f-ui);
   text-align: left;
@@ -557,7 +557,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .dossier.t-immeuble { --ton: var(--t-immeuble); }
 .dossier.t-hotel { --ton: var(--t-hotel); }
 /* L'onglet du dossier : la couleur du type, sur la tranche. */
-.dossier::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--ton); }
+.dossier::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ton); }
 .dossier:active { transform: scale(0.985); }
 @media (hover: hover) {
   .dossier:hover { transform: translateY(-2px); box-shadow: var(--sh-3); border-color: var(--c-line-2); }
@@ -568,18 +568,18 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   align-items: center;
   gap: 10px;
   min-width: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--c-muted);
 }
-.dossier-ref { font-family: var(--f-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
+.dossier-ref { font-family: var(--f-mono); font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em; color: var(--c-brand-ink); }
 .dossier-type { display: inline-flex; align-items: center; gap: 5px; font-weight: 650; color: var(--ton); }
-.dossier-type svg { width: 15px; height: 15px; }
+.dossier-type svg { width: 14px; height: 14px; }
 .dossier-quand { margin-left: auto; white-space: nowrap; }
 .dossier-nom {
   grid-column: 1;
-  margin-top: 8px;
+  margin-top: 5px;
   font-family: var(--f-display);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.016em;
@@ -589,8 +589,8 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 }
 .dossier-lieu {
   grid-column: 1;
-  margin-top: 3px;
-  font-size: 13.5px;
+  margin-top: 2px;
+  font-size: 13px;
   color: var(--c-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -602,15 +602,15 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   align-self: center;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   color: var(--c-on-primary);
   background: var(--c-primary);
   box-shadow: 0 8px 18px -10px rgba(8, 16, 18, 0.7);
   transition: transform var(--d-2) var(--ease-spring);
 }
-.dossier-go svg { width: 19px; height: 19px; }
+.dossier-go svg { width: 17px; height: 17px; }
 @media (hover: hover) {
   .dossier:hover .dossier-go { transform: translateX(3px); }
 }
@@ -619,11 +619,11 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 11px;
+  padding-top: 10px;
   border-top: 1px dashed var(--c-line-2);
 }
-.barre { flex: 1; height: 6px; overflow: hidden; border-radius: var(--r-pill); background: var(--c-bg-2); }
+.barre { flex: 1; height: 5px; overflow: hidden; border-radius: var(--r-pill); background: var(--c-bg-2); }
 .barre > span {
   display: block;
   width: var(--p);
@@ -632,7 +632,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   background: linear-gradient(90deg, var(--ton, var(--c-brand)), color-mix(in srgb, var(--ton, var(--c-brand)) 55%, #fff));
   transition: width var(--d-4) var(--ease);
 }
-.dossier-compte { font-size: 12.5px; font-weight: 650; color: var(--c-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dossier-compte { font-size: 12px; font-weight: 650; color: var(--c-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* --- Tablette et ordinateur : le poste a gauche, le travail a droite -------- */
 @media (min-width: 1024px) {
@@ -665,6 +665,6 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
     background: transparent;
   }
   .accueil-feuille > .reveal:first-child .bloc-tete { margin-top: 6px; }
-  .type-tuile { min-height: 190px; }
-  .type-tuile-illu { width: 120px; height: 112px; }
+  .type-tuile { min-height: 160px; }
+  .type-tuile-illu { width: 96px; height: 90px; }
 }

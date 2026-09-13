@@ -4,9 +4,9 @@
    ========================================================================== */
 
 .agenda-jour {
-  margin: 26px 4px 10px;
+  margin: 22px 4px 8px;
   font-family: var(--f-display);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.012em;
   color: var(--c-ink);
@@ -19,18 +19,18 @@
 /* Mois ou semaine : un controle segmente, comme partout ailleurs. */
 .agenda-vues {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   margin-bottom: 12px;
-  padding: 4px;
+  padding: 3px;
   background: var(--c-bg-2);
   border: 1px solid var(--c-line);
-  border-radius: 14px;
+  border-radius: 12px;
 }
 .agenda-vues .chip {
   flex: 1 1 0;
-  min-height: 38px;
+  min-height: 34px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   box-shadow: none;
 }
@@ -60,8 +60,8 @@
 /* --- Le calendrier du mois ---------------------------------------------------- */
 .calendrier { padding: 12px 10px; }
 .cal-tete { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
-.cal-titre { font-family: var(--f-display); font-size: 19px; font-weight: 600; letter-spacing: -0.012em; }
-.cal-nav { font-size: 26px; line-height: 1; color: var(--c-ink-2); }
+.cal-titre { font-family: var(--f-display); font-size: 17px; font-weight: 600; letter-spacing: -0.012em; }
+.cal-nav { font-size: 22px; line-height: 1; color: var(--c-ink-2); }
 .cal-semaine,
 .cal-grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .cal-semaine span { padding-bottom: 4px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--c-muted); }
@@ -238,14 +238,14 @@
 .sem-nom::before { content: ''; width: 9px; height: 9px; margin-right: 6px; border-radius: 50%; background: var(--ton); }
 
 /* --- Fiche et formulaire d'un rendez-vous ------------------------------------------ */
-.rdv-tete { display: flex; align-items: center; gap: 14px; }
-.rdv-tete .rapport-type { width: 48px; height: 48px; border-radius: 15px; }
+.rdv-tete { display: flex; align-items: center; gap: 12px; }
+.rdv-tete .rapport-type { width: 42px; height: 42px; border-radius: 13px; }
 .rdv-tete h2 { margin: 0; }
 .rdv-tete p { margin: 3px 0 0; }
-.rdv-adresse { margin: 4px 0 0; font-size: 15.5px; font-weight: 600; }
+.rdv-adresse { margin: 4px 0 0; font-size: 14.5px; font-weight: 600; }
 .rdv-note {
-  padding: 11px 13px;
-  font-size: 14px;
+  padding: 10px 12px;
+  font-size: 13.5px;
   white-space: pre-wrap;
   background: var(--c-surface-2);
   border: 1px solid var(--c-line);
@@ -255,11 +255,11 @@
 .rdv-form textarea { resize: vertical; }
 .rdv-statuts {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 3px;
+  padding: 3px;
   background: var(--c-bg-2);
   border: 1px solid var(--c-line);
-  border-radius: 14px;
+  border-radius: 12px;
 }
-.rdv-statuts .chip { flex: 1 1 0; min-height: 38px; border: 0; border-radius: 10px; background: transparent; }
+.rdv-statuts .chip { flex: 1 1 0; min-height: 34px; border: 0; border-radius: 9px; background: transparent; }
 .rdv-statuts .chip.on { color: var(--c-ink); background: var(--c-surface); box-shadow: 0 1px 2px rgba(21, 25, 26, 0.1), 0 2px 8px -4px rgba(21, 25, 26, 0.2); }

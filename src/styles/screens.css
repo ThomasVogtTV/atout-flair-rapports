@@ -8,7 +8,7 @@
   padding-left: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter)));
   padding-right: max(var(--gutter), calc((100% - var(--lecture-max)) / 2 + var(--gutter)));
 }
-.editor-top:not(.rapport-tete) .top-title h1 { font-size: 24px; }
+.editor-top:not(.rapport-tete) .top-title h1 { font-size: 19px; }
 
 /* Hors du rapport, un titre de rubrique est un chapitre en Fraunces : il se
    suffit, sans pastille d'icone - comme sur l'accueil. */
@@ -22,27 +22,27 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .card > input + .reglage-note { margin-top: 10px; }
 
 /* --- Fiche client ------------------------------------------------------------------ */
-.fiche-tete { display: flex; align-items: center; gap: 16px; padding: 20px; }
-.fiche-tete .contact-avatar { width: 62px; height: 62px; font-size: 21px; }
+.fiche-tete { display: flex; align-items: center; gap: 14px; padding: 16px; }
+.fiche-tete .contact-avatar { width: 52px; height: 52px; font-size: 18px; }
 .fiche-ident { display: grid; gap: 4px; min-width: 0; }
 .fiche-nom {
   font-family: var(--f-display);
-  font-size: 25px;
+  font-size: 21px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.016em;
   overflow-wrap: anywhere;
 }
-.fiche-etoile { margin-left: auto; width: 48px; height: 48px; }
-.fiche-etoile svg { width: 27px; height: 27px; }
+.fiche-etoile { margin-left: auto; width: 42px; height: 42px; }
+.fiche-etoile svg { width: 23px; height: 23px; }
 .fiche-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; margin: 12px 0 4px; }
 .fiche-btn {
   display: grid;
   justify-items: center;
   gap: 6px;
-  padding: 13px 4px 11px;
+  padding: 11px 4px 9px;
   font-family: var(--f-ui);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--c-ink);
   text-decoration: none;
@@ -53,15 +53,15 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
   cursor: pointer;
   transition: transform var(--d-1) var(--ease), box-shadow var(--d-2) var(--ease);
 }
-.fiche-btn svg { width: 23px; height: 23px; color: var(--c-brand); }
+.fiche-btn svg { width: 20px; height: 20px; color: var(--c-brand); }
 .fiche-btn:active { transform: scale(0.95); }
 @media (hover: hover) {
   .fiche-btn:hover { box-shadow: var(--sh-2); }
 }
-.fiche-coord { display: grid; gap: 16px; }
+.fiche-coord { display: grid; gap: 14px; }
 .fiche-coord div { display: grid; gap: 3px; min-width: 0; }
 .fiche-coord span { font-size: 10.5px; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-muted); }
-.fiche-coord b { font-size: 15.5px; font-weight: 560; overflow-wrap: anywhere; }
+.fiche-coord b { font-size: 14.5px; font-weight: 560; overflow-wrap: anywhere; }
 .fiche-suppr { margin-top: 28px; }
 
 /* Les trois types, pour un nouveau rapport au nom du client. */
@@ -70,8 +70,8 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
   --teinte: var(--t-maison);
   display: grid;
   justify-items: center;
-  gap: 8px;
-  padding: 14px 6px 12px;
+  gap: 6px;
+  padding: 11px 6px 10px;
   font-family: var(--f-ui);
   text-align: center;
   color: inherit;
@@ -92,23 +92,23 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
   --ton: var(--t-maison-fill);
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   color: #fff;
-  border-radius: 14px;
+  border-radius: 12px;
   background: linear-gradient(165deg, color-mix(in srgb, var(--ton) 82%, #fff), var(--ton));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 14px -8px color-mix(in srgb, var(--ton) 80%, transparent);
 }
 .type-chip-icon.icon-immeuble { --ton: var(--t-immeuble-fill); }
 .type-chip-icon.icon-hotel { --ton: var(--t-hotel-fill); }
-.type-chip-icon svg { width: 23px; height: 23px; }
-.type-chip-name { font-size: 13px; font-weight: 650; line-height: 1.2; }
+.type-chip-icon svg { width: 20px; height: 20px; }
+.type-chip-name { font-size: 12.5px; font-weight: 650; line-height: 1.2; }
 
 .picker-liste { max-height: 56vh; overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
 .carnet-choisir + .section-title { margin-top: 26px; }
 
 /* --- Reglages ---------------------------------------------------------------------- */
-.etat-sauvegarde { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--c-ink); }
+.etat-sauvegarde { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--c-ink); }
 .etat-sauvegarde.tard { color: var(--c-warning); }
 .etat-place { margin: 16px 0 8px; font-size: 13.5px; font-weight: 600; color: var(--c-ink-2); }
 .etat-place.tard { color: var(--c-warning); }
@@ -148,7 +148,7 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .admin-code b { color: var(--c-on-night); }
 .admin-code strong {
   font-family: var(--f-mono);
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 600;
   letter-spacing: 0.16em;
   color: var(--c-fauve-bright);
@@ -175,8 +175,8 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px;
-  font-size: 14.5px;
+  padding: 11px;
+  font-size: 14px;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;

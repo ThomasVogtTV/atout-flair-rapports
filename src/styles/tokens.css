@@ -40,15 +40,15 @@
 
   /* --- echelle typographique (mobile d'abord) --------------------------- */
   --fs-micro: 11px;     /* libelles en capitales espacees */
-  --fs-caption: 12.5px; /* mentions, dates, compteurs */
-  --fs-small: 13.5px;   /* texte secondaire */
-  --fs-body: 15.5px;    /* texte courant */
+  --fs-caption: 12px;   /* mentions, dates, compteurs */
+  --fs-small: 13px;     /* texte secondaire */
+  --fs-body: 14.5px;    /* texte courant */
   --fs-input: 16px;     /* valeur saisie (seuil sous lequel iOS zoome) */
-  --fs-lead: 17px;      /* nom d'un client, titre de carte */
-  --fs-h3: 20px;
-  --fs-h2: 24px;
-  --fs-h1: 30px;
-  --fs-display: 40px;   /* grands chiffres, date du jour */
+  --fs-lead: 15.5px;    /* nom d'un client, titre de carte */
+  --fs-h3: 17px;
+  --fs-h2: 20px;
+  --fs-h1: 24px;
+  --fs-display: 32px;   /* grands chiffres */
 
   /* --- couleurs : fond et surfaces --------------------------------------- */
   --c-bg: #f3f0e8;
@@ -119,17 +119,17 @@
   --s-6: 24px;
   --s-7: 32px;
   --s-8: 44px;
-  --gutter: 18px;
+  --gutter: 16px;
 
-  --r-xs: 8px;
-  --r-sm: 12px;
-  --r-md: 16px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  --r-xs: 7px;
+  --r-sm: 10px;
+  --r-md: 13px;
+  --r-lg: 16px;
+  --r-xl: 22px;
   --r-pill: 999px;
 
-  --tap: 46px;
-  --tap-min: 40px;
+  --tap: 42px;
+  --tap-min: 38px;
 
   /* --- profondeur : ombres chaudes, jamais grises ------------------------ */
   --sh-1: 0 1px 1px rgba(21, 25, 26, 0.04), 0 1px 3px rgba(21, 25, 26, 0.05);
@@ -148,8 +148,8 @@
   --d-4: 520ms;
 
   /* --- structure ---------------------------------------------------------- */
-  --dock-h: 74px;
-  --barre-h: 76px;
+  --dock-h: 64px;
+  --barre-h: 66px;
   --page-max: 1120px;
   --lecture-max: 760px;
 
@@ -297,8 +297,8 @@
 /* --- tablette et ordinateur : la typographie respire un cran plus haut ---- */
 @media (min-width: 768px) {
   :root {
-    --fs-h1: 34px;
-    --fs-display: 46px;
-    --gutter: 28px;
+    --fs-h1: 28px;
+    --fs-display: 38px;
+    --gutter: 24px;
   }
 }
