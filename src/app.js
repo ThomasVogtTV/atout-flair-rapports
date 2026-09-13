@@ -12,7 +12,7 @@ import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
-import { homeView, listeRapportsHTML } from './views/home.js'
+import { homeView, listeRapportsHTML, prochainHTML } from './views/home.js'
 import { contactsView, ficheContactView, listeContactsHTML } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
@@ -436,7 +436,10 @@ async function rafraichirAgenda() {
   if (view.screen === 'home') {
     const zone = root.querySelector('.rdv-accueil-zone')
     if (zone) zone.innerHTML = rdvAccueilHTML(view)
-    // La tournee du tableau se lit dans le meme agenda.
+    // Le prochain rendez-vous du poste et la tournee du tableau se lisent dans
+    // le meme agenda.
+    const prochain = root.querySelector('.prochain-zone')
+    if (prochain) prochain.innerHTML = prochainHTML(view)
     majTableau()
   } else if (view.screen === 'agenda') {
     render()
@@ -1073,6 +1076,14 @@ root.addEventListener('click', async (ev) => {
   if (btnTournee) {
     view.tableauQui = btnTournee.dataset.tableauQui
     return majTableau()
+  }
+
+  // Le prochain rendez-vous de l'accueil : son rapport, sans passer par la fiche.
+  const rdvACommencer = el.closest('[data-rdv-commencer]')?.dataset.rdvCommencer
+  if (rdvACommencer) {
+    const rdv = view.agenda?.rdvs?.find((r) => r.id === rdvACommencer)
+    if (rdv) commencerRdv(rdv)
+    return
   }
 
   // Un rendez-vous de l'agenda (ou de l'accueil) : sa fiche.

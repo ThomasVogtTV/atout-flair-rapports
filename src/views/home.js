@@ -7,8 +7,8 @@
 //
 // La photo des chiens tient le haut de l'ecran, nette et en entier : c'est
 // l'identite de la maison. Elle se fond dans la nuit du poste de controle, ou
-// se lisent les trois chiffres du mois. Le reste se pose sur le papier, sans
-// rien de flou ni de transparent derriere ce qu'on lit.
+// se lit le prochain rendez-vous. Le reste se pose sur le papier, sans rien de
+// flou ni de transparent derriere ce qu'on lit.
 
 import { TYPE_LIST, typeOf } from '../templates.js'
 import * as S from '../state.js'
@@ -21,6 +21,7 @@ import { ILLUSTRATIONS } from '../ui/illustrations.js'
 import { ICONES_3D } from '../ui/icones3d.js'
 import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { rdvAccueilHTML } from './agenda.js'
+import { aVenir, estFait, libelleJour, nomClient, adresseRdv } from '../agenda-outils.js'
 import { tableauAdminHTML } from './tableau.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
@@ -275,18 +276,64 @@ function sessionHTML() {
   return `<span class="poste-session ${ident.role}">${esc(texte)}</span>`
 }
 
+// --- ou je vais ? ----------------------------------------------------------
+
 /**
- * Le poste de controle : qui tient le telephone, et les trois chiffres qu'on
- * vient chercher le matin - ce qui reste sur les bras, et ce que le mois a
- * deja produit. Seul ce qui reclame un geste porte une alerte.
+ * L'outil du poste : le prochain rendez-vous, et les trois gestes qu'on fait en
+ * montant dans la voiture - l'itineraire, l'appel au client, le rapport. Le sien
+ * d'abord ; un administrateur sans rendez-vous a lui voit le prochain de
+ * l'equipe. Rien tant que l'agenda n'a jamais ete lu (premiere ouverture hors
+ * ligne) : un "rien de prevu" y serait un mensonge.
+ */
+export function prochainHTML(view) {
+  const a = view.agenda
+  if (!a) return ''
+  const jour = S.todayISO()
+  const suivants = aVenir(a.rdvs ?? [], jour).filter((r) => !estFait(r))
+  const miens = suivants.filter((r) => !r.pour?.id || r.pour.id === a.moi?.id)
+  const r = miens[0] ?? (a.role === 'admin' ? suivants[0] : null)
+  const titre = `<span class="prochain-titre">${ICONS.horloge}Prochain rendez-vous</span>`
+
+  if (!r) {
+    return `
+      <div class="prochain vide">
+        ${titre}
+        <p class="prochain-rien">Rien de prévu pour l’instant.</p>
+        ${a.role === 'invite' ? '' : `<button type="button" class="prochain-btn" data-act="ajouter-rdv">${ICONS.ajout}Planifier</button>`}
+      </div>`
+  }
+
+  const ou = adresseRdv(r)
+  const tel = (r.client?.tel ?? '').replace(/[^\d+]/g, '')
+  const pourAutre = r.pour?.id && r.pour.id !== a.moi?.id && r.pour.nom ? ` · ${r.pour.nom}` : ''
+  const itineraire = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ou)}`
+  return `
+    <div class="prochain">
+      ${titre}
+      <button type="button" class="prochain-fiche" data-rdv="${esc(r.id)}" aria-label="Voir le rendez-vous">
+        <span class="prochain-quand">
+          <b class="prochain-heure">${r.heure ? esc(r.heure) : '—'}</b>
+          <span class="prochain-jour">${esc(libelleJour(r.date, jour))}</span>
+        </span>
+        <span class="prochain-corps">
+          <span class="prochain-nom">${esc(nomClient(r.client) || 'Client')}</span>
+          <span class="prochain-ou">${esc((ou || 'Adresse à renseigner') + pourAutre)}</span>
+        </span>
+        <span class="prochain-go" aria-hidden="true">${ICONS.chevron}</span>
+      </button>
+      <div class="prochain-gestes">
+        ${ou ? `<a class="prochain-btn" href="${esc(itineraire)}" target="_blank" rel="noopener">${ICONS.pin}Itinéraire</a>` : ''}
+        ${tel ? `<a class="prochain-btn" href="tel:${esc(tel)}">${ICONS.phone}Appeler</a>` : ''}
+        <button type="button" class="prochain-btn principal" data-rdv-commencer="${esc(r.id)}">${ICONS.suivant}${r.rapportId ? 'Reprendre' : 'Commencer'}</button>
+      </div>
+    </div>`
+}
+
+/**
+ * Le poste de controle : qui tient le telephone, et ou il va ensuite. Seul ce
+ * qui reclame un geste porte une alerte.
  */
 function posteHTML(view) {
-  const maintenant = new Date()
-  const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).getTime()
-  const brouillons = view.reports.filter(S.enCours).length
-  const crees = view.reports.filter((r) => (r.createdAt ?? 0) >= debutMois).length
-  const remis = view.reports.filter((r) => S.estTermine(r) && (r.sentAt ?? r.remisAt ?? r.updatedAt ?? 0) >= debutMois).length
-
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
   // perdre, et que la sauvegarde en ligne n'a pas pu passer depuis une semaine.
   const jours = S.backupAge()
@@ -300,18 +347,11 @@ function posteHTML(view) {
     sauvegardeEnRetard && { t: 'Sauvegarde à faire', alerte: true, act: 'open-reglages' },
   ].filter(Boolean)
 
-  const mesure = (n, libelle, vif = false) =>
-    `<div class="releve-mesure${vif ? ' vif' : ''}"><b>${n}</b><span>${libelle}</span></div>`
-
   return `
     <div class="poste reveal" style="--i:0">
       ${LIGNES_FLAIR}
       ${sessionHTML()}
-      <div class="releve" role="group" aria-label="Activité">
-        ${mesure(brouillons, 'en cours', brouillons > 0)}
-        ${mesure(crees, 'créés ce mois')}
-        ${mesure(remis, 'remis ce mois')}
-      </div>
+      <div class="prochain-zone">${prochainHTML(view)}</div>
       ${
         alertes.length
           ? `<div class="poste-alertes">${alertes

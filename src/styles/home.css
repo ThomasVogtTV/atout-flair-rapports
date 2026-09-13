@@ -93,7 +93,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 
 /* --- Le poste de controle ----------------------------------------------------
    La nuit de la maison, les lignes de niveau en filigrane, qui tient le
-   telephone, et un releve de trois mesures, comme sur un instrument. */
+   telephone, et le prochain rendez-vous avec ses gestes. */
 .poste {
   position: relative;
   z-index: 1;
@@ -331,33 +331,104 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .incident-tete i { margin-left: auto; font-style: normal; font-size: 10.5px; opacity: 0.8; }
 .incident-motif { font-size: 11px; opacity: 0.9; overflow-wrap: anywhere; }
 
-.releve {
+/* --- Le prochain rendez-vous ----------------------------------------------------
+   L'outil du poste : ou je vais, et les gestes qui vont avec. Le bouton du
+   rapport est clair plutot que dore : l'or reste a l'action principale du dock. */
+.prochain-zone:empty { display: none; }
+.prochain {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--c-night-line);
 }
-.releve-mesure { display: grid; gap: 8px; padding: 0 12px; border-left: 1px solid var(--c-night-line); min-width: 0; }
-.releve-mesure:first-child { padding-left: 0; border-left: 0; }
-.releve-mesure b {
-  font-family: var(--f-display);
-  font-size: var(--fs-display);
-  font-weight: 500;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  font-variant-numeric: lining-nums tabular-nums;
-  color: var(--c-on-night);
-}
-.releve-mesure span {
-  white-space: nowrap;
+.prochain-titre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-on-night-2);
 }
-.releve-mesure.vif b { color: var(--c-fauve-bright); }
+.prochain-titre svg { width: 13px; height: 13px; color: var(--c-fauve-bright); }
+.prochain-fiche {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 0;
+  font-family: var(--f-ui);
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.prochain-quand { display: grid; gap: 4px; max-width: 92px; }
+.prochain-heure {
+  font-family: var(--f-mono);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--c-fauve-bright);
+}
+.prochain-jour {
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-on-night-2);
+}
+.prochain-corps { display: grid; gap: 3px; min-width: 0; padding-left: 14px; border-left: 1px solid var(--c-night-line); }
+.prochain-nom {
+  font-family: var(--f-display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--c-on-night);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prochain-ou { font-size: 12.5px; color: var(--c-on-night-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prochain-go svg { width: 18px; height: 18px; color: var(--c-on-night-2); }
+.prochain-gestes { display: flex; gap: 8px; }
+.prochain-btn {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  color: var(--c-on-night);
+  text-decoration: none;
+  background: rgba(241, 237, 228, 0.07);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: transform var(--d-1) var(--ease), background-color var(--d-2) var(--ease);
+}
+.prochain-btn svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--c-fauve-bright); }
+.prochain-btn:active { transform: scale(0.96); }
+.prochain-btn.principal { color: var(--c-night); background: var(--c-on-night); border-color: transparent; }
+.prochain-btn.principal svg { color: currentColor; }
+@media (hover: hover) {
+  .prochain-btn:hover { background: rgba(241, 237, 228, 0.13); }
+  .prochain-btn.principal:hover { background: #fff; }
+}
+.prochain-rien { margin: 0; font-size: 14px; color: var(--c-on-night-2); }
+.prochain.vide .prochain-btn { justify-self: start; flex: none; padding: 0 16px; }
 
 .poste-alertes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .poste-alerte {
