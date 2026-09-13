@@ -19,7 +19,7 @@ import { esc } from '../ui/dom.js'
 import { ICONS } from '../ui/icons.js'
 import { estAdmin } from '../lock.js'
 import { todayISO } from '../state.js'
-import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne } from '../agenda-outils.js'
+import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne, aVenir, libelleJour } from '../agenda-outils.js'
 import { ilYA } from './envois.js'
 
 // Les envois refuses montres ici. Au-dela, ce n'est plus une nouvelle du jour :
@@ -37,28 +37,34 @@ const CLE_CARTE = import.meta.env.VITE_GOOGLE_MAPS_KEY ?? ''
 // de la carte devient trop longue pour tenir.
 const ETAPES_MAX = 8
 
+// La maison, quand il n'y a rien d'autre a montrer. Recopiee du pied de page des
+// rapports (FOOTER_LINE1 dans src/pdf.js) au lieu d'etre importee : pdf.js tire
+// le moteur PDF avec lui, 440 Ko qui n'ont rien a faire sur l'accueil.
+const BASE = 'Rue des Fontaines 6, 1423 Vaugondry'
+
 const url = encodeURIComponent
 const lienCarte = (adresse) => `https://www.google.com/maps/search/?api=1&query=${url(adresse)}`
 
 /**
- * La carte du jour, telle que Google l'integre : le trajet trace d'un arret a
- * l'autre. A un seul arret, la carte se contente de le montrer - un trajet d'un
- * point a lui-meme n'aurait rien a dessiner.
+ * La carte, telle que Google l'integre : le trajet trace d'un arret a l'autre.
+ * A un seul arret elle se contente de le montrer - un trajet d'un point a
+ * lui-meme n'aurait rien a dessiner - et sans aucun arret elle se pose sur la
+ * maison. Elle ne disparait jamais : une fenetre presente un jour sur deux ne
+ * se lit plus, on cesse de la regarder.
  */
 function carteHTML(arrets) {
   if (!CLE_CARTE) return `<p class="tableau-note">Carte : clé Google Maps non configurée.</p>`
   if (!navigator.onLine) return `<p class="tableau-note">Carte indisponible hors ligne.</p>`
   const ou = arrets.map(adresseRdv).filter(Boolean)
-  if (!ou.length) return ''
   const src =
-    ou.length === 1
-      ? `https://www.google.com/maps/embed/v1/place?key=${CLE_CARTE}&q=${url(ou[0])}&zoom=14`
-      : (() => {
+    ou.length > 1
+      ? (() => {
           const etapes = ou.slice(1, -1).slice(0, ETAPES_MAX)
           return `https://www.google.com/maps/embed/v1/directions?key=${CLE_CARTE}&mode=driving&origin=${url(
             ou[0]
           )}&destination=${url(ou[ou.length - 1])}${etapes.length ? `&waypoints=${etapes.map(url).join('%7C')}` : ''}`
         })()
+      : `https://www.google.com/maps/embed/v1/place?key=${CLE_CARTE}&q=${url(ou[0] ?? BASE)}&zoom=${ou.length ? 14 : 11}`
   return `
     <div class="carte">
       <iframe src="${esc(src)}" title="Carte de la tournée du jour" loading="lazy"
@@ -98,8 +104,23 @@ function arretHTML(r) {
 /** Les rendez-vous du jour, par personne : c'est ainsi qu'on repartit une journee. */
 function tourneeHTML(view) {
   const jour = todayISO()
-  const duJour = trierRdv((view.agenda?.rdvs ?? []).filter((r) => r.date === jour && !estAnnule(r)))
-  if (!duJour.length) return `<p class="tableau-vide">Personne sur la route aujourd’hui.</p>`
+  const tous = view.agenda?.rdvs ?? []
+  const duJour = trierRdv(tous.filter((r) => r.date === jour && !estAnnule(r)))
+
+  // Journee vide : la carte reste, posee sur le prochain rendez-vous, ou sur la
+  // maison quand l'agenda ne dit plus rien.
+  if (!duJour.length) {
+    const prochain = aVenir(tous, jour)[0]
+    return `
+      ${carteHTML(prochain ? [prochain] : [])}
+      <p class="tableau-vide">${
+        prochain
+          ? `Rien aujourd’hui. Prochain : ${esc(libelleJour(prochain.date, jour).toLowerCase())}, ${esc(
+              nomClient(prochain.client) || 'client'
+            )}.`
+          : 'Aucun rendez-vous à venir.'
+      }</p>`
+  }
 
   const parPersonne = new Map()
   for (const r of duJour) {
