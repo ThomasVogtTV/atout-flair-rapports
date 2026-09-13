@@ -316,6 +316,9 @@ async function openReport(id) {
   view.children = await S.enfantsDe(report.id)
   view.contacts = await contactsVisibles()
   view.partenaires = await S.listPartenaires()
+  // D'ou l'on vient : c'est la que ramene le retour. Un sous-rapport garde
+  // l'origine du rapport qui l'a ouvert.
+  if (view.screen !== 'editor') view.depuis = view.screen
   view.screen = 'editor'
   render()
 }
@@ -1429,8 +1432,19 @@ root.addEventListener('click', async (ev) => {
       if (choice === 'cancel') return
       if (choice === 'delete') await S.deleteReport(view.report.id)
     }
-    if (view.screen === 'editor' && view.report?.parentId) return openReport(view.report.parentId)
-    if (view.screen === 'editor' && view.retour) return openFiche(view.retour)
+    if (view.screen === 'editor') {
+      if (view.report?.parentId) return openReport(view.report.parentId)
+      // Le retour ramene la ou l'on etait : la fiche du client, l'agenda d'ou
+      // l'on a commence le rendez-vous, les envois... L'accueil par defaut.
+      const RETOURS = { agenda: openAgenda, envois: openEnvois, contacts: openContacts, reglages: openReglages, admin: openAdmin }
+      const vers = view.retour ? () => openFiche(view.retour) : RETOURS[view.depuis]
+      if (vers) {
+        await flushSave()
+        viderVignettes()
+        planifierSauvegarde()
+        return vers()
+      }
+    }
     return goHome()
   }
   if (act === 'add-row') return insertNewRow()

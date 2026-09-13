@@ -60,11 +60,6 @@ body.defile .top {
 }
 .top .back svg { width: 18px; height: 18px; }
 
-/* Les ecrans du dock sont de premier niveau : pas de retour, la porte suffit. */
-body[data-screen='agenda'] .top .back,
-body[data-screen='contacts'] .top .back,
-body[data-screen='envois'] .top .back { display: none; }
-
 /* --- Navigation du bas (dock) ----------------------------------------------
    Quatre portes et l'action principale au centre, sous le pouce - le
    technicien a souvent une seule main de libre. La barre est un verre fume,
