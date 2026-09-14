@@ -70,22 +70,23 @@ export function rdvLigneHTML(r, { montrerQui = false } = {}) {
 const pasAMoi = (agenda) => (r) => agenda.role !== 'invite' && r.pour?.id && r.pour.id !== agenda.moi?.id
 
 /**
- * Sur l'accueil : les rendez-vous du jour, ou a defaut le prochain. Rien du
- * tout quand l'agenda est vide - une rubrique vide ne sert qu'a encombrer.
+ * Sur l'accueil d'un employe ou d'un invite : les rendez-vous du jour. Rien les
+ * autres jours - le prochain se lit deja dans le poste, juste au-dessus - ni
+ * quand l'agenda est vide : une rubrique vide ne sert qu'a encombrer.
+ * L'administrateur a, a la place, la tournee de toute l'equipe (voir
+ * src/views/tableau.js).
  */
 export function rdvAccueilHTML(view) {
   const a = view.agenda
   if (!a?.rdvs?.length) return ''
   const jour = todayISO()
-  const avenir = aVenir(a.rdvs, jour)
-  const duJour = avenir.filter((r) => r.date === jour)
-  const montres = duJour.length ? duJour.slice(0, 4) : avenir.slice(0, 1)
-  if (!montres.length) return ''
-  const titre = duJour.length ? "Aujourd'hui" : `Prochain rendez-vous · ${libelleJour(montres[0].date, jour)}`
+  const duJour = aVenir(a.rdvs, jour).filter((r) => r.date === jour)
+  if (!duJour.length) return ''
+  const montres = duJour.slice(0, 4)
   const qui = pasAMoi(a)
   return `
     <h2 class="section-title">
-      <span class="section-title-main">${esc(titre)}</span>
+      <span class="section-title-main">Aujourd'hui</span>
       <span class="section-title-trailer">
         ${duJour.length > 4 ? `<span class="count-pill"><b>${duJour.length}</b></span>` : ''}
         <button class="link" data-act="open-agenda">Agenda</button>

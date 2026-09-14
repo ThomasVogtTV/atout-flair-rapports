@@ -159,6 +159,9 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .admin-emp .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-emp .row-actions .btn { flex: 1; }
 .admin-filtres { margin: 0 0 10px; }
+/* Venu de l'alerte des envois rates, l'ecran descend jusqu'au journal : son
+   titre s'arrete sous l'en-tete colle en haut, et non dessous. */
+#journal-envois { scroll-margin-top: calc(var(--bandeau, 0px) + 76px); }
 /* Un rapport d'invite en attente de relecture : la tranche ocre de l'attente. */
 .envoi-row.a-valider::before { background: var(--c-warning); }
 /* Un rapport de l'equipe : il s'ouvre en PDF d'un tap. */

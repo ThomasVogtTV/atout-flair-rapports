@@ -252,7 +252,7 @@ export function adminView(view) {
 
       ${rapportsEquipeHTML(view)}
 
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>
+      <h2 class="section-title" id="journal-envois"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>
       ${filtres(a.journal, filtre)}
       <ul class="report-list">
         ${journal.map(ligneJournal).join('') || `<li class="empty">Aucun envoi enregistré pour l'instant.</li>`}

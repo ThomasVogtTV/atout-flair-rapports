@@ -1,31 +1,21 @@
 // Le tableau de l'administrateur, sur l'accueil, sous les rapports en cours :
-// le travail a lancer ou a reprendre passe avant la carte. Reserve a l'admin : un
-// technicien a son agenda, il n'a pas a savoir depuis son accueil ce que fait
-// le voisin.
+// la tournee du jour. Reserve a l'admin : un technicien a son agenda, il n'a pas
+// a savoir depuis son accueil ce que fait le voisin.
 //
-// Il ne repond qu'a deux questions, celles qu'on se pose le matin quand on tient
-// la boite : "qui est ou aujourd'hui ?" - la tournee de chacun, et l'itineraire
-// complet en un tap vers les cartes du telephone - et "qui a ouvert l'app, et
-// qu'est-ce qui a casse ?".
+// Il ne repond qu'a la question qu'on se pose le matin quand on tient la boite :
+// "qui est ou aujourd'hui ?" - la tournee de chacun, et l'itineraire complet en
+// un tap vers les cartes du telephone. Qui a ouvert l'app et ce qui a casse
+// vivent dans l'onglet Administration : l'accueil n'en garde qu'une alerte dans
+// le poste, quand il y a quelque chose a regarder (voir src/equipe-alertes.js).
 //
-// "Vu" n'est pas une presence : c'est la derniere fois que le serveur a verifie
-// le code de la personne (ouverture de l'app avec du reseau) ou recu un envoi
-// d'elle. L'app ne tient aucun lien ouvert avec le serveur, et le tableau ne
-// pretend donc pas dire qui est connecte a la seconde.
-//
-// Il defile dans sa propre fenetre : l'equipe peut grandir sans que le tableau
-// repousse le reste de l'accueil hors de l'ecran.
+// Un jour sans rendez-vous, le tableau disparait : le prochain se lit deja dans
+// le poste, juste au-dessus.
 
 import { esc } from '../ui/dom.js'
 import { ICONS } from '../ui/icons.js'
 import { estAdmin } from '../lock.js'
 import { todayISO } from '../state.js'
-import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne, aVenir, libelleJour } from '../agenda-outils.js'
-import { ilYA } from './envois.js'
-
-// Les envois refuses montres ici. Au-dela, ce n'est plus une nouvelle du jour :
-// c'est le journal, dans l'onglet Administration.
-const INCIDENTS = 3
+import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne } from '../agenda-outils.js'
 
 // La carte integree parle adresses, pas coordonnees : c'est pour cela qu'elle
 // peut se passer d'un geocodage, l'app n'ayant jamais que du texte. La cle est
@@ -38,20 +28,17 @@ const CLE_CARTE = import.meta.env.VITE_GOOGLE_MAPS_KEY ?? ''
 // de la carte devient trop longue pour tenir.
 const ETAPES_MAX = 8
 
-// La maison, quand il n'y a rien d'autre a montrer. Recopiee du pied de page des
-// rapports (FOOTER_LINE1 dans src/pdf.js) au lieu d'etre importee : pdf.js tire
-// le moteur PDF avec lui, 440 Ko qui n'ont rien a faire sur l'accueil.
-const BASE = 'Rue des Fontaines 6, 1423 Vaugondry'
-
 const url = encodeURIComponent
 const lienCarte = (adresse) => `https://www.google.com/maps/search/?api=1&query=${url(adresse)}`
 
 /**
  * La carte, telle que Google l'integre : le trajet trace d'un arret a l'autre.
  * A un seul arret elle se contente de le montrer - un trajet d'un point a
- * lui-meme n'aurait rien a dessiner - et sans aucun arret elle se pose sur la
- * maison. Elle ne disparait jamais : une fenetre presente un jour sur deux ne
- * se lit plus, on cesse de la regarder.
+ * lui-meme n'aurait rien a dessiner.
+ *
+ * Repliee tant qu'on ne la demande pas : les arrets et l'itineraire suffisent
+ * pour partir, et la carte prenait a elle seule la moitie de l'accueil. Repliee,
+ * elle ne coute rien non plus - l'iframe ne se charge qu'a l'ouverture.
  */
 function carteHTML(arrets) {
   if (!CLE_CARTE) return `<p class="tableau-note">Carte : clé Google Maps non configurée.</p>`
@@ -65,7 +52,7 @@ function carteHTML(arrets) {
             ou[0]
           )}&destination=${url(ou[ou.length - 1])}${etapes.length ? `&waypoints=${etapes.map(url).join('%7C')}` : ''}`
         })()
-      : `https://www.google.com/maps/embed/v1/place?key=${CLE_CARTE}&q=${url(ou[0] ?? BASE)}&zoom=${ou.length ? 14 : 11}`
+      : `https://www.google.com/maps/embed/v1/place?key=${CLE_CARTE}&q=${url(ou[0])}&zoom=14`
   return `
     <div class="carte">
       <iframe src="${esc(src)}" title="Carte de la tournée du jour" loading="lazy"
@@ -103,26 +90,7 @@ function arretHTML(r) {
 }
 
 /** Les rendez-vous du jour, par personne : c'est ainsi qu'on repartit une journee. */
-function tourneeHTML(view) {
-  const jour = todayISO()
-  const tous = view.agenda?.rdvs ?? []
-  const duJour = trierRdv(tous.filter((r) => r.date === jour && !estAnnule(r)))
-
-  // Journee vide : la carte reste, posee sur le prochain rendez-vous, ou sur la
-  // maison quand l'agenda ne dit plus rien.
-  if (!duJour.length) {
-    const prochain = aVenir(tous, jour)[0]
-    return `
-      ${carteHTML(prochain ? [prochain] : [])}
-      <p class="tableau-vide">${
-        prochain
-          ? `Rien aujourd’hui. Prochain : ${esc(libelleJour(prochain.date, jour).toLowerCase())}, ${esc(
-              nomClient(prochain.client) || 'client'
-            )}.`
-          : 'Aucun rendez-vous à venir.'
-      }</p>`
-  }
-
+function tourneeHTML(view, duJour) {
   const parPersonne = new Map()
   for (const r of duJour) {
     const cle = r.pour?.id ?? 'sans'
@@ -147,80 +115,32 @@ function tourneeHTML(view) {
 
   const route = lienItineraire(choisi.arrets)
   const n = choisi.arrets.length
+  // La carte ne se propose que s'il y a une adresse a y montrer.
+  const carte = Boolean(route && view.tableauCarte)
   return `
     ${onglets}
-    ${carteHTML(choisi.arrets)}
     <div class="tournee-tete">
       <span class="tournee-qui ton-${tonPersonne(choisi.id)}">${esc(choisi.nom)}</span>
       <span class="tournee-compte">${n} arrêt${n > 1 ? 's' : ''}</span>
-      ${route ? `<a class="tournee-route" href="${esc(route)}" target="_blank" rel="noopener">${ICONS.pin}Itinéraire</a>` : ''}
+      ${
+        route
+          ? `<a class="tournee-geste" href="${esc(route)}" target="_blank" rel="noopener">${ICONS.pin}Itinéraire</a>
+             <button type="button" class="tournee-geste${carte ? ' on' : ''}" data-tableau-carte aria-expanded="${carte}">${ICONS.oeil}Carte</button>`
+          : ''
+      }
     </div>
+    ${carte ? carteHTML(choisi.arrets) : ''}
     <ol class="arrets">${choisi.arrets.map(arretHTML).join('')}</ol>`
-}
-
-/** Qui a ouvert l'app, du plus recent au plus ancien, et ce qui a echoue. */
-function equipeHTML(view) {
-  const a = view.admin
-  if (!a || a.chargement) return `<p class="tableau-vide">Lecture de l’équipe…</p>`
-  if (a.erreur) return `<p class="tableau-vide">${esc(a.erreur)}</p>`
-
-  const gens = [
-    { id: 'admin', nom: 'Administrateur', vu: a.admin?.vu ?? null },
-    ...(a.employes ?? []).filter((e) => e.actif && !e.expire),
-  ].sort((x, y) => (y.vu ?? 0) - (x.vu ?? 0))
-
-  const equipiers = gens
-    .map(
-      (p) => `
-      <li class="equipier">
-        <span class="equipier-pastille ton-${tonPersonne(p.id)}" aria-hidden="true"></span>
-        <span class="equipier-nom">${esc(p.nom)}</span>
-        <span class="equipier-vu">${p.vu ? esc(ilYA(p.vu)) : 'jamais ouvert'}</span>
-      </li>`
-    )
-    .join('')
-
-  const rates = (a.journal ?? []).filter((j) => j.statut === 'echec').slice(0, INCIDENTS)
-  const incidents = rates.length
-    ? `<ul class="incidents">${rates
-        .map(
-          (j) => `
-          <li class="incident">
-            <span class="incident-tete">${ICONS.alerte}<b>${esc(j.ref || 'Rapport')}</b><i>${esc(ilYA(j.date))}</i></span>
-            <span class="incident-motif">${esc(j.erreur || 'Envoi refusé')}</span>
-          </li>`
-        )
-        .join('')}</ul>`
-    : ''
-
-  return `<ul class="equipiers">${equipiers}</ul>${incidents}`
-}
-
-// Les rapports d'invites qui attendent une relecture : la seule chose du tableau
-// qui reclame un geste de l'administrateur, donc la premiere.
-function aValiderHTML(view) {
-  const n = view.admin?.validations?.length ?? 0
-  if (!n) return ''
-  return `
-    <button type="button" class="tableau-valider" data-act="open-admin">
-      ${ICONS.alerte}<span>${n} rapport${n > 1 ? 's' : ''} d’invité à valider</span>${ICONS.chevron}
-    </button>`
 }
 
 export function tableauAdminHTML(view) {
   if (!estAdmin()) return ''
+  const jour = todayISO()
+  const duJour = trierRdv((view.agenda?.rdvs ?? []).filter((r) => r.date === jour && !estAnnule(r)))
+  if (!duJour.length) return ''
   return `
-    <section class="tableau" aria-label="Tableau de l’équipe">
-      <div class="tableau-defile">
-        ${aValiderHTML(view)}
-        <div class="tableau-bloc">
-          <h3 class="tableau-titre">${ICONS.pin}Tournée du jour</h3>
-          ${tourneeHTML(view)}
-        </div>
-        <div class="tableau-bloc">
-          <h3 class="tableau-titre">${ICONS.collab}L’équipe</h3>
-          ${equipeHTML(view)}
-        </div>
-      </div>
+    <section class="tableau" aria-label="Tournée du jour">
+      <h3 class="tableau-titre">${ICONS.pin}Tournée du jour</h3>
+      ${tourneeHTML(view, duJour)}
     </section>`
 }

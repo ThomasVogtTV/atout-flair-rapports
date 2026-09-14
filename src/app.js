@@ -12,7 +12,7 @@ import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
 import { setTheme } from './ui/theme.js'
-import { homeView, listeRapportsHTML, prochainHTML } from './views/home.js'
+import { homeView, listeRapportsHTML, prochainHTML, alertesHTML } from './views/home.js'
 import { contactsView, ficheContactView, listeContactsHTML } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
@@ -25,6 +25,7 @@ import { suivreValidations } from './validations.js'
 import { installerVerrou, seDeconnecter, estInvite, estAdmin, identite } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
 import { tableauAdminHTML } from './views/tableau.js'
+import { marquerJournalVu } from './equipe-alertes.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, marquerStatut, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
 import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe, plusJours, libelleJour } from './agenda-outils.js'
@@ -190,7 +191,7 @@ async function goHome() {
   render()
   // Retour a l'accueil : le rapport qu'on vient de quitter part en ligne.
   planifierSauvegarde()
-  rafraichirTableau()
+  rafraichirEquipe()
   suivreMesValidations()
 }
 
@@ -252,10 +253,18 @@ async function adminAppel(methode, corps, query) {
 
 // Le code revele a la creation d'un employe ne survit pas a une sortie de
 // l'onglet : il ne doit s'afficher qu'une fois.
-async function openAdmin() {
+//
+// `ancre` : la rubrique ou descendre une fois l'ecran charge - le journal, quand
+// on vient de l'alerte des envois rates.
+async function openAdmin({ ancre } = {}) {
   view = { ...view, screen: 'admin', report: null, admin: { chargement: true }, adminRapports: null, adminCodeRevele: null }
   render()
   await rechargerAdmin()
+  if (view.screen !== 'admin' || !view.admin?.journal) return
+  // Le journal est sous les yeux : l'alerte des envois rates, sur l'accueil,
+  // peut se taire.
+  marquerJournalVu(view.admin.journal)
+  if (ancre) document.getElementById(ancre)?.scrollIntoView({ block: 'start' })
 }
 
 async function rechargerAdmin() {
@@ -358,8 +367,9 @@ function oublierSession() {
   view.adminFiltre = undefined
   view.adminRapportsQui = undefined
   view.tableauQui = undefined
+  view.tableauCarte = false
   view.agenda = null
-  tableauLu = 0
+  equipeLue = 0
   tableauRendu = ''
   validationsLues = 0
   try {
@@ -394,23 +404,28 @@ async function suivreMesValidations({ force = false } = {}) {
   }
 }
 
-// Le tableau de l'accueil lit au meme endroit que l'onglet Administration, et
-// garde sa reponse dans le meme cache : deux lectures de la meme chose a une
-// seconde d'intervalle ne diraient rien de plus.
-const TABLEAU_FRAIS_MS = 60_000
-let tableauLu = 0
+// L'accueil de l'administrateur lit au meme endroit que l'onglet Administration,
+// et garde sa reponse dans le meme cache : deux lectures de la meme chose a une
+// seconde d'intervalle ne diraient rien de plus. Il n'en tire que ses alertes -
+// les rapports a valider, les envois rates.
+const EQUIPE_FRAIS_MS = 60_000
+let equipeLue = 0
 
-async function rafraichirTableau({ force = false } = {}) {
+async function rafraichirEquipe({ force = false } = {}) {
   if (!estAdmin() || !navigator.onLine) return
-  if (!force && Date.now() - tableauLu < TABLEAU_FRAIS_MS) return
+  if (!force && Date.now() - equipeLue < EQUIPE_FRAIS_MS) return
   try {
-    view.admin = await adminAppel('GET')
-    tableauLu = Date.now()
+    // Lue d'abord, rangee ensuite : `view.admin = await ...` rangerait la reponse
+    // dans la vue d'avant l'attente, que l'accueil a pu remplacer entre-temps -
+    // au deverrouillage, les alertes restaient vides.
+    const equipe = await adminAppel('GET')
+    view.admin = equipe
+    equipeLue = Date.now()
   } catch (err) {
-    // Le tableau dit pourquoi il est vide ; le reste de l'accueil continue.
+    // Pas d'alerte, faute de lecture : l'onglet Administration dira pourquoi.
     view.admin = { erreur: err.message, base: err.base }
   }
-  majTableau()
+  majAlertes()
 }
 
 // Rendu chirurgical, comme pour les rendez-vous : un rendu complet ferait
@@ -423,17 +438,21 @@ function majTableau() {
   if (!zone) return
   const neuf = tableauAdminHTML(view)
   // Rien n'a change depuis le dernier rendu : ne pas reecrire. Refaire le HTML
-  // detruit l'iframe de la carte, que Google recharge alors entierement pour
-  // redessiner exactement la meme - a chaque retour a l'accueil.
+  // detruit l'iframe de la carte ouverte, que Google recharge alors entierement
+  // pour redessiner exactement la meme - a chaque retour a l'accueil.
   if (neuf === tableauRendu) return
-  // Le tableau se relit pendant qu'on le parcourt : refaire son contenu le
-  // ramenait en haut, et la ligne qu'on etait en train de lire disparaissait
-  // sous les yeux.
-  const ou = zone.querySelector('.tableau-defile')?.scrollTop ?? 0
   zone.innerHTML = neuf
   tableauRendu = neuf
-  const defile = zone.querySelector('.tableau-defile')
-  if (defile) defile.scrollTop = ou
+}
+
+// Les alertes du poste. Comparees a ce qui est affiche plutot qu'au dernier
+// rendu : l'accueil entier a pu etre redessine entre-temps.
+function majAlertes() {
+  if (view.screen !== 'home') return
+  const zone = root.querySelector('.alertes-zone')
+  if (!zone) return
+  const neuf = alertesHTML(view)
+  if (zone.innerHTML !== neuf) zone.innerHTML = neuf
 }
 
 const CONFIRMATIONS = {
@@ -1258,11 +1277,15 @@ root.addEventListener('click', async (ev) => {
     view.agendaQui = btnQui.dataset.agendaQui
     return render()
   }
-  // La tournee montree par le tableau de l'accueil : seul le tableau change,
-  // pour ne pas redessiner l'accueil entier a chaque bascule.
+  // La tournee montree par le tableau de l'accueil, et sa carte : seul le
+  // tableau change, pour ne pas redessiner l'accueil entier a chaque bascule.
   const btnTournee = el.closest('[data-tableau-qui]')
   if (btnTournee) {
     view.tableauQui = btnTournee.dataset.tableauQui
+    return majTableau()
+  }
+  if (el.closest('[data-tableau-carte]')) {
+    view.tableauCarte = !view.tableauCarte
     return majTableau()
   }
 
@@ -1590,7 +1613,7 @@ root.addEventListener('click', async (ev) => {
   if (act === 'open-agenda') return openAgenda()
   if (act === 'ajouter-rdv') return editerRdv()
   if (act === 'open-reglages') return openReglages()
-  if (act === 'open-admin') return openAdmin()
+  if (act === 'open-admin') return openAdmin({ ancre: el.closest('[data-act]').dataset.ancre })
   if (act === 'deconnexion') {
     if (!confirm('Se déconnecter ? Le code sera redemandé tout de suite, et à chaque ouverture tant que « Se souvenir de moi » ne sera pas coché.')) return
     oublierSession()
@@ -2060,7 +2083,7 @@ export async function boot() {
   rafraichirAgenda()
   window.addEventListener('online', () => {
     rafraichirAgenda()
-    rafraichirTableau({ force: true })
+    rafraichirEquipe({ force: true })
     suivreMesValidations({ force: true })
   })
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
@@ -2075,7 +2098,7 @@ export async function boot() {
     }
     reserverNumeros()
     rafraichirAgenda()
-    rafraichirTableau({ force: true })
+    rafraichirEquipe({ force: true })
     suivreMesValidations({ force: true })
     syncCarnet()
     planifierSauvegarde()

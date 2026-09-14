@@ -141,25 +141,18 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 
 /* --- Le tableau de l'administrateur ------------------------------------------
    Pose sur la feuille, sous les rapports en cours : une carte de la nuit de la
-   maison, ou ses textes clairs gardent leur contraste. Une fenetre a soi, qui
-   defile : l'equipe peut grandir sans repousser le reste de l'accueil. */
+   maison, ou ses textes clairs gardent leur contraste. La tournee du jour, et
+   rien d'autre : la carte reste repliee tant qu'on ne la demande pas. */
 .tableau-zone:empty { display: none; }
 .tableau {
   margin-top: 28px;
+  padding: 12px;
   color: var(--c-on-night);
   border: 1px solid var(--c-night-line);
   border-radius: var(--r-lg);
   background: var(--c-night);
   box-shadow: var(--sh-2);
   overflow: hidden;
-}
-.tableau-defile {
-  display: grid;
-  gap: 14px;
-  max-height: 50vh;
-  padding: 12px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 .tableau-titre {
   display: flex;
@@ -174,18 +167,18 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   color: var(--c-on-night-2);
 }
 .tableau-titre svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
-.tableau-vide { margin: 0; font-size: 11.5px; color: var(--c-on-night-2); }
-.tableau-note { margin: 0 0 8px; font-size: 10px; color: var(--c-on-night-2); }
+.tableau-note { margin: 8px 0; font-size: 10px; color: var(--c-on-night-2); }
 
-/* La carte du jour. Le rapport de forme tient la place avant que l'iframe ne
-   charge : sans lui, le tableau sauterait a l'arrivee de la carte. */
+/* La carte du jour, ouverte sous la tete de la tournee. Le rapport de forme
+   tient la place avant que l'iframe ne charge : sans lui, le tableau sauterait
+   a l'arrivee de la carte. */
 .carte {
   aspect-ratio: 16 / 10;
   width: 100%;
-  /* Sur un grand ecran, la carte prendrait toute la fenetre du tableau et
+  /* Sur un grand ecran, la carte prendrait toute la largeur de la feuille et
      pousserait les arrets hors de vue : elle s'arrete avant. */
   max-height: 220px;
-  margin-bottom: 10px;
+  margin: 8px 0 10px;
   border: 1px solid var(--c-night-line);
   border-radius: var(--r-sm);
   overflow: hidden;
@@ -222,7 +215,7 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   background: rgba(241, 237, 228, 0.1);
 }
 
-.tournee-tete { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.tournee-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 5px; }
 .tournee-qui {
   display: inline-flex;
   align-items: center;
@@ -238,21 +231,26 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
   border-radius: 50%;
   background: var(--ton, var(--c-fauve-bright));
 }
-.tournee-compte { font-size: 10px; color: var(--c-on-night-2); }
-.tournee-route {
+/* Le compte pousse l'itineraire et la carte au bout de la ligne. */
+.tournee-compte { margin-right: auto; font-size: 10px; color: var(--c-on-night-2); }
+.tournee-geste {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-left: auto;
   padding: 3px 9px;
+  font-family: var(--f-ui);
   font-size: 10px;
   font-weight: 600;
+  line-height: inherit;
   color: var(--c-on-night);
+  text-decoration: none;
   border: 1px solid rgba(241, 237, 228, 0.2);
   border-radius: var(--r-pill);
   background: rgba(241, 237, 228, 0.06);
+  cursor: pointer;
 }
-.tournee-route svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
+.tournee-geste svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
+.tournee-geste.on { border-color: rgba(241, 237, 228, 0.36); background: rgba(241, 237, 228, 0.16); }
 
 .arrets { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .arret-dedans {
@@ -297,61 +295,6 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
   color: #7fcf9f;
 }
 .arret.sans-lieu .arret-qui, .arret.sans-lieu .arret-ou { opacity: 0.72; }
-
-.equipiers { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
-.equipier { display: flex; align-items: center; gap: 9px; padding: 5px 7px; }
-.equipier-pastille {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--ton, var(--c-fauve-bright));
-}
-.equipier-nom {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--c-on-night);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.equipier-vu { margin-left: auto; font-size: 10px; color: var(--c-on-night-2); white-space: nowrap; }
-
-/* Des rapports d'invites a relire : fauve, comme ce qui reclame un geste. */
-.tableau-valider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 38px;
-  padding: 0 10px;
-  font-family: var(--f-ui);
-  font-size: 12px;
-  font-weight: 650;
-  text-align: left;
-  color: #1b1206;
-  background: var(--c-fauve-bright);
-  border: 0;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-}
-.tableau-valider span { flex: 1; }
-.tableau-valider svg { width: 15px; height: 15px; flex-shrink: 0; }
-
-.incidents { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
-.incident {
-  display: grid;
-  gap: 2px;
-  padding: 7px 9px;
-  border: 1px solid rgba(242, 164, 151, 0.36);
-  border-radius: var(--r-xs);
-  background: rgba(170, 60, 48, 0.3);
-  color: #ffdcd5;
-}
-.incident-tete { display: flex; align-items: center; gap: 6px; font-size: 11px; }
-.incident-tete svg { width: 13px; height: 13px; flex-shrink: 0; }
-.incident-tete i { margin-left: auto; font-style: normal; font-size: 9.5px; opacity: 0.8; }
-.incident-motif { font-size: 10px; opacity: 0.9; overflow-wrap: anywhere; }
 
 /* --- Le prochain rendez-vous ----------------------------------------------------
    L'outil du poste : ou je vais, et les gestes qui vont avec. Le bouton du
