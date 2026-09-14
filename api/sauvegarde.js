@@ -8,6 +8,10 @@
 //   - le rapport lui-meme est un fichier JSON sans les images, qui les designe
 //     par leur empreinte.
 //
+// L'index (Redis) ne sert qu'a lister : une ligne legere par rapport, sans la
+// liste de ses photos - elle vit dans le rapport lui-meme. Avec une equipe
+// entiere, des milliers de rapports passent ainsi en une lecture raisonnable.
+//
 // Chacun recupere ses propres rapports ; l'administrateur, ceux de tous.
 //
 // POST {action: 'photo', rapportId, cle, dataUrl}
@@ -16,14 +20,15 @@
 // GET  ?liste=1 | ?rapport=<id> | ?photo=<id>/<cle>
 
 import {
-  identifier,
+  identifierRequete,
+  TropDEssais,
   baseConfiguree,
   lireSauvegardes,
   lireSauvegarde,
   indexerSauvegarde,
   retirerSauvegarde,
 } from './_lib/equipe.js'
-import { stockageConfigure, ecrireFichier, lireFichier, supprimerFichiers } from './_lib/stockage.js'
+import { stockageConfigure, ecrireFichier, lireFichier, supprimerFichiers, listerFichiers } from './_lib/stockage.js'
 
 const ID_OK = /^[\w-]{1,64}$/
 const CLE_OK = /^[a-f0-9]{16,64}$/
@@ -32,8 +37,9 @@ const DATA_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/
 const PHOTO_MAX = 4_000_000
 const RAPPORT_MAX = 4_000_000
 
-const cheminRapport = (id) => `rapports/${id}/rapport.json`
-const cheminPhoto = (id, cle) => `rapports/${id}/${cle}`
+const dossierRapport = (id) => `rapports/${id}/`
+const cheminRapport = (id) => `${dossierRapport(id)}rapport.json`
+const cheminPhoto = (id, cle) => `${dossierRapport(id)}${cle}`
 const qui = (ident) => ({ id: ident.id ?? 'admin', nom: ident.nom, role: ident.role })
 const aLui = (ident, entree) => ident.role === 'admin' || entree?.par?.id === (ident.id ?? 'admin')
 
@@ -50,8 +56,9 @@ export default async function handler(req, res) {
 
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     console.error('Identification impossible', err)
     return res.status(503).json({ error: 'Base de données injoignable' })
   }
@@ -86,7 +93,9 @@ export default async function handler(req, res) {
         return res.status(200).json({ dataUrl: `data:${f.type};base64,${f.contenu.toString('base64')}` })
       }
 
-      const sauvegardes = (await lireSauvegardes()).filter((e) => aLui(ident, e))
+      // Les lignes indexees avant l'allegement portaient encore la liste de leurs
+      // photos : elle ne part plus vers les telephones.
+      const sauvegardes = (await lireSauvegardes()).filter((e) => aLui(ident, e)).map(({ fichiers: _f, ...e }) => e)
       return res.status(200).json({ sauvegardes })
     }
 
@@ -114,17 +123,15 @@ export default async function handler(req, res) {
       const avant = await lireSauvegarde(rapport.id)
       if (avant && !aLui(ident, avant)) return res.status(403).json({ error: 'Rapport d’un autre utilisateur' })
 
-      const fichiers = [
-        ...new Set(
-          (Array.isArray(rapport.photos) ? rapport.photos : [])
-            .flatMap((p) => [p?.hOriginal, p?.hImage])
-            .filter((h) => typeof h === 'string' && CLE_OK.test(h))
-        ),
-      ]
+      const fichiers = new Set(
+        (Array.isArray(rapport.photos) ? rapport.photos : [])
+          .flatMap((p) => [p?.hOriginal, p?.hImage])
+          .filter((h) => typeof h === 'string' && CLE_OK.test(h))
+      )
       await ecrireFichier(cheminRapport(rapport.id), json, 'application/json')
       // Les photos remplacees depuis le depot precedent : plus rien ne les designe.
       const partis = (Array.isArray(obsoletes) ? obsoletes : []).filter(
-        (h) => typeof h === 'string' && CLE_OK.test(h) && !fichiers.includes(h)
+        (h) => typeof h === 'string' && CLE_OK.test(h) && !fichiers.has(h)
       )
       await supprimerFichiers(partis.map((h) => cheminPhoto(rapport.id, h)))
 
@@ -136,7 +143,6 @@ export default async function handler(req, res) {
         parentId: rapport.parentId ?? null,
         status: String(rapport.status ?? ''),
         nPhotos: Array.isArray(rapport.photos) ? rapport.photos.length : 0,
-        fichiers,
         maj: Date.now(),
         // Le proprietaire reste celui qui l'a depose le premier : un rapport
         // repris par l'administrateur appartient toujours a son technicien.
@@ -150,7 +156,9 @@ export default async function handler(req, res) {
       for (const id of ids) {
         const entree = await lireSauvegarde(id)
         if (!entree || !aLui(ident, entree)) continue
-        await supprimerFichiers([cheminRapport(id), ...(entree.fichiers ?? []).map((h) => cheminPhoto(id, h))])
+        // Tout ce qui est range sous le rapport, y compris une photo deposee
+        // puis jamais rattachee (telephone coupe au mauvais moment).
+        await supprimerFichiers(await listerFichiers(dossierRapport(id)))
         await retirerSauvegarde(id)
       }
       return res.status(200).json({ ok: true })

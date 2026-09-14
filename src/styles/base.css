@@ -130,6 +130,40 @@ body[data-screen='admin'] #app {
 body[data-reseau='hors-ligne'] { --bandeau: var(--bandeau-h); }
 body[data-reseau='hors-ligne'] .hors-ligne { display: flex; }
 
+/* Une nouvelle version est en ligne (voir src/mise-a-jour.js) : la meme place
+   et la meme nuit que le bandeau reseau, mais c'est un bouton. Hors ligne, il
+   s'efface - on ne peut de toute facon pas recharger. */
+.mise-a-jour {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100%;
+  height: var(--bandeau-h);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--f-ui);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--c-on-night);
+  background: var(--c-night);
+  border: 0;
+  cursor: pointer;
+}
+.mise-a-jour::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7fcf9f;
+  box-shadow: 0 0 0 3px rgba(127, 207, 159, 0.25);
+}
+body[data-maj='1']:not([data-reseau='hors-ligne']) { --bandeau: var(--bandeau-h); }
+body[data-maj='1']:not([data-reseau='hors-ligne']) .mise-a-jour { display: flex; }
+
 /* --- entree d'un ecran --------------------------------------------------
    L'animation porte sur les blocs de l'ecran, jamais sur #app lui-meme : un
    element anime en transform devient le repere de ses enfants "fixed", et la

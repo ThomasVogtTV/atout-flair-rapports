@@ -1,16 +1,28 @@
 // Agenda de l'equipe : les rendez-vous, gardes en ligne pour que chacun voie
 // les siens et ceux des collegues. Voir _lib/agenda.js pour qui voit quoi.
 //
-//   GET                                  -> { moi, role, rdvs }
+//   GET [?v=<version connue>]            -> { moi, role, rdvs, version }, ou
+//                                           { inchange, version } si le telephone est a jour
 //   POST { action: 'enregistrer', rdv }  -> cree ou modifie
 //   POST { action: 'commencer', id, rapportId } -> le rapport est lance
 //   POST { action: 'statut', id, statut }     -> prevu / fait / annule
 //   POST { action: 'supprimer', id }
 
-import { identifier, baseConfiguree, lireAgenda, ecrireAgenda, retirerDeAgenda } from './_lib/equipe.js'
+import {
+  identifierRequete,
+  TropDEssais,
+  baseConfiguree,
+  lireAgenda,
+  lireRdv,
+  ecrireAgenda,
+  retirerDeAgenda,
+  versionAgenda,
+  archiverAgenda,
+} from './_lib/equipe.js'
 import { nettoyerRdv, visiblesPour, peutModifier, personne, jourSuisse, trierParDate, idValable, statutValable } from './_lib/agenda.js'
 
-// Au-dela, un rendez-vous passe n'a plus rien a dire sur un telephone.
+// Au-dela, un rendez-vous passe n'a plus rien a dire sur un telephone : il part
+// aux archives.
 const PASSES_GARDES = 60 * 86_400_000
 
 export default async function handler(req, res) {
@@ -21,8 +33,9 @@ export default async function handler(req, res) {
 
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     console.error('Identification impossible', err)
     return res.status(503).json({ error: 'Base de données injoignable' })
   }
@@ -33,8 +46,6 @@ export default async function handler(req, res) {
   if (!baseConfiguree()) return res.status(503).json({ error: 'Base de données non configurée', base: false })
 
   try {
-    const agenda = await lireAgenda()
-
     if (req.method === 'POST') {
       const { action, rdv: brut, id, rapportId, statut } = req.body ?? {}
 
@@ -42,7 +53,7 @@ export default async function handler(req, res) {
         if (ident.role === 'invite') return res.status(403).json({ error: 'Un invité ne peut pas modifier l’agenda.' })
         const rdv = nettoyerRdv(brut, Date.now())
         if (!rdv) return res.status(400).json({ error: 'Rendez-vous incomplet : il faut une date et un client.' })
-        const existant = agenda.get(rdv.id)
+        const existant = await lireRdv(rdv.id)
         if (existant && !peutModifier(ident, existant)) {
           return res.status(403).json({ error: 'Ce rendez-vous est celui d’un collègue.' })
         }
@@ -57,7 +68,7 @@ export default async function handler(req, res) {
       }
 
       if (action === 'commencer') {
-        const rdv = agenda.get(String(id ?? ''))
+        const rdv = await lireRdv(String(id ?? ''))
         if (!rdv || !visiblesPour(ident, [rdv]).length) return res.status(404).json({ error: 'Rendez-vous introuvable' })
         if (!idValable(rapportId)) return res.status(400).json({ error: 'Rapport invalide' })
         rdv.rapportId = rapportId
@@ -69,7 +80,7 @@ export default async function handler(req, res) {
       // Fait ou annule : un geste a part, pour qu'un technicien puisse le
       // poser depuis la fiche sans rouvrir tout le formulaire.
       if (action === 'statut') {
-        const rdv = agenda.get(String(id ?? ''))
+        const rdv = await lireRdv(String(id ?? ''))
         if (!rdv) return res.status(404).json({ error: 'Rendez-vous introuvable' })
         if (!peutModifier(ident, rdv)) return res.status(403).json({ error: 'Ce rendez-vous est celui d’un collègue.' })
         if (!statutValable(statut)) return res.status(400).json({ error: 'État inconnu' })
@@ -80,7 +91,7 @@ export default async function handler(req, res) {
       }
 
       if (action === 'supprimer') {
-        const rdv = agenda.get(String(id ?? ''))
+        const rdv = await lireRdv(String(id ?? ''))
         if (!rdv) return res.status(200).json({ ok: true })
         if (!peutModifier(ident, rdv)) return res.status(403).json({ error: 'Ce rendez-vous est celui d’un collègue.' })
         await retirerDeAgenda(rdv.id)
@@ -90,9 +101,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Action inconnue' })
     }
 
-    const depuis = jourSuisse(Date.now() - PASSES_GARDES)
-    const rdvs = trierParDate(visiblesPour(ident, [...agenda.values()]).filter((r) => r.date >= depuis))
-    return res.status(200).json({ moi: personne(ident), role: ident.role, rdvs })
+    // La version se lit AVANT l'agenda : une ecriture qui passerait entre les
+    // deux donnerait au pire un agenda plus neuf que sa version, que le
+    // telephone relira la fois suivante - jamais l'inverse.
+    const version = await versionAgenda()
+    if (Number(req.query?.v) === version) return res.status(200).json({ inchange: true, version })
+
+    const agenda = await lireAgenda()
+    await archiverAgenda(agenda, jourSuisse(Date.now() - PASSES_GARDES))
+    const rdvs = trierParDate(visiblesPour(ident, [...agenda.values()]))
+    return res.status(200).json({ moi: personne(ident), role: ident.role, rdvs, version })
   } catch (err) {
     console.error('Agenda', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })

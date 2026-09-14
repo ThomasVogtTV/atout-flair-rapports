@@ -83,8 +83,10 @@ function fauxRedis() {
       case 'GET': return typeof kv.get(k) === 'string' ? kv.get(k) : null
       case 'SET': if (a[1] === 'NX' && kv.has(k)) return null; kv.set(k, a[0]); return 'OK'
       case 'HSET': for (let i = 0; i < a.length; i += 2) h(k).set(a[i], a[i + 1]); return a.length / 2
+      case 'HGET': return h(k).get(a[0]) ?? null
       case 'HGETALL': return kv.has(k) ? [...h(k)].flat() : []
-      case 'HDEL': return h(k).delete(a[0]) ? 1 : 0
+      case 'HDEL': return a.filter((f) => h(k).delete(f)).length
+      case 'INCR': { const n = (Number(kv.get(k)) || 0) + 1; kv.set(k, String(n)); return n }
       case 'SADD': s(k).add(a[0]); return 1
       default: throw new Error('commande non imitee : ' + cmd)
     }

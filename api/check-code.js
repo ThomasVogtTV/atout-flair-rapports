@@ -4,7 +4,7 @@
 // code revoque cesse de fonctionner (voir src/lock.js). Chaque appel note
 // l'activite de la personne dans l'onglet Administration.
 
-import { identifier, noterActivite, pourquoiRefuse } from './_lib/equipe.js'
+import { identifierRequete, TropDEssais, noterActivite, pourquoiRefuse } from './_lib/equipe.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -16,8 +16,9 @@ export default async function handler(req, res) {
   }
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     // Base injoignable : ce n'est pas un mauvais code, on ne le traite pas comme tel.
     console.error('Identification impossible', err)
     return res.status(503).json({ error: 'Vérification impossible pour le moment' })

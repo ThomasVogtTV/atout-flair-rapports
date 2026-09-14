@@ -26,8 +26,8 @@ function retenir(data) {
   }
 }
 
-async function appel(methode, corps) {
-  const res = await fetch('/api/agenda', {
+async function appel(methode, corps, query) {
+  const res = await fetch(`/api/agenda${query ? `?${new URLSearchParams(query)}` : ''}`, {
     method: methode,
     headers: { 'x-app-code': currentCode(), ...(corps ? { 'Content-Type': 'application/json' } : {}) },
     body: corps ? JSON.stringify(corps) : undefined,
@@ -41,16 +41,20 @@ const SANS_RESEAU = "Pas de réseau : l'agenda de l'équipe se modifie avec du r
 
 /** L'agenda a jour si le reseau le permet, sinon la derniere version gardee. */
 export async function chargerAgenda() {
-  if (!navigator.onLine || !currentCode()) return agendaEnCache()
+  const cache = agendaEnCache()
+  if (!navigator.onLine || !currentCode()) return cache
   try {
-    const data = await appel('GET')
+    // La version deja gardee : si rien n'a bouge depuis, le serveur ne renvoie
+    // rien, et c'est le cas de la plupart des ouvertures.
+    const data = await appel('GET', undefined, cache?.version ? { v: cache.version } : undefined)
+    if (data?.inchange && cache) return cache
     // Une reponse qui n'est pas un agenda (page d'erreur, reseau de captif
     // d'hotel...) ne doit pas ecraser la derniere version valable.
-    if (!Array.isArray(data?.rdvs)) return agendaEnCache()
+    if (!Array.isArray(data?.rdvs)) return cache
     retenir(data)
     return data
   } catch {
-    return agendaEnCache()
+    return cache
   }
 }
 

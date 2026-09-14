@@ -92,6 +92,50 @@ export async function identifier(code) {
   return { role: 'employe', id, nom: emp.nom }
 }
 
+// --- essais de code en serie ---------------------------------------------------
+// Chaque adresse de reseau a droit a ESSAIS_MAX codes refuses par quart d'heure.
+// Au-dela, plus rien ne passe depuis elle - un bon code non plus : sinon la
+// difference entre un refus et un blocage dirait a qui essaie en boucle qu'il
+// est tombe juste. Une equipe entiere derriere le meme wifi reste tres loin du
+// plafond ; un programme qui essaie des codes l'atteint en quelques secondes.
+export const ESSAIS_MAX = 50
+const ESSAIS_FENETRE = 15 * 60
+
+export class TropDEssais extends Error {
+  constructor() {
+    super('Trop de codes refusés depuis ce réseau. Réessayez dans un quart d’heure.')
+  }
+}
+
+// Vercel pose lui-meme ces en-tetes : un appareil ne peut pas s'en inventer.
+const adresseDe = (req) =>
+  String(req.headers?.['x-real-ip'] || req.headers?.['x-forwarded-for'] || 'inconnue').split(',')[0].trim()
+// L'adresse ne s'ecrit pas en clair dans la base.
+const cleEssais = (req) => `af:essais:${createHash('sha256').update(adresseDe(req)).digest('hex').slice(0, 24)}`
+
+/**
+ * Qui se cache derriere le code de cette requete, avec le frein aux essais en
+ * serie. Un compteur injoignable ne bloque personne : si la base tombe, le code
+ * administrateur doit continuer d'ouvrir l'app.
+ * @throws {TropDEssais} quand l'adresse a epuise ses essais
+ */
+export async function identifierRequete(req) {
+  const cle = baseConfiguree() ? cleEssais(req) : null
+  if (cle && Number(await r('GET', cle).catch(() => 0)) >= ESSAIS_MAX) throw new TropDEssais()
+  const ident = await identifier(req.headers?.['x-app-code'])
+  if (!ident && cle) {
+    try {
+      // Cree avec son delai d'expiration, puis compte : un compteur ne peut pas
+      // rester sans fin de vie si la seconde commande echoue.
+      await r('SET', cle, '0', 'NX', 'EX', ESSAIS_FENETRE)
+      await r('INCR', cle)
+    } catch {
+      // Compteur indisponible : le refus reste un refus, sans plus.
+    }
+  }
+  return ident
+}
+
 /**
  * Pour un code refuse, un motif plus parlant que "code invalide" quand on en a
  * un : acces retire, ou invite arrive a sa date de fin. Sinon null.
@@ -294,28 +338,62 @@ export const ecrireValidation = (v) => r('HSET', VALIDATIONS, v.id, JSON.stringi
 export const retirerValidation = (id) => r('HDEL', VALIDATIONS, id)
 
 // --- agenda de l'equipe ------------------------------------------------------
-// Un hash : id du rendez-vous -> rendez-vous en JSON.
+// Un hash : id du rendez-vous -> rendez-vous en JSON. Il ne garde que ce qui
+// sert encore - les deux derniers mois et tout ce qui vient ; le reste part aux
+// archives, qu'aucun telephone ne relit. Sans cela, dix techniciens remplissent
+// en un an un agenda que chaque ouverture de l'app relirait en entier.
+//
+// La version avance a chaque ecriture : un telephone qui la connait deja n'a
+// rien a recharger, et la plupart des ouvertures s'arretent la.
 const AGENDA = 'af:agenda'
+const AGENDA_ARCHIVES = 'af:agenda:archives'
+const AGENDA_VERSION = 'af:agenda:version'
+// L'archivage d'une annee entiere passe en quelques paquets plutot qu'en une
+// seule requete geante.
+const PAQUET = 500
 
-export async function lireAgenda() {
-  const o = enObjet(await r('HGETALL', AGENDA))
-  const agenda = new Map()
-  for (const [id, json] of Object.entries(o)) {
-    try {
-      agenda.set(id, JSON.parse(json))
-    } catch {
-      // Une entree illisible est ignoree plutot que de bloquer tout l'agenda.
-    }
+const enMap = (plat) => {
+  const m = new Map()
+  for (const [id, json] of Object.entries(enObjet(plat))) {
+    const x = lireJson(json)
+    // Une entree illisible est ignoree plutot que de bloquer tout l'agenda.
+    if (x) m.set(id, x)
   }
-  return agenda
+  return m
 }
+
+export const lireAgenda = async () => enMap(await r('HGETALL', AGENDA))
+export const lireRdv = async (id) => lireJson(await r('HGET', AGENDA, id))
+export const lireArchivesAgenda = async () => enMap(await r('HGETALL', AGENDA_ARCHIVES))
+
+export const versionAgenda = () => lireVersion(AGENDA_VERSION)
 
 export async function ecrireAgenda(rdvs) {
   if (!rdvs.length) return
   await r('HSET', AGENDA, ...rdvs.flatMap((x) => [x.id, JSON.stringify(x)]))
+  await r('INCR', AGENDA_VERSION)
 }
 
-export const retirerDeAgenda = (id) => r('HDEL', AGENDA, id)
+export async function retirerDeAgenda(id) {
+  await r('HDEL', AGENDA, id)
+  await r('INCR', AGENDA_VERSION)
+}
+
+/**
+ * Range aux archives les rendez-vous d'avant `avant` (AAAA-MM-JJ), et les retire
+ * de `agenda`. La version ne bouge pas : aucun telephone ne les montrait plus.
+ * @returns {Promise<number>} combien sont partis
+ */
+export async function archiverAgenda(agenda, avant) {
+  const vieux = [...agenda.values()].filter((x) => String(x.date ?? '') < avant)
+  for (let i = 0; i < vieux.length; i += PAQUET) {
+    const lot = vieux.slice(i, i + PAQUET)
+    await r('HSET', AGENDA_ARCHIVES, ...lot.flatMap((x) => [x.id, JSON.stringify(x)]))
+    await r('HDEL', AGENDA, ...lot.map((x) => x.id))
+  }
+  for (const x of vieux) agenda.delete(x.id)
+  return vieux.length
+}
 
 // --- carnet commun -----------------------------------------------------------
 // Un seul hash : id du contact -> contact en JSON. Un contact supprime y reste
@@ -336,9 +414,24 @@ export async function lireCarnet() {
   return carnet
 }
 
+// Comme l'agenda : la version avance a chaque ecriture, et un telephone qui la
+// connait deja n'a rien a recevoir.
+const CARNET_VERSION = 'af:carnet:version'
+
+/** Une version, posee a 1 la premiere fois pour que les telephones puissent la retenir. */
+async function lireVersion(cle) {
+  const v = Number(await r('GET', cle)) || 0
+  if (v) return v
+  await r('SET', cle, '1', 'NX')
+  return Number(await r('GET', cle)) || 1
+}
+
+export const versionCarnet = () => lireVersion(CARNET_VERSION)
+
 export async function ecrireCarnet(contacts) {
   if (!contacts.length) return
   await r('HSET', CARNET, ...contacts.flatMap((c) => [c.id, JSON.stringify(c)]))
+  await r('INCR', CARNET_VERSION)
 }
 
 // Le journal garde le nom : supprimer un employe n'efface pas ce qu'il a envoye.
@@ -347,4 +440,39 @@ export async function supprimerEmploye(id) {
   if (e.empreinte) await r('DEL', cleCode(e.empreinte))
   await r('DEL', cleEmp(id))
   await r('SREM', EMPLOYES, id)
+}
+
+// --- copie de la base, chaque nuit ----------------------------------------------
+// Voir api/sauvegarde-base.js. Le verrou fait qu'une nuit ne donne qu'une copie,
+// qui que ce soit qui appelle l'adresse.
+const COPIE_VERROU = 'af:copie:verrou'
+const COPIE_DATE = 'af:copie:date'
+
+export const reserverCopie = async () => (await r('SET', COPIE_VERROU, '1', 'NX', 'EX', 20 * 3600)) === 'OK'
+export const libererCopie = () => r('DEL', COPIE_VERROU)
+export const noterCopie = (ms) => r('SET', COPIE_DATE, String(ms))
+export const derniereCopie = async () => Number(await r('GET', COPIE_DATE)) || null
+
+/**
+ * Tout ce que l'equipe perdrait avec la base, de quoi la reconstruire : l'equipe
+ * (les codes n'y sont qu'en empreinte), l'agenda et ses archives, le carnet,
+ * l'index des sauvegardes, les demandes a valider, le journal et le compteur
+ * des numeros de rapport.
+ */
+export async function exporterBase() {
+  const hash = async (cle) => enObjet(await r('HGETALL', cle))
+  const ids = (await r('SMEMBERS', EMPLOYES)) ?? []
+  return {
+    format: 1,
+    date: Date.now(),
+    employes: (await Promise.all(ids.map(lireEmploye))).filter(Boolean),
+    admin: await hash(ADMIN),
+    compteurRef: await r('GET', COMPTEUR_REF),
+    agenda: await hash(AGENDA),
+    archivesAgenda: await hash(AGENDA_ARCHIVES),
+    carnet: await hash(CARNET),
+    sauvegardes: await hash(SAUVEGARDES),
+    validations: await hash(VALIDATIONS),
+    journal: (await r('LRANGE', JOURNAL, 0, -1)) ?? [],
+  }
 }

@@ -39,6 +39,7 @@ import { installerDock, majDock } from './ui/dock.js'
 import { ouvrirNouveauRapport } from './nouveau-dialog.js'
 import { ouvrirMenuRapport } from './rapport-menu.js'
 import { montrerSceau } from './ui/sceau.js'
+import { verifierMiseAJour } from './mise-a-jour.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -89,7 +90,8 @@ function etatSauvegarde(enCours) {
   el.querySelector('span').textContent = enCours ? 'Enregistrement…' : 'Enregistré'
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) flushSave()
+  if (document.hidden) return flushSave()
+  miseAJour({ auRetour: true })
 })
 window.addEventListener('pagehide', () => flushSave())
 
@@ -193,6 +195,19 @@ async function goHome() {
   planifierSauvegarde()
   rafraichirEquipe()
   suivreMesValidations()
+  miseAJour()
+}
+
+// Une nouvelle version en ligne (voir src/mise-a-jour.js) : au retour dans
+// l'app, a l'accueil et sans rien d'ouvert, elle s'installe d'elle-meme ;
+// ailleurs, le bandeau attend qu'on la demande.
+function miseAJour({ auRetour = false } = {}) {
+  verifierMiseAJour({
+    force: auRetour,
+    peutRecharger: () =>
+      auRetour && view.screen === 'home' && !document.querySelector('.overlay') && !document.body.classList.contains('verrouille'),
+    avantRecharge: flushSave,
+  })
 }
 
 async function openEnvois() {
@@ -2085,6 +2100,7 @@ export async function boot() {
     rafraichirAgenda()
     rafraichirEquipe({ force: true })
     suivreMesValidations({ force: true })
+    miseAJour()
   })
   // Premiere ouverture : le code n'est connu qu'une fois l'ecran de code passe.
   window.addEventListener('af-deverrouille', () => {

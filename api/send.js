@@ -23,7 +23,7 @@
 // reduit les photos pour rester sous cette limite et bascule sur le partage
 // manuel si un rapport reste trop lourd (voir PDF_MAX dans src/send.js).
 
-import { identifier, baseConfiguree, lireValidation, lireValidations, ecrireValidation, nouvelId } from './_lib/equipe.js'
+import { identifierRequete, TropDEssais, baseConfiguree, lireValidation, lireValidations, ecrireValidation, nouvelId } from './_lib/equipe.js'
 import { boiteIndisponible, envoyerMail, demandeDEnvoi, consigner, cheminPdfValidation } from './_lib/mail.js'
 import { stockageConfigure, ecrireFichier } from './_lib/stockage.js'
 
@@ -52,8 +52,9 @@ export default async function handler(req, res) {
   // le journal de l'onglet Administration retient - et si c'est un invite.
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     // Base injoignable : ce n'est pas un mauvais code. Un 401 ferait oublier son
     // code au telephone et redemander une saisie pour rien.
     console.error('Identification impossible', err)

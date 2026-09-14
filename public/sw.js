@@ -2,7 +2,7 @@
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
 
-const CACHE = 'atout-flair-v15'
+const CACHE = 'atout-flair-v16'
 const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
@@ -77,7 +77,9 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== location.origin) return
-  if (url.pathname.startsWith('/api/')) return
+  // L'app qui regarde si une nouvelle version est en ligne (src/mise-a-jour.js) :
+  // la reponse doit venir du reseau, jamais du cache.
+  if (url.pathname.startsWith('/api/') || url.searchParams.has('verif')) return
 
   if (request.mode === 'navigate') {
     event.respondWith(

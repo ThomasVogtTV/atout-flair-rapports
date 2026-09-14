@@ -6,9 +6,9 @@
 // Enveloppe mince autour de @vercel/blob : les tests la remplacent par une
 // imitation en memoire, comme la base Redis (voir _brancherBase).
 
-import { put, get, del } from '@vercel/blob'
+import { put, get, del, list } from '@vercel/blob'
 
-let impl = { put, get, del }
+let impl = { put, get, del, list }
 
 /** Remplace le stockage par une imitation. Tests uniquement. */
 export const _brancherStockage = (fausse) => {
@@ -33,4 +33,16 @@ export async function lireFichier(chemin) {
 
 export async function supprimerFichiers(chemins) {
   if (chemins.length) await impl.del(chemins)
+}
+
+/** Les chemins de tous les fichiers ranges sous un prefixe, page apres page. */
+export async function listerFichiers(prefixe) {
+  const chemins = []
+  let cursor
+  do {
+    const page = await impl.list({ prefix: prefixe, cursor, limit: 1000 })
+    chemins.push(...(page?.blobs ?? []).map((b) => b.pathname))
+    cursor = page?.hasMore ? page.cursor : undefined
+  } while (cursor)
+  return chemins
 }

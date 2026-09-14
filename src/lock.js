@@ -73,6 +73,12 @@ async function verifierEnLigne(code) {
     const motif = data.error && data.error !== "Code d'accès invalide" ? data.error : null
     return { etat: 'refuse', message: motif }
   }
+  // Trop d'essais depuis ce reseau : le code n'est pas en cause, il ne doit
+  // surtout pas etre oublie - seulement attendre.
+  if (res.status === 429) {
+    const data = await res.json().catch(() => ({}))
+    return { etat: 'indisponible', message: data.error || null }
+  }
   if (!res.ok) return { etat: 'indisponible' }
   const ident = res.status === 204 ? null : await res.json().catch(() => null)
   return { etat: 'ok', ident }
@@ -123,7 +129,7 @@ async function essayer(saisi) {
       return { ok: true }
     }
     if (r.etat === 'refuse') return { ok: false, message: r.message || 'Code incorrect.' }
-    return { ok: false, message: 'Vérification impossible pour le moment. Réessayez dans un instant.' }
+    return { ok: false, message: r.message || 'Vérification impossible pour le moment. Réessayez dans un instant.' }
   } catch {
     return { ok: false, message: 'Pas de réseau pour vérifier le code.' }
   }

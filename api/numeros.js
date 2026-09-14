@@ -2,7 +2,7 @@
 // demande. Ouvert a tous ceux qui ont un code valable - un invite fait aussi
 // des rapports, et ses numeros doivent aussi etre uniques.
 
-import { identifier, baseConfiguree, reserverNumeros } from './_lib/equipe.js'
+import { identifierRequete, TropDEssais, baseConfiguree, reserverNumeros } from './_lib/equipe.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,8 +12,9 @@ export default async function handler(req, res) {
 
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     console.error('Identification impossible', err)
     return res.status(503).json({ error: 'Base de données injoignable' })
   }

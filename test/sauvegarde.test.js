@@ -39,6 +39,10 @@ const fauxStockage = () => ({
     return f ? { stream: new Blob([f.contenu]).stream(), blob: { contentType: f.type } } : null
   },
   del: async (chemins) => [].concat(chemins).forEach((c) => fichiers.delete(c)),
+  list: async ({ prefix }) => ({
+    blobs: [...fichiers.keys()].filter((c) => c.startsWith(prefix)).map((pathname) => ({ pathname })),
+    hasMore: false,
+  }),
 })
 
 // fetch du telephone -> le vrai serveur, sans reseau.

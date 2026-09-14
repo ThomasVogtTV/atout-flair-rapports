@@ -22,13 +22,13 @@ const AIDE_BASE = `
   Dans Vercel : <b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b> → région
   <b>Europe (Frankfurt)</b> → la relier au projet <b>atout-flair-rapports</b>, puis redéployer.</p>`
 
-function entete() {
+function entete(copie) {
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Administration</h1>
-        <p class="muted">Équipe et envois</p>
+        <p class="muted">Équipe et envois${copie ? ` · base copiée ${esc(ilYA(copie))}` : ''}</p>
       </div>
     </header>`
 }
@@ -232,7 +232,7 @@ export function adminView(view) {
   const filtre = view.adminFiltre ?? 'Tous'
   const journal = filtre === 'Tous' ? a.journal : a.journal.filter((j) => j.qui === filtre)
 
-  return `${entete()}
+  return `${entete(a.copie)}
     <section class="pad">
       ${codeRevele(view.adminCodeRevele)}
       ${aValiderHTML(a.validations ?? [])}

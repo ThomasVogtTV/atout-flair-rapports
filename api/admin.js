@@ -8,7 +8,8 @@
 // POST {action: 'refuser', id, motif}   il ne part pas ; l'invite lit le motif
 
 import {
-  identifier,
+  identifierRequete,
+  TropDEssais,
   baseConfiguree,
   listerEmployes,
   lireJournal,
@@ -22,6 +23,7 @@ import {
   ecrireValidation,
   retirerValidation,
   Erreur400,
+  derniereCopie,
 } from './_lib/equipe.js'
 import { boiteIndisponible, envoyerMail, consigner, cheminPdfValidation } from './_lib/mail.js'
 import { stockageConfigure, lireFichier, supprimerFichiers } from './_lib/stockage.js'
@@ -34,8 +36,9 @@ const GARDE_TRAITEES = 60 * 24 * 60 * 60 * 1000
 export default async function handler(req, res) {
   let ident = null
   try {
-    ident = await identifier(req.headers['x-app-code'])
+    ident = await identifierRequete(req)
   } catch (err) {
+    if (err instanceof TropDEssais) return res.status(429).json({ error: err.message })
     console.error('Identification impossible', err)
     return res.status(503).json({ error: 'Base de données injoignable' })
   }
@@ -49,8 +52,8 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
-      const [equipe, journal, validations] = await Promise.all([listerEmployes(), lireJournal(300), aValider()])
-      return res.status(200).json({ base: true, ...equipe, journal, validations })
+      const [equipe, journal, validations, copie] = await Promise.all([listerEmployes(), lireJournal(300), aValider(), derniereCopie()])
+      return res.status(200).json({ base: true, ...equipe, journal, validations, copie })
     }
     if (req.method === 'POST') {
       const { action, id, nom, fin, motif } = req.body ?? {}
