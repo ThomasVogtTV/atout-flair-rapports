@@ -57,7 +57,8 @@ const cleCode = (h) => `af:code:${h}`
 const EMPLOYES = 'af:emps'
 const ADMIN = 'af:admin'
 const JOURNAL = 'af:journal'
-const JOURNAL_MAX = 2000
+// De quoi retrouver un envoi de l'annee, meme a dix techniciens.
+const JOURNAL_MAX = 10000
 
 // HGETALL rend une liste a plat [cle1, valeur1, cle2, valeur2...].
 const enObjet = (plat) => {
@@ -173,8 +174,9 @@ export async function journaliser(entree) {
   await r('LTRIM', JOURNAL, 0, JOURNAL_MAX - 1)
 }
 
-export async function lireJournal(n = 300) {
-  const lignes = (await r('LRANGE', JOURNAL, 0, n - 1)) ?? []
+/** `n` lignes du journal, de la plus recente a la plus ancienne, a partir de la `depuis`-ieme. */
+export async function lireJournal(n = 300, depuis = 0) {
+  const lignes = (await r('LRANGE', JOURNAL, depuis, depuis + n - 1)) ?? []
   return lignes
     .map((l) => {
       try {
@@ -473,6 +475,31 @@ export async function exporterBase() {
     carnet: await hash(CARNET),
     sauvegardes: await hash(SAUVEGARDES),
     validations: await hash(VALIDATIONS),
+    tons: await hash(TEINTES),
     journal: (await r('LRANGE', JOURNAL, 0, -1)) ?? [],
   }
+}
+
+// --- la couleur de chacun ---------------------------------------------------------
+// Un hash : id de la personne -> numero de teinte (voir TONS dans
+// src/agenda-outils.js). Attribuee la premiere fois que la personne apparait
+// dans l'agenda - la moins portee du moment - puis gardee.
+const TEINTES = 'af:tons'
+export const NB_TONS = 12
+
+/** @returns {Promise<Record<string, number>>} la teinte de chacune de ces personnes */
+export async function tonsDe(ids) {
+  const uniques = [...new Set(ids.filter((id) => id && id !== 'admin'))]
+  if (!uniques.length) return {}
+  const tous = enObjet(await r('HGETALL', TEINTES))
+  for (const id of uniques) {
+    if (tous[id] !== undefined) continue
+    const portes = new Array(NB_TONS).fill(0)
+    for (const v of Object.values(tous)) portes[Number(v) % NB_TONS]++
+    const ton = portes.indexOf(Math.min(...portes))
+    // Deux telephones qui la demandent au meme instant repartent avec la meme.
+    if (Number(await r('HSETNX', TEINTES, id, ton)) === 1) tous[id] = String(ton)
+    else tous[id] = await r('HGET', TEINTES, id)
+  }
+  return Object.fromEntries(uniques.map((id) => [id, (Number(tous[id]) || 0) % NB_TONS]))
 }

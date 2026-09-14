@@ -18,6 +18,7 @@ import {
   retirerDeAgenda,
   versionAgenda,
   archiverAgenda,
+  tonsDe,
 } from './_lib/equipe.js'
 import { nettoyerRdv, visiblesPour, peutModifier, personne, jourSuisse, trierParDate, idValable, statutValable } from './_lib/agenda.js'
 
@@ -110,7 +111,9 @@ export default async function handler(req, res) {
     const agenda = await lireAgenda()
     await archiverAgenda(agenda, jourSuisse(Date.now() - PASSES_GARDES))
     const rdvs = trierParDate(visiblesPour(ident, [...agenda.values()]))
-    return res.status(200).json({ moi: personne(ident), role: ident.role, rdvs, version })
+    // La couleur des personnes qu'il montre : la meme sur tous les telephones.
+    const tons = await tonsDe(rdvs.map((x) => x.pour?.id))
+    return res.status(200).json({ moi: personne(ident), role: ident.role, rdvs, version, tons })
   } catch (err) {
     console.error('Agenda', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })

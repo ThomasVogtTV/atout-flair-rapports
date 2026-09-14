@@ -56,6 +56,37 @@
 .ton-green { --ton: var(--c-success); }
 .ton-amber { --ton: var(--c-warning); }
 .ton-red { --ton: var(--c-danger); }
+/* Les teintes d'une equipe qui grandit : sombres sur le papier, eclaircies la
+   nuit pour rester lisibles en texte comme en pastille. */
+.ton-bleu { --ton: #2f63a8; }
+.ton-rose { --ton: #a93d72; }
+.ton-olive { --ton: #66751d; }
+.ton-orange { --ton: #b75a1a; }
+.ton-violet { --ton: #6a4cc2; }
+.ton-brun { --ton: #7a5334; }
+.ton-gris { --ton: #5b646c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .ton-accent { --ton: var(--c-brand); }
+  :root:not([data-theme='light']) .ton-ardoise { --ton: var(--t-immeuble); }
+  :root:not([data-theme='light']) .ton-prune { --ton: var(--t-hotel); }
+  :root:not([data-theme='light']) .ton-bleu { --ton: #8db3ee; }
+  :root:not([data-theme='light']) .ton-rose { --ton: #e99cc2; }
+  :root:not([data-theme='light']) .ton-olive { --ton: #bccb6e; }
+  :root:not([data-theme='light']) .ton-orange { --ton: #f0a36b; }
+  :root:not([data-theme='light']) .ton-violet { --ton: #b9a3f5; }
+  :root:not([data-theme='light']) .ton-brun { --ton: #d2ab86; }
+  :root:not([data-theme='light']) .ton-gris { --ton: #b3bac1; }
+}
+:root[data-theme='dark'] .ton-accent { --ton: var(--c-brand); }
+:root[data-theme='dark'] .ton-ardoise { --ton: var(--t-immeuble); }
+:root[data-theme='dark'] .ton-prune { --ton: var(--t-hotel); }
+:root[data-theme='dark'] .ton-bleu { --ton: #8db3ee; }
+:root[data-theme='dark'] .ton-rose { --ton: #e99cc2; }
+:root[data-theme='dark'] .ton-olive { --ton: #bccb6e; }
+:root[data-theme='dark'] .ton-orange { --ton: #f0a36b; }
+:root[data-theme='dark'] .ton-violet { --ton: #b9a3f5; }
+:root[data-theme='dark'] .ton-brun { --ton: #d2ab86; }
+:root[data-theme='dark'] .ton-gris { --ton: #b3bac1; }
 
 /* --- Le calendrier du mois ---------------------------------------------------- */
 .calendrier { padding: 12px 10px; }

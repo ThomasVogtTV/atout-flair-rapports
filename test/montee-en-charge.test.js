@@ -1,7 +1,7 @@
 // Ce qui tient quand l'equipe grandit : un telephone a jour ne recharge ni
 // l'agenda ni le carnet, les rendez-vous anciens partent aux archives, l'index
-// des sauvegardes reste leger, les essais de code en serie butent, et la base
-// est copiee chaque nuit.
+// des sauvegardes reste leger, les essais de code en serie butent, la base est
+// copiee chaque nuit, chacun garde sa couleur et le journal se lit par pages.
 
 import { test, describe, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
@@ -10,7 +10,9 @@ import { _brancherStockage } from '../api/_lib/stockage.js'
 import agenda from '../api/agenda.js'
 import carnet from '../api/carnet.js'
 import sauvegarde from '../api/sauvegarde.js'
+import admin from '../api/admin.js'
 import copieBase, { cheminCopie } from '../api/sauvegarde-base.js'
+import { retenirTons, tonPersonne, TONS } from '../src/agenda-outils.js'
 
 // Imitation de Redis qui garde la trace des commandes recues.
 function fauxRedis() {
@@ -27,11 +29,14 @@ function fauxRedis() {
       case 'DEL': return kv.delete(k) ? 1 : 0
       case 'INCR': { const n = (Number(kv.get(k)) || 0) + 1; kv.set(k, String(n)); return n }
       case 'HSET': for (let i = 0; i < a.length; i += 2) h(k).set(a[i], a[i + 1]); return a.length / 2
+      case 'HSETNX': if (h(k).has(a[0])) return 0; h(k).set(a[0], a[1]); return 1
       case 'HGET': return h(k).get(a[0]) ?? null
       case 'HDEL': return a.filter((f) => h(k).delete(f)).length
       case 'HGETALL': return kv.has(k) ? [...h(k)].flat() : []
       case 'SADD': s(k).add(a[0]); return 1
       case 'SMEMBERS': return [...s(k)]
+      case 'LPUSH': l(k).unshift(a[0]); return l(k).length
+      case 'LTRIM': kv.set(k, l(k).slice(Number(a[0]), Number(a[1]) + 1)); return 'OK'
       case 'LRANGE': {
         const fin = Number(a[1])
         return l(k).slice(Number(a[0]), fin < 0 ? l(k).length + fin + 1 : fin + 1)
@@ -221,5 +226,45 @@ describe('la copie de nuit de la base', () => {
     fichiers.set(vieille, { contenu: Buffer.from('{}'), type: 'application/json' })
     await appel(copieBase, '')
     assert.equal(fichiers.has(vieille), false)
+  })
+})
+
+describe('douze couleurs pour une grande equipe', () => {
+  test('chacun recoit la teinte la moins portee, puis la garde', async () => {
+    const ids = Array.from({ length: 12 }, (_, i) => `e${i}`)
+    const tons = await E.tonsDe(ids)
+    assert.equal(new Set(Object.values(tons)).size, 12, 'douze personnes, douze teintes')
+    const encore = await E.tonsDe(['e3', 'e12', 'admin'])
+    assert.equal(encore.e3, tons.e3)
+    assert.equal('admin' in encore, false)
+    assert.ok(Number.isInteger(encore.e12) && encore.e12 < E.NB_TONS)
+    assert.equal(TONS.length, E.NB_TONS)
+  })
+
+  test("l'agenda donne a chaque telephone la couleur des personnes qu'il montre", async () => {
+    await appel(agenda, ADMIN, { corps: { action: 'enregistrer', rdv: { ...rdv('r1', jour(1)), pour: { id: 'e1', nom: 'Luc' } } } })
+    await appel(agenda, ADMIN, { corps: { action: 'enregistrer', rdv: { ...rdv('r2', jour(1)), pour: { id: 'e2', nom: 'Sophie' } } } })
+    const { tons } = (await appel(agenda, ADMIN)).corps
+    assert.deepEqual(Object.keys(tons).sort(), ['e1', 'e2'])
+    assert.notEqual(tons.e1, tons.e2)
+
+    retenirTons(tons)
+    assert.equal(tonPersonne('e1'), TONS[tons.e1])
+    assert.notEqual(tonPersonne('e1'), tonPersonne('e2'))
+    assert.equal(tonPersonne('admin'), 'accent')
+    assert.ok(TONS.includes(tonPersonne('inconnu')))
+  })
+})
+
+describe("le journal d'une grande equipe", () => {
+  test('garde bien plus que quelques semaines, et se lit page apres page', async () => {
+    for (let i = 0; i < 650; i++) await E.journaliser({ qui: 'Marc', role: 'employe', statut: 'envoye', ref: `AF-${i}` })
+    const premiere = (await appel(admin, ADMIN)).corps.journal
+    assert.equal(premiere.length, 300)
+    assert.equal(premiere[0].ref, 'AF-649')
+    const suite = (await appel(admin, ADMIN, { query: { journal: '300' } })).corps.journal
+    assert.deepEqual([suite.length, suite[0].ref], [300, 'AF-349'])
+    const fin = (await appel(admin, ADMIN, { query: { journal: '600' } })).corps.journal
+    assert.deepEqual([fin.length, fin.at(-1).ref], [50, 'AF-0'])
   })
 })

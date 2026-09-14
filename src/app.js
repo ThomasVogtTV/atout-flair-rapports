@@ -16,7 +16,7 @@ import { homeView, listeRapportsHTML, prochainHTML, alertesHTML } from './views/
 import { contactsView, ficheContactView, listeContactsHTML } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
-import { adminView } from './views/admin.js'
+import { adminView, PAGE_JOURNAL } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS, etapesNavHTML, verdictsHTML } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
@@ -296,6 +296,21 @@ async function rechargerAdmin() {
     ])
     view.admin = admin
     view.adminRapports = rapports
+  }
+  if (view.screen === 'admin') render()
+}
+
+// Les envois plus anciens du journal, par pages : a dix techniciens, quelques
+// semaines en remplissent deja trois cents.
+async function journalPlus() {
+  const a = view.admin
+  if (!a?.journal) return
+  try {
+    const { journal = [] } = await adminAppel('GET', null, { journal: String(a.journal.length) })
+    a.journal = [...a.journal, ...journal]
+    a.journalComplet = journal.length < PAGE_JOURNAL
+  } catch (err) {
+    toast(err.message || 'Journal illisible.')
   }
   if (view.screen === 'admin') render()
 }
@@ -1651,6 +1666,7 @@ root.addEventListener('click', async (ev) => {
     view.adminFiltre = el.closest('[data-act]').dataset.val
     return render()
   }
+  if (act === 'journal-plus') return journalPlus()
   if (act === 'admin-masquer-code') {
     view.adminCodeRevele = null
     return render()

@@ -206,6 +206,11 @@ function aValiderHTML(validations) {
     <ul class="report-list">${validations.map(ligneValidation).join('')}</ul>`
 }
 
+// Le journal arrive par pages de trois cents : une page pleine en annonce
+// peut-etre une autre.
+export const PAGE_JOURNAL = 300
+const plusDEnvois = (a) => !(a.journalComplet ?? (a.journal?.length ?? 0) < PAGE_JOURNAL)
+
 // Un filtre par personne presente dans le journal. Inutile tant qu'une seule
 // personne a envoye quelque chose.
 function filtres(journal, actif) {
@@ -257,5 +262,6 @@ export function adminView(view) {
       <ul class="report-list">
         ${journal.map(ligneJournal).join('') || `<li class="empty">Aucun envoi enregistré pour l'instant.</li>`}
       </ul>
+      ${plusDEnvois(a) ? `<button class="btn ghost wide" data-act="journal-plus">Voir les envois plus anciens</button>` : ''}
     </section>`
 }

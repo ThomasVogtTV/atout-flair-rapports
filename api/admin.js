@@ -52,6 +52,11 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
+      // Les envois plus anciens du journal, page apres page.
+      if (req.query?.journal !== undefined) {
+        const depuis = Math.max(0, Math.floor(Number(req.query.journal)) || 0)
+        return res.status(200).json({ journal: await lireJournal(300, depuis) })
+      }
       const [equipe, journal, validations, copie] = await Promise.all([listerEmployes(), lireJournal(300), aValider(), derniereCopie()])
       return res.status(200).json({ base: true, ...equipe, journal, validations, copie })
     }

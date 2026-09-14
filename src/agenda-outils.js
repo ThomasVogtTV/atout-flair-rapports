@@ -194,13 +194,30 @@ export function disposerJour(rdvs) {
 }
 
 // La couleur d'une personne : toujours la meme pour la meme personne, sur tous
-// les telephones, sans rien avoir a enregistrer. Le patron garde le petrole de
-// la marque - qui ne figure donc pas dans la liste, pour qu'aucun employe ne
-// porte la meme couleur que lui.
-const TONS = ['ardoise', 'prune', 'green', 'amber', 'red']
+// les telephones. Le patron garde le petrole de la marque - qui ne figure donc
+// pas dans la liste, pour qu'aucun employe ne porte la meme couleur que lui.
+//
+// Douze teintes, et c'est le serveur qui les distribue (voir tonsDe dans
+// api/_lib/equipe.js) : chacun recoit la moins portee au moment ou il apparait
+// dans l'agenda, puis la garde. Tirees de l'identifiant, cinq teintes pour dix
+// techniciens donnaient forcement des collegues de la meme couleur.
+export const TONS = ['ardoise', 'prune', 'green', 'amber', 'red', 'bleu', 'rose', 'olive', 'orange', 'violet', 'brun', 'gris']
+
+// Les teintes attribuees, telles que l'agenda les a donnees.
+let attribuees = new Map()
+
+/** Retient les teintes distribuees par le serveur : { id: numero }. */
+export function retenirTons(tons) {
+  if (!tons || typeof tons !== 'object') return
+  attribuees = new Map(Object.entries(tons).filter(([, n]) => Number.isInteger(n) && n >= 0))
+}
 
 export function tonPersonne(id) {
   if (!id || id === 'admin') return 'accent'
+  const n = attribuees.get(String(id))
+  if (n !== undefined) return TONS[n % TONS.length]
+  // Pas encore distribuee (agenda garde par une version plus ancienne) : une
+  // teinte tiree de l'identifiant, stable en attendant.
   let somme = 0
   for (const c of String(id)) somme = (somme * 31 + c.charCodeAt(0)) >>> 0
   return TONS[somme % TONS.length]

@@ -87,6 +87,7 @@ function fauxRedis() {
       case 'HGETALL': return kv.has(k) ? [...h(k)].flat() : []
       case 'HDEL': return a.filter((f) => h(k).delete(f)).length
       case 'INCR': { const n = (Number(kv.get(k)) || 0) + 1; kv.set(k, String(n)); return n }
+      case 'HSETNX': if (h(k).has(a[0])) return 0; h(k).set(a[0], a[1]); return 1
       case 'SADD': s(k).add(a[0]); return 1
       default: throw new Error('commande non imitee : ' + cmd)
     }

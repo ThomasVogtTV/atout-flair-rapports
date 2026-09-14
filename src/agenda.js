@@ -5,20 +5,24 @@
 // toute l'equipe, il n'a qu'une seule version.
 
 import { currentCode } from './mailer.js'
-import { fichierIcs, lienGoogleAgenda } from './agenda-outils.js'
+import { fichierIcs, lienGoogleAgenda, retenirTons } from './agenda-outils.js'
 
 const CACHE_KEY = 'af-agenda'
 
 /** La derniere version de l'agenda lue sur ce telephone, ou null. */
 export function agendaEnCache() {
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null')
+    const data = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null')
+    retenirTons(data?.tons)
+    return data
   } catch {
     return null
   }
 }
 
 function retenir(data) {
+  // Les couleurs de l'equipe arrivent avec l'agenda.
+  retenirTons(data?.tons)
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(data))
   } catch {
