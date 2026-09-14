@@ -58,6 +58,12 @@ describe("les envois rates, sur l'accueil de l'administrateur", () => {
     assert.equal(compter(undefined), 0)
     assert.equal(compter([ligne('envoye'), ligne('a-valider'), ligne('refuse', { validePar: 'Administrateur' })]), 0)
   })
+
+  test('a plusieurs administrateurs, chacun voit les envois rates des autres, pas les siens', () => {
+    const journal = [ligne('echec', { qui: 'Marie', role: 'admin', id: 'e7' }), ligne('echec', { qui: 'Administrateur', role: 'admin', id: 'admin' })]
+    assert.deepEqual(echecsARegarder(journal, { maintenant: MAINTENANT, moi: 'e7' }).map((j) => j.qui), ['Administrateur'])
+    assert.deepEqual(echecsARegarder(journal, { maintenant: MAINTENANT }).map((j) => j.qui), ['Marie'])
+  })
 })
 
 describe("le journal vu dans l'onglet Administration", () => {

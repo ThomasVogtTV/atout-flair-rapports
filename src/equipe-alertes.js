@@ -6,8 +6,9 @@
 // au-dela, ce n'est plus une nouvelle, c'est le journal.
 //
 // Ne comptent pas :
-// - les envois de l'administrateur lui-meme : son telephone les garde en file,
-//   et l'alerte "envoi a corriger" du poste les signale deja ;
+// - ses propres envois : son telephone les garde en file, et l'alerte "envoi a
+//   corriger" du poste les signale deja (a plusieurs administrateurs, chacun
+//   voit ceux des autres) ;
 // - les rapports d'invites relus par l'administrateur : l'erreur s'est affichee
 //   sous ses yeux, au moment de valider ;
 // - un envoi rate puis reparti : le meme rapport, de la meme personne, a fini
@@ -42,11 +43,13 @@ export function marquerJournalVu(journal) {
 }
 
 /** Les envois rates a signaler. Le journal arrive du plus recent au plus ancien. */
-export function echecsARegarder(journal, { vu = 0, maintenant = Date.now() } = {}) {
+export function echecsARegarder(journal, { vu = 0, maintenant = Date.now(), moi = 'admin' } = {}) {
   const lignes = journal ?? []
   const depuis = Math.max(vu, maintenant - SEMAINE)
   return lignes.filter((j, i) => {
-    if (j.statut !== 'echec' || j.role === 'admin' || j.validePar) return false
+    if (j.statut !== 'echec' || j.validePar) return false
+    // Une ligne d'avant l'identifiant venue d'un administrateur : c'etait le titulaire.
+    if ((j.id ?? (j.role === 'admin' ? 'admin' : null)) === moi) return false
     if (!(Number(j.date) > depuis)) return false
     // Reparti depuis : une ligne plus recente, de la meme personne, pour le meme rapport.
     return !(j.ref && lignes.slice(0, i).some((k) => k.statut === 'envoye' && k.qui === j.qui && k.ref === j.ref))

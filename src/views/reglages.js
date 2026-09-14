@@ -66,7 +66,7 @@ function jaugeHTML(place) {
 function sessionTexte() {
   const i = identite()
   if (!i) return 'Aucune session sur cet appareil.'
-  if (i.role === 'admin') return 'Administrateur'
+  if (i.role === 'admin') return i.id ? `${i.nom} · admin` : 'Administrateur'
   if (i.role === 'invite') {
     const fin = i.fin ? ` jusqu'au ${new Date(i.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}` : ''
     return `${i.nom} · invité${fin}`

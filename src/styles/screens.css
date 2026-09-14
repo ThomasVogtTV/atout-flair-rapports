@@ -159,6 +159,9 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .admin-emp .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-emp .row-actions .btn { flex: 1; }
 .admin-filtres { margin: 0 0 10px; }
+/* L'export du mois : le choix du mois, le bouton a sa droite. */
+.admin-export { display: flex; gap: 8px; margin: 0 0 12px; }
+.admin-export select { flex: 1; min-width: 0; }
 /* Venu de l'alerte des envois rates, l'ecran descend jusqu'au journal : son
    titre s'arrete sous l'en-tete colle en haut, et non dessous. */
 #journal-envois { scroll-margin-top: calc(var(--bandeau, 0px) + 76px); }

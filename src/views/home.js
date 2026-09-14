@@ -277,7 +277,7 @@ function sessionHTML() {
   const invite = ident.role === 'invite'
   const jusqua =
     invite && ident.fin ? ` · jusqu'au ${new Date(ident.fin).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long' })}` : ''
-  const texte = ident.role === 'admin' ? 'Administrateur' : invite ? `Invité · ${ident.nom}${jusqua}` : ident.nom
+  const texte = ident.role === 'admin' ? (ident.id ? `${ident.nom} · admin` : 'Administrateur') : invite ? `Invité · ${ident.nom}${jusqua}` : ident.nom
   return `<span class="poste-session ${ident.role}">${esc(texte)}</span>`
 }
 
@@ -349,7 +349,7 @@ export function alertesHTML(view) {
   const memoirePleine = (view.stockage?.part ?? 0) > S.STOCKAGE_ALERTE
   const admin = estAdmin()
   const aValider = admin ? (view.admin?.validations?.length ?? 0) : 0
-  const rates = admin ? echecsARegarder(view.admin?.journal, { vu: journalVu() }).length : 0
+  const rates = admin ? echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: identite()?.id ?? 'admin' }).length : 0
   const alertes = [
     view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true, act: 'open-envois' },
     aValider && { t: `${aValider} rapport${aValider > 1 ? 's' : ''} à valider`, act: 'open-admin' },

@@ -300,6 +300,25 @@ async function rechargerAdmin() {
   if (view.screen === 'admin') render()
 }
 
+// L'export de facturation d'un mois (voir api/_lib/export.js) : un fichier CSV
+// que le telephone partage ou telecharge, pour le tableur de la comptabilite.
+async function exporterEnvois() {
+  const mois = root.querySelector('[data-export-mois]')?.value
+  if (!mois) return
+  view.exportMois = mois
+  showLoading('Préparation de l’export…')
+  try {
+    const { csv, nom, nombre } = await adminAppel('GET', null, { export: mois })
+    hideLoading()
+    if (!nombre) return toast('Aucun envoi ce mois-là.')
+    await shareOrDownload(new Blob([csv], { type: 'text/csv;charset=utf-8' }), nom)
+    toast(`${nombre} envoi${nombre > 1 ? 's' : ''} exporté${nombre > 1 ? 's' : ''}.`)
+  } catch (err) {
+    hideLoading()
+    toast(err.message || 'Export impossible.')
+  }
+}
+
 // Les envois plus anciens du journal, par pages : a dix techniciens, quelques
 // semaines en remplissent deja trois cents.
 async function journalPlus() {
@@ -489,12 +508,16 @@ const CONFIRMATIONS = {
   revoquer: 'Révoquer cet employé ? Son code cessera de fonctionner à sa prochaine ouverture avec du réseau.',
   supprimer: 'Supprimer cet employé ? Son code cessera de fonctionner. Ses envois restent dans le journal.',
   'nouveau-code': "Donner un nouveau code à cet employé ? L'ancien cessera de fonctionner.",
+  'administrateur:oui':
+    "Donner l'accès administrateur ? Cette personne pourra gérer l'équipe et ses codes, valider les rapports des invités et exporter les envois.",
+  'administrateur:non': "Retirer l'accès administrateur ? Cette personne redevient employée à sa prochaine ouverture avec du réseau.",
 }
 
-async function adminAction(action, id) {
-  if (CONFIRMATIONS[action] && !confirm(CONFIRMATIONS[action])) return
+async function adminAction(action, id, oui) {
+  const question = CONFIRMATIONS[action === 'administrateur' ? `administrateur:${oui ? 'oui' : 'non'}` : action]
+  if (question && !confirm(question)) return
   try {
-    const r = await adminAppel('POST', { action, id })
+    const r = await adminAppel('POST', { action, id, ...(action === 'administrateur' ? { oui } : {}) })
     if (r.code) {
       const e = view.admin?.employes?.find((x) => x.id === id)
       view.adminCodeRevele = { nom: e?.nom ?? '', code: r.code }
@@ -709,6 +732,7 @@ async function editerRdv(rdv = null, creneau = {}) {
     reports: view.reports ?? [],
     equipe,
     admin,
+    moi: view.agenda?.moi,
     choisirContact,
     date,
     heure: creneau.heure,
@@ -1660,13 +1684,14 @@ root.addEventListener('click', async (ev) => {
   if (act === 'valid-envoyer' || act === 'valid-refuser') return traiterValidation(act, el.closest('[data-act]').dataset.id)
   if (act === 'admin-action') {
     const b = el.closest('[data-act]')
-    return adminAction(b.dataset.action, b.dataset.id)
+    return adminAction(b.dataset.action, b.dataset.id, b.dataset.oui === '1')
   }
   if (act === 'admin-filtre') {
     view.adminFiltre = el.closest('[data-act]').dataset.val
     return render()
   }
   if (act === 'journal-plus') return journalPlus()
+  if (act === 'exporter-envois') return exporterEnvois()
   if (act === 'admin-masquer-code') {
     view.adminCodeRevele = null
     return render()

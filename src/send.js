@@ -90,7 +90,7 @@ export async function previewPdf(report, children) {
  * automatique ne peut pas aboutir.
  */
 export async function shareOrDownload(blob, filename) {
-  const file = new File([blob], filename, { type: 'application/pdf' })
+  const file = new File([blob], filename, { type: blob.type || 'application/pdf' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: filename })

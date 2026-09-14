@@ -415,6 +415,7 @@ input[type='radio'] {
 .pill.amodifier { color: var(--c-fauve-ink); background: var(--c-fauve-soft); }
 .pill.off { color: var(--c-danger); background: var(--c-danger-soft); }
 .pill.invite { color: var(--c-fauve-ink); background: var(--c-fauve-soft); }
+.pill.admin { color: var(--c-brand-ink); background: color-mix(in srgb, var(--c-brand) var(--voile), transparent); }
 
 .counter-pills { display: inline-flex; gap: 6px; }
 .count-pill {

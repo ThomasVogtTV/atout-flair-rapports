@@ -28,6 +28,7 @@ function fauxRedis() {
       case 'SREM': return s(k).delete(a[0]) ? 1 : 0
       case 'SMEMBERS': return [...s(k)]
       case 'LPUSH': l(k).unshift(a[0]); return l(k).length
+      case 'RPUSH': l(k).push(a[0]); return l(k).length
       case 'LTRIM': kv.set(k, l(k).slice(Number(a[0]), Number(a[1]) + 1)); return 'OK'
       case 'LRANGE': return l(k).slice(Number(a[0]), Number(a[1]) + 1)
       default: throw new Error('commande non imitee : ' + cmd)

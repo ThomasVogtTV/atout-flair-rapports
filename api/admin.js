@@ -24,11 +24,20 @@ import {
   retirerValidation,
   Erreur400,
   derniereCopie,
+  estTitulaire,
+  estAdministrateur,
+  changerAdministrateur,
+  lireEnvoisDuMois,
 } from './_lib/equipe.js'
+import { envoisDuMois, enCsv } from './_lib/export.js'
 import { boiteIndisponible, envoyerMail, consigner, cheminPdfValidation } from './_lib/mail.js'
 import { stockageConfigure, lireFichier, supprimerFichiers } from './_lib/stockage.js'
 
 const ID_OK = /^[\w-]{1,64}$/
+const MOIS_OK = /^\d{4}-(0[1-9]|1[0-2])$/
+// Les gestes qui touchent a un compte : sur celui d'un administrateur, ils sont
+// reserves au code principal.
+const GESTES_COMPTE = new Set(['changer-fin', 'nouveau-code', 'revoquer', 'reactiver', 'supprimer'])
 // Une demande traitee reste lisible par l'invite le temps qu'il la voie passer,
 // puis s'efface d'elle-meme.
 const GARDE_TRAITEES = 60 * 24 * 60 * 60 * 1000
@@ -52,16 +61,32 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
+      // L'export de facturation d'un mois : les envois partis, en CSV. Ceux
+      // d'avant le rangement par mois viennent du journal courant.
+      if (req.query?.export !== undefined) {
+        const mois = String(req.query.export)
+        if (!MOIS_OK.test(mois)) return res.status(400).json({ error: 'Mois invalide' })
+        const [duMois, courant] = await Promise.all([lireEnvoisDuMois(mois), lireJournal(10000)])
+        const envois = envoisDuMois([...duMois, ...courant], mois)
+        return res.status(200).json({ mois, nombre: envois.length, nom: `envois-atout-flair-${mois}.csv`, csv: enCsv(envois) })
+      }
       // Les envois plus anciens du journal, page apres page.
       if (req.query?.journal !== undefined) {
         const depuis = Math.max(0, Math.floor(Number(req.query.journal)) || 0)
         return res.status(200).json({ journal: await lireJournal(300, depuis) })
       }
       const [equipe, journal, validations, copie] = await Promise.all([listerEmployes(), lireJournal(300), aValider(), derniereCopie()])
-      return res.status(200).json({ base: true, ...equipe, journal, validations, copie })
+      return res.status(200).json({ base: true, ...equipe, journal, validations, copie, titulaire: estTitulaire(ident) })
     }
     if (req.method === 'POST') {
-      const { action, id, nom, fin, motif } = req.body ?? {}
+      const { action, id, nom, fin, motif, oui } = req.body ?? {}
+      if ((action === 'administrateur' || (GESTES_COMPTE.has(action) && (await estAdministrateur(id)))) && !estTitulaire(ident)) {
+        return res.status(403).json({ error: 'Seul le code principal gère les administrateurs.' })
+      }
+      if (action === 'administrateur') {
+        await changerAdministrateur(id, oui === true)
+        return res.status(200).json({ ok: true })
+      }
       if (action === 'creer') return res.status(200).json(await creerEmploye(nom, { fin }))
       if (action === 'changer-fin') {
         await changerFin(id, fin)
@@ -76,8 +101,8 @@ export default async function handler(req, res) {
         await supprimerEmploye(id)
         return res.status(200).json({ ok: true })
       }
-      if (action === 'valider') return valider(id, res)
-      if (action === 'refuser') return refuser(id, motif, res)
+      if (action === 'valider') return valider(id, ident, res)
+      if (action === 'refuser') return refuser(id, motif, ident, res)
       return res.status(400).json({ error: 'Action inconnue' })
     }
     res.setHeader('Allow', 'GET, POST')
@@ -121,7 +146,7 @@ async function lirePdf(id, res) {
   return res.status(200).json({ pdfBase64: f.contenu.toString('base64') })
 }
 
-async function valider(id, res) {
+async function valider(id, ident, res) {
   const v = await demandeEnAttente(id, res)
   if (!v) return
   const indisponible = boiteIndisponible()
@@ -133,21 +158,21 @@ async function valider(id, res) {
     await envoyerMail({ ...v, pdf: f.contenu })
   } catch (err) {
     console.error('Envoi impossible', err)
-    await consigner(auteur(v), v, 'echec', { erreur: String(err?.message ?? err), validePar: 'Administrateur' })
+    await consigner(auteur(v), v, 'echec', { erreur: String(err?.message ?? err), validePar: ident.nom })
     return res.status(502).json({ error: String(err?.message ?? err) })
   }
   await ecrireValidation({ ...v, statut: 'envoye', traite: Date.now() })
   await supprimerFichiers([cheminPdfValidation(v.id)])
-  await consigner(auteur(v), v, 'envoye', { validePar: 'Administrateur' })
+  await consigner(auteur(v), v, 'envoye', { validePar: ident.nom })
   return res.status(200).json({ ok: true })
 }
 
-async function refuser(id, motif, res) {
+async function refuser(id, motif, ident, res) {
   const v = await demandeEnAttente(id, res)
   if (!v) return
   const propre = String(motif ?? '').trim().slice(0, 300)
   await ecrireValidation({ ...v, statut: 'refuse', motif: propre, traite: Date.now() })
   if (stockageConfigure()) await supprimerFichiers([cheminPdfValidation(v.id)])
-  await consigner(auteur(v), v, 'refuse', { erreur: propre || undefined, validePar: 'Administrateur' })
+  await consigner(auteur(v), v, 'refuse', { erreur: propre || undefined, validePar: ident.nom })
   return res.status(200).json({ ok: true })
 }

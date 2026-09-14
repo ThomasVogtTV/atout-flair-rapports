@@ -18,7 +18,7 @@
 // disparaitre sans que personne ne s'en apercoive.
 
 import * as db from './db.js'
-import { ecrireRapport } from './state.js'
+import { ecrireRapport, fullName } from './state.js'
 import { uid } from './state.js'
 import { askAppCode } from './ui/dialogs.js'
 import { hideLoading } from './ui/dom.js'
@@ -146,6 +146,8 @@ export async function sendReport(report, payload, blob) {
       meta: {
         ref: report.ref,
         type: report.type,
+        // Pour l'export de facturation : a qui le rapport est adresse.
+        client: fullName(report.mandant ?? {}),
         adresse:
           report.lieu?.adresseIntervention ||
           [report.lieu?.adresse, report.lieu?.npaLieu].filter(Boolean).join(', '),

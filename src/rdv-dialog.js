@@ -113,7 +113,7 @@ export function ouvrirRdv(rdv, { modifiable }) {
  * @param {{contacts: object[], reports: object[], equipe: object[]|null, admin: boolean, choisirContact: Function}} ctx
  * @returns {Promise<object|null>} le rendez-vous saisi, ou null si l'on renonce
  */
-export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirContact, date, heure, conflits, modele }) {
+export function formulaireRdv(rdv, { contacts, reports, equipe, admin, moi, choisirContact, date, heure, conflits, modele }) {
   // Un nouveau rendez-vous prend le jour touche dans le calendrier ; un modele
   // (le controle propose apres un rapport positif) le remplit d'avance.
   const r = rdv
@@ -131,11 +131,16 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
         ...(modele ?? {}),
       }
 
+  // "Moi" : le titulaire du code principal, ou l'administrateur nomme qui tient
+  // le telephone - qui figure alors aussi dans l'equipe, et n'y est pas repete.
+  const soi = moi?.id ? moi : { id: 'admin', nom: 'Administrateur' }
   const choixPour = admin
     ? `<label class="full">Pour
          <select data-f="pour">
-           <option value="admin">Moi (administrateur)</option>
+           <option value="${esc(soi.id)}">Moi</option>
+           ${soi.id !== 'admin' ? `<option value="admin"${r.pour?.id === 'admin' ? ' selected' : ''}>Administrateur</option>` : ''}
            ${(equipe ?? [])
+             .filter((e) => e.id !== soi.id)
              .map((e) => `<option value="${esc(e.id)}"${r.pour?.id === e.id ? ' selected' : ''}>${esc(e.nom)}${e.invite ? ' (invité)' : ''}</option>`)
              .join('')}
          </select>
@@ -214,7 +219,12 @@ export function formulaireRdv(rdv, { contacts, reports, equipe, admin, choisirCo
         r.lieu = { adresse: champ('adresse').value.trim(), npaLieu: champ('npaLieu').value.trim() }
         if (admin) {
           const v = champ('pour').value
-          r.pour = v === 'admin' ? { id: 'admin', nom: 'Administrateur' } : { id: v, nom: (equipe ?? []).find((e) => e.id === v)?.nom ?? '' }
+          r.pour =
+            v === soi.id
+              ? { id: soi.id, nom: soi.nom }
+              : v === 'admin'
+                ? { id: 'admin', nom: 'Administrateur' }
+                : { id: v, nom: (equipe ?? []).find((e) => e.id === v)?.nom ?? '' }
         }
         // La double reservation se voit ici, pas le jour meme sur le pas de la
         // porte. On previent, on n'interdit pas : deux passages au meme moment

@@ -31,5 +31,5 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: motif || "Code d'accès invalide" })
   }
   await noterActivite(ident).catch((err) => console.error('Activité non notée', err))
-  return res.status(200).json({ role: ident.role, nom: ident.nom, ...(ident.fin ? { fin: ident.fin } : {}) })
+  return res.status(200).json({ role: ident.role, nom: ident.nom, ...(ident.id ? { id: ident.id } : {}), ...(ident.fin ? { fin: ident.fin } : {}) })
 }

@@ -34,8 +34,12 @@ export function nettoyerDuree(v) {
 
 export const idValable = (id) => typeof id === 'string' && ID_OK.test(id)
 
-/** Qui est derriere un code, sous la forme que l'agenda retient. */
-export const personne = (ident) => ({ id: ident.role === 'admin' ? 'admin' : ident.id, nom: ident.nom })
+/**
+ * Qui est derriere un code, sous la forme que l'agenda retient. Le titulaire du
+ * code principal est "admin" ; un administrateur nomme, comme tout employe,
+ * garde son propre identifiant.
+ */
+export const personne = (ident) => ({ id: ident.id ?? 'admin', nom: ident.nom })
 
 /** Le jour (AAAA-MM-JJ) a Lausanne, a un instant donne. */
 export const jourSuisse = (ms) => new Date(ms).toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' })

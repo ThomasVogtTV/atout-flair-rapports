@@ -3,10 +3,15 @@
 // Il ne montre que ce que le serveur sait - les envois, et les ouvertures de
 // l'app avec du reseau. Les brouillons restent sur le telephone de chacun :
 // l'onglet dit ce qui a ete remis aux clients, pas ce qui est en cours de saisie.
+//
+// Plusieurs administrateurs : le titulaire du code principal donne l'acces a qui
+// il veut. Les autres gerent l'equipe comme lui, mais les comptes des
+// administrateurs restent a lui seul (voir api/admin.js).
 
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { ilYA } from './envois.js'
+import { decalerMois, libelleMois } from '../agenda-outils.js'
 
 const TYPES = { detection: 'Détection', immeuble: 'Immeuble', hotel: 'Hôtel' }
 
@@ -59,7 +64,12 @@ function ligneAdmin(a) {
     </li>`
 }
 
-function ligneEmploye(e) {
+/**
+ * Une personne de l'equipe. `titulaire` : l'ecran est ouvert avec le code
+ * principal - lui seul donne l'acces administrateur et touche au compte d'un
+ * administrateur.
+ */
+function ligneEmploye(e, titulaire) {
   const vu = e.vu ? `vu ${ilYA(e.vu)}` : 'jamais connecté'
   const bloque = !e.actif || e.expire
   const pastille = !e.actif
@@ -68,9 +78,25 @@ function ligneEmploye(e) {
       ? ' <span class="pill off">Expiré</span>'
       : e.invite
         ? ' <span class="pill invite">Invité</span>'
-        : ''
+        : e.admin
+          ? ' <span class="pill admin">Admin</span>'
+          : ''
   const echeance = e.invite && e.fin ? (e.expire ? `terminé le ${jourLong(e.fin)}` : `jusqu'au ${jourLong(e.fin)}`) : ''
   const detail = [echeance, vu, `${e.envois} envoi${e.envois > 1 ? 's' : ''}`].filter(Boolean).join(' · ')
+  const gestes =
+    e.admin && !titulaire
+      ? ''
+      : `
+      <div class="row-actions">
+        <button class="btn ghost btn-mini" data-act="admin-action" data-action="nouveau-code" data-id="${e.id}">Nouveau code</button>
+        <button class="btn ghost btn-mini" data-act="admin-action" data-action="${e.actif ? 'revoquer' : 'reactiver'}" data-id="${e.id}">${e.actif ? 'Révoquer' : 'Réactiver'}</button>
+        <button class="btn ghost btn-mini" data-act="admin-action" data-action="supprimer" data-id="${e.id}">Supprimer</button>
+        ${
+          titulaire && !e.invite
+            ? `<button class="btn ghost btn-mini" data-act="admin-action" data-action="administrateur" data-oui="${e.admin ? '0' : '1'}" data-id="${e.id}">${e.admin ? 'Retirer l’admin' : 'Rendre admin'}</button>`
+            : ''
+        }
+      </div>`
   return `
     <li class="envoi-row admin-emp${bloque ? ' echec' : ''}">
       <div class="envoi-main">
@@ -82,11 +108,7 @@ function ligneEmploye(e) {
           ? `<label class="admin-fin">Accès jusqu'au <input type="date" data-changer-fin="${e.id}" value="${e.fin ? isoJour(e.fin) : ''}" /></label>`
           : ''
       }
-      <div class="row-actions">
-        <button class="btn ghost btn-mini" data-act="admin-action" data-action="nouveau-code" data-id="${e.id}">Nouveau code</button>
-        <button class="btn ghost btn-mini" data-act="admin-action" data-action="${e.actif ? 'revoquer' : 'reactiver'}" data-id="${e.id}">${e.actif ? 'Révoquer' : 'Réactiver'}</button>
-        <button class="btn ghost btn-mini" data-act="admin-action" data-action="supprimer" data-id="${e.id}">Supprimer</button>
-      </div>
+      ${gestes}
     </li>`
 }
 
@@ -109,7 +131,7 @@ function ligneJournal(j) {
       <div class="envoi-main">
         <strong>${esc(j.qui || '?')}</strong>
         <span class="muted">${esc(quoi || j.fichier || 'Rapport')}</span>
-        <span class="muted">→ ${esc(j.destinataire || '?')} · ${esc(ilYA(j.date))}${j.validePar ? ' · relu par l’administrateur' : ''}</span>
+        <span class="muted">→ ${esc(j.destinataire || '?')} · ${esc(ilYA(j.date))}${j.validePar ? ` · relu par ${esc(j.validePar)}` : ''}</span>
         ${motif ? `<span class="envoi-motif">${esc(motif)}</span>` : ''}
       </div>
       <div class="envoi-side"><span class="pill ${pastille}">${mot}</span></div>
@@ -211,6 +233,25 @@ function aValiderHTML(validations) {
 export const PAGE_JOURNAL = 300
 const plusDEnvois = (a) => !(a.journalComplet ?? (a.journal?.length ?? 0) < PAGE_JOURNAL)
 
+/**
+ * L'export de facturation : un mois des douze derniers, en CSV. Pendant la
+ * premiere semaine, le mois propose est celui qui vient de finir - c'est lui
+ * qu'on facture ; ensuite, le mois en cours.
+ */
+function exportHTML(view) {
+  const maintenant = new Date()
+  const courant = `${maintenant.getFullYear()}-${String(maintenant.getMonth() + 1).padStart(2, '0')}`
+  const mois = Array.from({ length: 12 }, (_, i) => decalerMois(courant, -i))
+  const choisi = mois.includes(view.exportMois) ? view.exportMois : maintenant.getDate() <= 7 ? mois[1] : mois[0]
+  return `
+    <div class="admin-export">
+      <select data-export-mois aria-label="Mois à exporter">
+        ${mois.map((m) => `<option value="${m}"${m === choisi ? ' selected' : ''}>${esc(libelleMois(m))}</option>`).join('')}
+      </select>
+      <button class="btn ghost" data-act="exporter-envois">Exporter</button>
+    </div>`
+}
+
 // Un filtre par personne presente dans le journal. Inutile tant qu'une seule
 // personne a envoye quelque chose.
 function filtres(journal, actif) {
@@ -251,13 +292,14 @@ export function adminView(view) {
       </div>
       <ul class="report-list">
         ${ligneAdmin(a.admin)}
-        ${a.employes.map(ligneEmploye).join('')}
+        ${a.employes.map((e) => ligneEmploye(e, a.titulaire)).join('')}
       </ul>
       ${a.employes.length ? '' : `<p class="muted small">Aucun employé pour l'instant. Ajoutez-en un : un code personnel lui sera attribué.</p>`}
 
       ${rapportsEquipeHTML(view)}
 
       <h2 class="section-title" id="journal-envois"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>
+      ${exportHTML(view)}
       ${filtres(a.journal, filtre)}
       <ul class="report-list">
         ${journal.map(ligneJournal).join('') || `<li class="empty">Aucun envoi enregistré pour l'instant.</li>`}

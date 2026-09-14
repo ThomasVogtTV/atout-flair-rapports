@@ -13,6 +13,7 @@
 //     la base ne donne aucun code utilisable.
 
 import { createHash, randomInt } from 'node:crypto'
+import { jourSuisse } from './agenda.js'
 
 const urlBase = () => process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
 const jeton = () => process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
@@ -59,6 +60,10 @@ const ADMIN = 'af:admin'
 const JOURNAL = 'af:journal'
 // De quoi retrouver un envoi de l'annee, meme a dix techniciens.
 const JOURNAL_MAX = 10000
+// Les envois partis, ranges aussi par mois et sans limite : c'est ce que relit
+// l'export de facturation (voir api/_lib/export.js).
+const ENVOIS = (mois) => `af:envois:${mois}`
+const MOIS_ENVOIS = 'af:envois:mois'
 
 // HGETALL rend une liste a plat [cle1, valeur1, cle2, valeur2...].
 const enObjet = (plat) => {
@@ -90,8 +95,18 @@ export async function identifier(code) {
   // Invite : l'acces s'arrete tout seul a la date prevue.
   if (emp.fin && Date.now() > Number(emp.fin)) return null
   if (emp.invite === '1') return { role: 'invite', id, nom: emp.nom, fin: Number(emp.fin) || null }
+  // Un employe a qui le code principal a donne l'acces administrateur.
+  if (emp.admin === '1') return { role: 'admin', id, nom: emp.nom }
   return { role: 'employe', id, nom: emp.nom }
 }
+
+/**
+ * Le titulaire du code principal (APP_CODE) : le seul administrateur sans fiche
+ * d'employe. Lui seul donne ou retire l'acces administrateur, et gere les
+ * comptes des autres administrateurs - sans quoi l'un d'eux pourrait se faire
+ * donner le code d'un autre, ou l'ecarter.
+ */
+export const estTitulaire = (ident) => ident?.role === 'admin' && !ident.id
 
 // --- essais de code en serie ---------------------------------------------------
 // Chaque adresse de reseau a droit a ESSAIS_MAX codes refuses par quart d'heure.
@@ -163,15 +178,28 @@ export async function pourquoiRefuse(code) {
 /** Note une ouverture de l'app, et le cas echeant un rapport parti. */
 export async function noterActivite(ident, { envoi = false, vu = true } = {}) {
   if (!ident || !baseConfiguree()) return
-  const cle = ident.role === 'admin' ? ADMIN : cleEmp(ident.id)
+  // Le titulaire du code principal n'a pas de fiche : son activite a sa propre cle.
+  const cle = ident.id ? cleEmp(ident.id) : ADMIN
   if (vu) await r('HSET', cle, 'vu', Date.now())
   if (envoi) await r('HINCRBY', cle, 'envois', 1)
 }
 
 export async function journaliser(entree) {
   if (!baseConfiguree()) return
-  await r('LPUSH', JOURNAL, JSON.stringify({ date: Date.now(), ...entree }))
+  const ligne = { date: Date.now(), ...entree }
+  const json = JSON.stringify(ligne)
+  await r('LPUSH', JOURNAL, json)
   await r('LTRIM', JOURNAL, 0, JOURNAL_MAX - 1)
+  if (ligne.statut === 'envoye') {
+    const mois = jourSuisse(ligne.date).slice(0, 7)
+    await r('RPUSH', ENVOIS(mois), json)
+    await r('SADD', MOIS_ENVOIS, mois)
+  }
+}
+
+/** Les envois partis dans un mois (AAAA-MM), du plus ancien au plus recent. */
+export async function lireEnvoisDuMois(mois) {
+  return ((await r('LRANGE', ENVOIS(mois), 0, -1)) ?? []).map(lireJson).filter(Boolean)
 }
 
 /** `n` lignes du journal, de la plus recente a la plus ancienne, a partir de la `depuis`-ieme. */
@@ -203,6 +231,7 @@ export async function listerEmployes() {
         vu: Number(e.vu) || null,
         envois: Number(e.envois) || 0,
         invite: e.invite === '1',
+        admin: e.admin === '1',
         fin: Number(e.fin) || null,
         expire: !!(Number(e.fin) && Date.now() > Number(e.fin)),
       }))
@@ -278,6 +307,16 @@ export async function changerStatut(id, actif) {
   await exiger(id)
   await r('HSET', cleEmp(id), 'actif', actif ? '1' : '0')
 }
+
+/** Donne ou retire l'acces administrateur. Un invite n'y a pas droit : son acces s'arrete a une date. */
+export async function changerAdministrateur(id, oui) {
+  const e = await exiger(id)
+  if (oui && e.invite === '1') throw new Erreur400('Un invité ne peut pas être administrateur')
+  await r('HSET', cleEmp(id), 'admin', oui ? '1' : '0')
+}
+
+/** Vrai si cette fiche porte l'acces administrateur. */
+export const estAdministrateur = async (id) => (await lireEmploye(String(id ?? '')))?.admin === '1'
 
 // --- numeros de rapport ------------------------------------------------------
 // Chaque telephone numerotait de son cote : deux techniciens sortaient chacun
@@ -476,6 +515,9 @@ export async function exporterBase() {
     sauvegardes: await hash(SAUVEGARDES),
     validations: await hash(VALIDATIONS),
     tons: await hash(TEINTES),
+    envois: Object.fromEntries(
+      await Promise.all(((await r('SMEMBERS', MOIS_ENVOIS)) ?? []).map(async (m) => [m, (await r('LRANGE', ENVOIS(m), 0, -1)) ?? []]))
+    ),
     journal: (await r('LRANGE', JOURNAL, 0, -1)) ?? [],
   }
 }

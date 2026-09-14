@@ -36,6 +36,7 @@ function fauxRedis() {
       case 'SADD': s(k).add(a[0]); return 1
       case 'SMEMBERS': return [...s(k)]
       case 'LPUSH': l(k).unshift(a[0]); return l(k).length
+      case 'RPUSH': l(k).push(a[0]); return l(k).length
       case 'LTRIM': kv.set(k, l(k).slice(Number(a[0]), Number(a[1]) + 1)); return 'OK'
       case 'LRANGE': {
         const fin = Number(a[1])

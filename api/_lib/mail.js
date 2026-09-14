@@ -69,7 +69,7 @@ export function demandeDEnvoi(corps) {
     subject: court(corps?.subject, 300),
     body: court(corps?.body, 20000),
     filename: court(corps?.filename, 160),
-    meta: { ref: court(m.ref, 40), type: court(m.type, 20), adresse: court(m.adresse), rapportId: court(m.rapportId, 64) },
+    meta: { ref: court(m.ref, 40), type: court(m.type, 20), client: court(m.client, 120), adresse: court(m.adresse), rapportId: court(m.rapportId, 64) },
   }
 }
 
@@ -86,9 +86,12 @@ export async function consigner(ident, demande, statut, { erreur, validePar } = 
     await journaliser({
       qui: ident.nom,
       role: ident.role,
+      // Qui, precisement : deux personnes peuvent porter le meme nom.
+      id: ident.id ?? 'admin',
       statut,
       ref: demande.meta?.ref ?? '',
       type: demande.meta?.type ?? '',
+      client: demande.meta?.client ?? '',
       adresse: demande.meta?.adresse ?? '',
       destinataire: demande.to,
       cc: demande.cc,
