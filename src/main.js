@@ -7,7 +7,7 @@ import '@fontsource/ibm-plex-mono/600.css'
 import './styles/index.css'
 import { installerIncidents } from './incidents.js'
 import { currentCode } from './mailer.js'
-import { boot } from './app.js'
+import { boot } from './terrain/demarrage.js'
 
 // Avant le demarrage : une erreur de l'ouverture doit, elle aussi, remonter.
 installerIncidents('terrain', { code: currentCode })
