@@ -229,3 +229,5 @@ span.contact-etoile svg { width: 15px; height: 15px; }
   border-radius: 10px;
 }
 .envoi-side { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+/* Un rapport d'invite en attente de relecture : la tranche ocre de l'attente. */
+.envoi-row.a-valider::before { background: var(--c-warning); }

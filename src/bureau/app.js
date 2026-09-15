@@ -1,7 +1,7 @@
 // Bureau : l'ecran ouvert, les donnees de l'equipe, et les gestes du planning et
 // de l'administration.
 //
-// Terrain (src/app.js) fait les rapports sur le telephone ; le Bureau organise.
+// Terrain (src/terrain/) fait les rapports sur le telephone ; le Bureau organise.
 // Les deux vivent a la meme adresse : le code d'acces, retenu une fois, vaut pour
 // les deux, et les donnees sont les memes. Seul un administrateur entre ici - un
 // employe y trouve le chemin de Terrain.
@@ -20,7 +20,7 @@ import { previewPdf, ouvrirPdf, shareOrDownload } from '../send.js'
 import { marquerJournalVu, incidentsVus, marquerIncidentsVus } from '../equipe-alertes.js'
 import { verifierMiseAJour } from '../mise-a-jour.js'
 import { appelIncidents } from '../incidents.js'
-import { PAGE_JOURNAL } from '../views/admin.js'
+import { PAGE_JOURNAL } from './rubriques.js'
 import { ECRANS, bureauView } from './vues.js'
 
 // Au bureau, la semaine est la vue de travail : c'est elle qui s'ouvre, tant

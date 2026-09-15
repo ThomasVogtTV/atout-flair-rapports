@@ -2,7 +2,7 @@
 // alertes de l'administrateur, les decisions sur les rapports d'un invite.
 
 import { root, toast } from '../ui/dom.js'
-import { alertesHTML } from '../views/home.js'
+import { alertesHTML, bureauHTML } from '../views/home.js'
 import { suivreValidations } from '../validations.js'
 import { estInvite, estAdmin, identite } from '../lock.js'
 import { adminAppel } from '../admin-api.js'
@@ -83,14 +83,17 @@ export async function rafraichirEquipe({ force = false } = {}) {
   majAlertes()
 }
 
-// Les alertes du poste. Comparees a ce qui est affiche plutot qu'au dernier
-// rendu : l'accueil entier a pu etre redessine entre-temps.
+// Les alertes du poste et la pastille du Bureau. Comparees a ce qui est affiche
+// plutot qu'au dernier rendu : l'accueil entier a pu etre redessine entre-temps.
 function majAlertes() {
   if (view.screen !== 'home') return
-  const zone = root.querySelector('.alertes-zone')
-  if (!zone) return
-  const neuf = alertesHTML(view)
-  if (zone.innerHTML !== neuf) zone.innerHTML = neuf
+  for (const [selecteur, html] of [
+    ['.alertes-zone', alertesHTML(view)],
+    ['.bureau-zone', bureauHTML(view)],
+  ]) {
+    const zone = root.querySelector(selecteur)
+    if (zone && zone.innerHTML !== html) zone.innerHTML = html
+  }
 }
 
 /** Retient la session dont l'ecran montre maintenant les donnees. */

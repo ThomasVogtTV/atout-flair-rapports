@@ -333,11 +333,9 @@ export function prochainHTML(view) {
 }
 
 /**
- * Ce qui reclame un geste, et rien d'autre. L'administrateur y trouve en plus
- * ce que l'equipe attend de lui : les rapports d'invites a relire, les envois
- * rates et les incidents techniques qu'il n'a pas encore vus (voir
- * src/equipe-alertes.js). Un tap ouvre la
- * bonne page du Bureau, ou vit tout le reste de l'equipe.
+ * Ce qui reclame un geste sur cet appareil, et rien d'autre : la memoire qui se
+ * remplit, la sauvegarde en retard. Les envois ont leur pastille sur le dock ;
+ * ce que l'equipe attend de l'administrateur, la sienne sur le bouton du Bureau.
  */
 export function alertesHTML(view) {
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
@@ -346,36 +344,28 @@ export function alertesHTML(view) {
   const enLigneRecente = Date.now() - derniereSauvegarde() < 7 * 86_400_000
   const sauvegardeEnRetard = view.reports.length > 0 && !enLigneRecente && (jours === null || jours > 30)
   const memoirePleine = (view.stockage?.part ?? 0) > S.STOCKAGE_ALERTE
-  const admin = estAdmin()
-  const aValider = admin ? (view.admin?.validations?.length ?? 0) : 0
-  const rates = admin ? echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: identite()?.id ?? 'admin' }).length : 0
-  const incidents = admin ? incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length : 0
-  const alertes = [
-    view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true, act: 'open-envois' },
-    aValider && { t: `${aValider} rapport${aValider > 1 ? 's' : ''} à valider`, lien: '/bureau/#valider' },
-    rates && {
-      t: `${rates} envoi${rates > 1 ? 's' : ''} raté${rates > 1 ? 's' : ''} dans l’équipe`,
-      alerte: true,
-      lien: '/bureau/#envois',
-    },
-    incidents && {
-      t: `${incidents} incident${incidents > 1 ? 's' : ''} technique${incidents > 1 ? 's' : ''}`,
-      alerte: true,
-      lien: '/bureau/#incidents',
-    },
-    !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente`, act: 'open-envois' },
-    memoirePleine && { t: 'Mémoire presque pleine', alerte: true, act: 'open-reglages' },
-    sauvegardeEnRetard && { t: 'Sauvegarde à faire', alerte: true, act: 'open-reglages' },
-  ].filter(Boolean)
+  const alertes = [memoirePleine && 'Mémoire presque pleine', sauvegardeEnRetard && 'Sauvegarde à faire'].filter(Boolean)
   if (!alertes.length) return ''
   return `<div class="poste-alertes">${alertes
-    .map(
-      (m) =>
-        m.lien
-          ? `<a class="poste-alerte${m.alerte ? ' alerte' : ''}" href="${m.lien}">${esc(m.t)}</a>`
-          : `<button type="button" class="poste-alerte${m.alerte ? ' alerte' : ''}" data-act="${m.act}">${esc(m.t)}</button>`
-    )
+    .map((t) => `<button type="button" class="poste-alerte alerte" data-act="open-reglages">${esc(t)}</button>`)
     .join('')}</div>`
+}
+
+/**
+ * Le passage au Bureau, pour l'administrateur, et ce que l'equipe y attend de
+ * lui : les rapports d'invites a relire, les envois rates et les incidents qu'il
+ * n'a pas encore vus (voir src/equipe-alertes.js). Une seule pastille, qui ouvre
+ * la page ou il y a quelque chose - le detail vit dans le menu du Bureau.
+ */
+export function bureauHTML(view) {
+  if (!estAdmin()) return ''
+  const aValider = view.admin?.validations?.length ?? 0
+  const rates = echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: identite()?.id ?? 'admin' }).length
+  const incidents = incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length
+  const n = aValider + rates + incidents
+  const page = aValider ? '#valider' : rates ? '#envois' : incidents ? '#incidents' : ''
+  const compte = n ? `<b class="poste-bureau-compte${rates || incidents ? ' alerte' : ''}">${n}</b>` : ICONS.suivant
+  return `<a class="poste-bureau" href="/bureau/${page}">${ICONES_3D.admin}<span>Bureau</span>${compte}</a>`
 }
 
 /**
@@ -383,9 +373,9 @@ export function alertesHTML(view) {
  * reclame un geste. Les alertes ont leur zone : l'equipe se relit en ligne apres
  * l'affichage, et ce qu'elle apporte s'y pose sans redessiner l'accueil.
  *
- * Un administrateur y trouve, face a son nom, le passage au Bureau : le planning
- * de l'equipe et l'administration. Un bouton qui dit ou il mene - une icone
- * seule, dans l'en-tete, ne se reconnaissait pas.
+ * Un administrateur y trouve, face a son nom, le passage au Bureau (voir
+ * bureauHTML). Il a sa zone, comme les alertes : l'equipe se relit en ligne apres
+ * l'affichage.
  */
 function posteHTML(view) {
   return `
@@ -393,7 +383,7 @@ function posteHTML(view) {
       ${LIGNES_FLAIR}
       <div class="poste-tete">
         ${sessionHTML()}
-        ${estAdmin() ? `<a class="poste-bureau" href="/bureau/">${ICONES_3D.admin}<span>Bureau</span>${ICONS.suivant}</a>` : ''}
+        <span class="bureau-zone">${bureauHTML(view)}</span>
       </div>
       <div class="prochain-zone">${prochainHTML(view)}</div>
       <div class="alertes-zone">${alertesHTML(view)}</div>

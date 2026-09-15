@@ -134,7 +134,7 @@ export async function repriseCompteur() {
 // Constat par defaut, pre-rempli a la creation : c'est le cas le plus frequent
 // et l'issue qu'un rapport doit enoncer explicitement plutot que de laisser
 // vide. Le champ reste modifiable, et l'app le vide d'elle-meme des qu'une
-// piece est declaree contaminee (voir app.js) pour qu'un rapport ne puisse pas
+// piece est declaree contaminee (voir src/terrain/) pour qu'un rapport ne puisse pas
 // affirmer l'inverse de son propre tableau.
 export const DEFAULT_REMARQUES =
   'Aucun marquage du chien de recherche. Aucune trace de punaises de lit visible.'
@@ -153,7 +153,7 @@ export function newReport(type) {
     rows: [],
     remarques: DEFAULT_REMARQUES,
     // Qui a fait la detection : recopie du technicien par defaut a l'ouverture
-    // (voir app.js). Stocke dans le rapport et non lu au moment du PDF, pour
+    // (voir src/terrain/). Stocke dans le rapport et non lu au moment du PDF, pour
     // qu'un rapport garde la signature de celui qui etait sur place, meme si
     // le technicien par defaut change ensuite.
     technicien: { nom: '', signature: null },
@@ -286,7 +286,7 @@ export function rouvrirReport(report) {
  * L'ecriture refusee est le seul echec de l'app qui coute du travail : sans
  * signal, la photo reste a l'ecran, le rapport parait enregistre, et tout
  * disparait au rechargement. Ce fichier n'a pas a connaitre l'interface, il se
- * contente de prevenir qui veut l'entendre (voir app.js).
+ * contente de prevenir qui veut l'entendre (voir src/terrain/).
  */
 let signalEcriture = null
 export const onEcritureRefusee = (fn) => {

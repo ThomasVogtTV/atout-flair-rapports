@@ -1,6 +1,6 @@
-// La tournee d'un jour, pour l'administrateur : sur l'accueil de Terrain celle
-// d'aujourd'hui, dans le planning du Bureau celle du jour choisi. Un technicien
-// a son agenda, il n'a pas a savoir depuis son accueil ce que fait le voisin.
+// La tournee d'un jour, dans le planning du Bureau : qui est ou le jour choisi.
+// Un technicien a son agenda dans Terrain, il n'a pas a savoir depuis son
+// accueil ce que fait le voisin.
 //
 // Elle ne repond qu'a la question qu'on se pose quand on tient la boite : "qui
 // est ou ce jour-la ?" - la tournee de chacun, et l'itineraire complet en un

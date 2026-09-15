@@ -234,9 +234,10 @@ rouvrir.
 | `src/templates.js` | Définition des trois types de rapport (colonnes, champs, pièces) |
 | `src/state.js` | Modèle de données, persistance, carnet d'adresses, nom de fichier |
 | `src/db.js` | Wrapper IndexedDB (rapports, contacts, file d'envoi, réglages) |
-| `src/app.js` | Chef d'orchestre : état de l'écran, rendu, interactions, démarrage |
-| `src/views/` | Le HTML de chaque écran : `home.js`, `contacts.js`, `editor.js`, `envois.js`, `agenda.js`, `admin.js`, `tableau.js` (le tableau de l'administrateur) |
-| `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `theme.js`, `dialogs.js`, `chips.js`, `dragsort.js` (glissement des cartes) |
+| `src/terrain/` | Terrain, un module par sujet : `etat.js` (l'écran courant), `rendu.js`, `navigation.js`, `session.js`, `rapport.js`, `agenda.js`, `carnet.js`, `photos.js`, `sauvegardes.js`, `retour.js` (geste retour), `gestes.js` (chaque geste reconnu dans l'ordre), `demarrage.js` |
+| `src/bureau/` | Le Bureau : `app.js` (données et gestes), `vues.js` (menu et pages), `rubriques.js` (équipe, validations, rapports de l'équipe, journal), `tableau.js` (tournée du jour) |
+| `src/views/` | Le HTML de chaque écran de Terrain : `home.js`, `contacts.js`, `editor.js`, `envois.js`, `agenda.js` (aussi le calendrier du Bureau), `reglages.js` |
+| `src/ui/` | Briques communes : `dom.js` (toast, chargement), `icons.js`, `icones3d.js`, `temps.js` (« il y a 3 min »), `theme.js`, `dialogs.js`, `chips.js`, `dragsort.js` (glissement des cartes) |
 | `src/lock.js` | Le verrou : code demandé à l'ouverture, mémorisation, révocation |
 | `src/agenda.js`, `src/agenda-outils.js` | L'agenda de l'équipe : lecture en ligne et cache, puis ce qui se calcule sans réseau |
 | `src/send.js` | Aperçu PDF, dialogue d'envoi, partage vers la messagerie |
@@ -315,8 +316,9 @@ action de terrain. Il s'y choisit entre **Système**, **Clair** et **Sombre** ; 
 bouton bascule ne connaissait que les deux derniers et, une fois touché, ne savait plus
 rendre la main au réglage du téléphone.
 
-Pour retoucher un écran, ouvrir le fichier de `src/views/` qui porte son nom ; `app.js`
-ne contient plus que l'enchaînement des écrans et les réactions aux gestes de l'utilisateur.
+Pour retoucher un écran de Terrain, ouvrir le fichier de `src/views/` qui porte son nom ;
+ce qu'il fait se trouve dans le module de `src/terrain/` du même sujet, et le geste qui
+le déclenche dans `src/terrain/gestes.js`.
 
 ## À compléter
 

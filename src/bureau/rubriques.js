@@ -10,11 +10,11 @@
 //
 // Chaque rubrique se dessine seule (equipeHTML, validationsHTML,
 // rapportsEquipeHTML, journalHTML) : le Bureau en fait chacune une page, avec
-// son propre titre.
+// son propre titre (voir vues.js).
 
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
-import { ilYA } from './envois.js'
+import { ilYA } from '../ui/temps.js'
 import { decalerMois, libelleMois, tonPersonne } from '../agenda-outils.js'
 
 const TYPES = { detection: 'Détection', immeuble: 'Immeuble', hotel: 'Hôtel' }
@@ -38,17 +38,6 @@ export const AIDE_BASE = `
   <p class="muted small">Le journal a besoin d'une petite base de données, gratuite à cette échelle.
   Dans Vercel : <b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b> → région
   <b>Europe (Frankfurt)</b> → la relier au projet <b>atout-flair-rapports</b>, puis redéployer.</p>`
-
-function entete(copie) {
-  return `
-    <header class="top editor-top">
-      <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
-      <div class="top-title">
-        <h1>Administration</h1>
-        <p class="muted">Équipe et envois${copie ? ` · base copiée ${esc(ilYA(copie))}` : ''}</p>
-      </div>
-    </header>`
-}
 
 // Le code n'est montre qu'une fois, a la creation : le serveur n'en garde que
 // l'empreinte et ne pourrait plus le redonner.
@@ -329,24 +318,4 @@ export function equipeHTML(view, { titre = true } = {}) {
       ${a.employes.map((e) => ligneEmploye(e, a.titulaire)).join('')}
     </ul>
     ${a.employes.length ? '' : `<p class="muted small">Aucun employé pour l'instant. Ajoutez-en un : un code personnel lui sera attribué.</p>`}`
-}
-
-/** L'onglet Administration de Terrain : toutes les rubriques, l'une sous l'autre. */
-export function adminView(view) {
-  const a = view.admin ?? { chargement: true }
-  if (a.chargement) return `${entete()}<section class="pad"><p class="muted">Chargement…</p></section>`
-  if (a.erreur) {
-    return `${entete()}
-      <section class="pad">
-        <div class="card"><p>${esc(a.erreur)}</p>${a.base === false ? AIDE_BASE : ''}</div>
-      </section>`
-  }
-  return `${entete(a.copie)}
-    <section class="pad">
-      ${codeRevele(view.adminCodeRevele)}
-      ${validationsHTML(a.validations ?? [])}
-      ${equipeHTML(view)}
-      ${rapportsEquipeHTML(view)}
-      ${journalHTML(view)}
-    </section>`
 }

@@ -87,8 +87,7 @@ button {
 }
 body[data-screen='editor'] #app,
 body[data-screen='fiche'] #app,
-body[data-screen='reglages'] #app,
-body[data-screen='admin'] #app {
+body[data-screen='reglages'] #app {
   padding-bottom: calc(var(--barre-h) + 32px + env(safe-area-inset-bottom));
 }
 

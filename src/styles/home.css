@@ -160,167 +160,26 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 }
 .poste-bureau > svg:first-child { width: 26px; height: 26px; }
 .poste-bureau > svg:last-child { width: 14px; height: 14px; color: var(--c-fauve-bright); }
+/* Ce que l'equipe attend : doree pour relire, rouge pour ce qui a casse. */
+.poste-bureau-compte {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #1b1206;
+  background: var(--c-fauve-bright);
+  border-radius: var(--r-pill);
+}
+.poste-bureau-compte.alerte { color: #fff; background: #c9483a; }
+.bureau-zone { display: contents; }
 .poste-bureau:active { transform: scale(0.96); }
 @media (hover: hover) {
   .poste-bureau:hover { background: rgba(241, 237, 228, 0.14); }
 }
-
-/* --- Le tableau de l'administrateur ------------------------------------------
-   Pose sur la feuille, sous les rapports en cours : une carte de la nuit de la
-   maison, ou ses textes clairs gardent leur contraste. La tournee du jour, et
-   rien d'autre : la carte reste repliee tant qu'on ne la demande pas. */
-.tableau-zone:empty { display: none; }
-.tableau {
-  margin-top: 28px;
-  padding: 12px;
-  color: var(--c-on-night);
-  border: 1px solid var(--c-night-line);
-  border-radius: var(--r-lg);
-  background: var(--c-night);
-  box-shadow: var(--sh-2);
-  overflow: hidden;
-}
-.tableau-titre {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 8px;
-  font-family: var(--f-ui);
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--c-on-night-2);
-}
-.tableau-titre svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
-.tableau-note { margin: 8px 0; font-size: 10px; color: var(--c-on-night-2); }
-
-/* La carte du jour, ouverte sous la tete de la tournee. Le rapport de forme
-   tient la place avant que l'iframe ne charge : sans lui, le tableau sauterait
-   a l'arrivee de la carte. */
-.carte {
-  aspect-ratio: 16 / 10;
-  width: 100%;
-  /* Sur un grand ecran, la carte prendrait toute la largeur de la feuille et
-     pousserait les arrets hors de vue : elle s'arrete avant. */
-  max-height: 220px;
-  margin: 8px 0 10px;
-  border: 1px solid var(--c-night-line);
-  border-radius: var(--r-sm);
-  overflow: hidden;
-  background: rgba(241, 237, 228, 0.04);
-}
-.carte iframe { display: block; width: 100%; height: 100%; border: 0; }
-
-.tournee-gens { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.tournee-onglet {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-family: var(--f-ui);
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--c-on-night-2);
-  border: 1px solid var(--c-night-line);
-  border-radius: var(--r-pill);
-  background: none;
-  cursor: pointer;
-}
-.tournee-onglet::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ton, var(--c-fauve-bright));
-}
-.tournee-onglet i { font-style: normal; font-size: 9.5px; opacity: 0.7; }
-.tournee-onglet.on {
-  color: var(--c-on-night);
-  border-color: rgba(241, 237, 228, 0.3);
-  background: rgba(241, 237, 228, 0.1);
-}
-
-.tournee-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 5px; }
-.tournee-qui {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--c-on-night);
-}
-.tournee-qui::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ton, var(--c-fauve-bright));
-}
-/* Le compte pousse l'itineraire et la carte au bout de la ligne. */
-.tournee-compte { margin-right: auto; font-size: 10px; color: var(--c-on-night-2); }
-.tournee-geste {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  font-family: var(--f-ui);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: inherit;
-  color: var(--c-on-night);
-  text-decoration: none;
-  border: 1px solid rgba(241, 237, 228, 0.2);
-  border-radius: var(--r-pill);
-  background: rgba(241, 237, 228, 0.06);
-  cursor: pointer;
-}
-.tournee-geste svg { width: 12px; height: 12px; color: var(--c-fauve-bright); }
-.tournee-geste.on { border-color: rgba(241, 237, 228, 0.36); background: rgba(241, 237, 228, 0.16); }
-
-.arrets { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.arret-dedans {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 7px;
-  border-radius: var(--r-xs);
-  color: inherit;
-  text-decoration: none;
-}
-a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
-.arret-heure {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--c-fauve-bright);
-}
-.arret-corps { display: grid; gap: 1px; min-width: 0; }
-.arret-qui {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--c-on-night);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.arret-ou {
-  font-size: 10px;
-  color: var(--c-on-night-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.arret-pin svg { width: 13px; height: 13px; color: var(--c-on-night-2); }
-.arret-fait {
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #7fcf9f;
-}
-.arret.sans-lieu .arret-qui, .arret.sans-lieu .arret-ou { opacity: 0.72; }
 
 /* --- Le prochain rendez-vous ----------------------------------------------------
    L'outil du poste : ou je vais, et les gestes qui vont avec. Le bouton du

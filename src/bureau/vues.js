@@ -13,14 +13,21 @@ import { ICONES_3D } from '../ui/icones3d.js'
 import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { identite } from '../lock.js'
 import { todayISO } from '../state.js'
-import { ilYA } from '../views/envois.js'
+import { ilYA } from '../ui/temps.js'
 import { agendaCalendrierHTML, agendaJourHTML } from '../views/agenda.js'
-import { tableauAdminHTML } from '../views/tableau.js'
-import { AIDE_BASE, PAGE_JOURNAL, codeRevele, equipeHTML, validationsHTML, rapportsEquipeHTML, journalHTML } from '../views/admin.js'
+import { tableauAdminHTML } from './tableau.js'
+import { AIDE_BASE, PAGE_JOURNAL, codeRevele, equipeHTML, validationsHTML, rapportsEquipeHTML, journalHTML } from './rubriques.js'
 import { estAnnule, lundiDe, plusJours, personnesDe } from '../agenda-outils.js'
-import { incidentsNouveaux, incidentsVus } from '../equipe-alertes.js'
+import { echecsARegarder, journalVu, incidentsNouveaux, incidentsVus } from '../equipe-alertes.js'
 
-export const ECRANS = ['planning', 'equipe', 'valider', 'rapports', 'envois', 'incidents', 'donnees']
+// Le menu en deux groupes : le travail de tous les jours, puis ce qui fait tourner
+// l'app, pose a part au bas de la navigation.
+const GROUPES = [
+  { cle: 'travail', ecrans: ['planning', 'equipe', 'valider', 'rapports', 'envois'] },
+  { cle: 'systeme', titre: 'Système', ecrans: ['incidents', 'donnees'] },
+]
+
+export const ECRANS = GROUPES.flatMap((g) => g.ecrans)
 
 const PAGES = {
   planning: { titre: 'Planning', icone: 'agenda' },
@@ -38,9 +45,25 @@ const s = (n) => (n > 1 ? 's' : '')
 // --- le cadre ---------------------------------------------------------------------
 
 function navHTML(view, ident) {
-  const aValider = view.admin?.validations?.length ?? 0
-  const nouveaux = incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length
+  // Une pastille par page qui attend un geste : doree pour relire, rouge pour ce qui a casse.
+  const comptes = {
+    valider: { n: view.admin?.validations?.length ?? 0 },
+    envois: { n: echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: ident.id ?? 'admin' }).length, alerte: true },
+    incidents: { n: incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length, alerte: true },
+  }
   const nom = ident.id ? ident.nom : 'Administrateur'
+  const lien = (e) => {
+    const on = view.ecran === e
+    const c = comptes[e]
+    const compte = c?.n ? `<b class="bureau-compte${c.alerte ? ' alerte' : ''}">${c.n}</b>` : ''
+    return `
+          <li>
+            <button type="button" class="bureau-lien${on ? ' on' : ''}" data-bureau-ecran="${e}"${on ? ' aria-current="page"' : ''}>
+              <span class="bureau-lien-ico">${ICONES_3D[PAGES[e].icone]}${compte}</span>
+              <span class="bureau-lien-nom">${PAGES[e].titre}</span>
+            </button>
+          </li>`
+  }
   return `
     <nav class="bureau-nav" aria-label="Bureau">
       ${LIGNES_FLAIR}
@@ -51,24 +74,13 @@ function navHTML(view, ident) {
           <span class="bureau-marque-app">Bureau</span>
         </div>
       </div>
-      <ul class="bureau-liens">
-        ${ECRANS.map((e) => {
-          const on = view.ecran === e
-          const compte =
-            e === 'valider' && aValider
-              ? `<b class="bureau-compte">${aValider}</b>`
-              : e === 'incidents' && nouveaux
-                ? `<b class="bureau-compte alerte">${nouveaux}</b>`
-                : ''
-          return `
-          <li>
-            <button type="button" class="bureau-lien${on ? ' on' : ''}" data-bureau-ecran="${e}"${on ? ' aria-current="page"' : ''}>
-              <span class="bureau-lien-ico">${ICONES_3D[PAGES[e].icone]}${compte}</span>
-              <span class="bureau-lien-nom">${PAGES[e].titre}</span>
-            </button>
-          </li>`
-        }).join('')}
-      </ul>
+      ${GROUPES.map(
+        (g) => `
+      <div class="bureau-groupe groupe-${g.cle}">
+        ${g.titre ? `<p class="bureau-groupe-titre">${g.titre}</p>` : ''}
+        <ul class="bureau-liens">${g.ecrans.map(lien).join('')}</ul>
+      </div>`
+      ).join('')}
       <div class="bureau-pied">
         <a class="bureau-terrain" href="/">${ICONS.phone}<span>Terrain</span>${ICONS.suivant}</a>
         <div class="bureau-moi">
