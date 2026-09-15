@@ -38,6 +38,7 @@ import {
   estAnnule,
   estFait,
   libelleStatut,
+  aMoi,
 } from '../agenda-outils.js'
 
 /**
@@ -75,17 +76,15 @@ export function rdvLigneHTML(r, { montrerQui = false } = {}) {
 const pasAMoi = (agenda) => (r) => agenda.role !== 'invite' && r.pour?.id && r.pour.id !== agenda.moi?.id
 
 /**
- * Sur l'accueil d'un employe ou d'un invite : les rendez-vous du jour. Rien les
- * autres jours - le prochain se lit deja dans le poste, juste au-dessus - ni
- * quand l'agenda est vide : une rubrique vide ne sert qu'a encombrer.
- * L'administrateur a, a la place, la tournee de toute l'equipe (voir
- * src/views/tableau.js).
+ * Sur l'accueil de Terrain : mes rendez-vous du jour. Rien les autres jours - le
+ * prochain se lit deja dans le poste, juste au-dessus - ni quand l'agenda est
+ * vide : une rubrique vide ne sert qu'a encombrer.
  */
 export function rdvAccueilHTML(view) {
   const a = view.agenda
   if (!a?.rdvs?.length) return ''
   const jour = todayISO()
-  const duJour = aVenir(a.rdvs, jour).filter((r) => r.date === jour)
+  const duJour = aVenir(a.rdvs, jour).filter((r) => r.date === jour && (!view.agendaPerso || aMoi(a)(r)))
   if (!duJour.length) return ''
   const montres = duJour.slice(0, 4)
   const qui = pasAMoi(a)
@@ -296,9 +295,11 @@ function lecture(view) {
   const a = view.agenda
   const aujourdhui = todayISO()
   const jour = view.agendaJour ?? aujourdhui
-  const gens = personnesDe(a?.rdvs ?? [])
+  // Terrain ne montre que les rendez-vous de celui qui tient le telephone.
+  const tous = (a?.rdvs ?? []).filter((r) => !view.agendaPerso || aMoi(a)(r))
+  const gens = personnesDe(tous)
   const filtre = gens.some((p) => p.id === view.agendaQui) ? view.agendaQui : ''
-  const rdvs = (a?.rdvs ?? []).filter((r) => !filtre || r.pour?.id === filtre)
+  const rdvs = tous.filter((r) => !filtre || r.pour?.id === filtre)
   const parJour = new Map()
   for (const r of rdvs) parJour.set(r.date, [...(parJour.get(r.date) ?? []), r])
   return {
@@ -318,7 +319,8 @@ function lecture(view) {
 }
 
 /** Combien de rendez-vous restent a venir. */
-export const rdvsAVenir = (view) => (view.agenda ? aVenir(view.agenda.rdvs ?? [], todayISO()).length : 0)
+export const rdvsAVenir = (view) =>
+  view.agenda ? aVenir(view.agenda.rdvs ?? [], todayISO()).filter((r) => !view.agendaPerso || aMoi(view.agenda)(r)).length : 0
 
 /** Mois ou semaine, le filtre par personne et la legende des couleurs. */
 export function agendaCalendrierHTML(view) {
@@ -365,7 +367,7 @@ export function agendaView(view) {
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
-        <h1>Agenda</h1>
+        <h1>${view.agendaPerso ? 'Mon agenda' : 'Agenda'}</h1>
         <p class="muted">${rdvsAVenir(view)} rendez-vous à venir</p>
       </div>
       ${l.invite ? '' : `<span class="top-actions"><button class="btn ghost btn-mini" data-act="ajouter-rdv">+ Ajouter</button></span>`}

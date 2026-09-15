@@ -61,6 +61,16 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
+      // Le resume de l'accueil de Terrain : ce qui fait ses alertes, rien de plus -
+      // les demandes a valider, et les envois partis ou rates de la semaine.
+      if (req.query?.resume !== undefined) {
+        const semaine = Date.now() - 7 * 86_400_000
+        const [journal, validations] = await Promise.all([lireJournal(300), aValider()])
+        return res.status(200).json({
+          validations,
+          journal: journal.filter((j) => j.date > semaine && (j.statut === 'echec' || j.statut === 'envoye')),
+        })
+      }
       // L'export de facturation d'un mois : les envois partis, en CSV. Ceux
       // d'avant le rangement par mois viennent du journal courant.
       if (req.query?.export !== undefined) {

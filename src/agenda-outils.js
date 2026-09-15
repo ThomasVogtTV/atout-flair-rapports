@@ -223,6 +223,9 @@ export function tonPersonne(id) {
   return TONS[somme % TONS.length]
 }
 
+/** Un rendez-vous de celui qui tient le telephone : a son nom, ou a personne. */
+export const aMoi = (agenda) => (r) => !r.pour?.id || r.pour.id === agenda?.moi?.id
+
 /** Qui a des rendez-vous dans cette liste, par ordre alphabetique. */
 export function personnesDe(rdvs) {
   const vues = new Map()

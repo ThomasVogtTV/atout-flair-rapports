@@ -398,6 +398,7 @@ a.arret-dedans:active { background: rgba(241, 237, 228, 0.1); }
 .poste-alertes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .poste-alerte {
   display: inline-flex;
+  text-decoration: none;
   align-items: center;
   gap: 8px;
   min-height: 34px;

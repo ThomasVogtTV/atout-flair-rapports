@@ -3,8 +3,8 @@
 // Il repond, dans cet ordre, a ce qu'on vient chercher en ouvrant l'app sur le
 // terrain : ou j'en suis (le prochain rendez-vous, ce qui reclame un geste), je
 // commence (le choix du lieu), je continue (les rapports en cours), ou va la
-// journee (la tournee de l'equipe pour l'administrateur, les rendez-vous du jour
-// pour les autres), je cherche (les archives).
+// journee (mes rendez-vous du jour), je cherche (les archives). Le planning de
+// l'equipe et l'administration vivent dans le Bureau.
 //
 // La photo des chiens tient le haut de l'ecran, nette et en entier : c'est
 // l'identite de la maison. Elle se fond dans la nuit du poste de controle, ou
@@ -22,8 +22,7 @@ import { ILLUSTRATIONS } from '../ui/illustrations.js'
 import { ICONES_3D } from '../ui/icones3d.js'
 import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { rdvAccueilHTML } from './agenda.js'
-import { aVenir, estFait, libelleJour, nomClient, adresseRdv } from '../agenda-outils.js'
-import { tableauAdminHTML } from './tableau.js'
+import { aVenir, estFait, libelleJour, nomClient, adresseRdv, aMoi } from '../agenda-outils.js'
 import { echecsARegarder, journalVu } from '../equipe-alertes.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
@@ -286,17 +285,16 @@ function sessionHTML() {
 /**
  * L'outil du poste : le prochain rendez-vous, et les trois gestes qu'on fait en
  * montant dans la voiture - l'itineraire, l'appel au client, le rapport. Le sien
- * d'abord ; un administrateur sans rendez-vous a lui voit le prochain de
- * l'equipe. Rien tant que l'agenda n'a jamais ete lu (premiere ouverture hors
- * ligne) : un "rien de prevu" y serait un mensonge.
+ * seulement : ceux de l'equipe se lisent dans le planning du Bureau. Rien tant
+ * que l'agenda n'a jamais ete lu (premiere ouverture hors ligne) : un "rien de
+ * prevu" y serait un mensonge.
  */
 export function prochainHTML(view) {
   const a = view.agenda
   if (!a) return ''
   const jour = S.todayISO()
   const suivants = aVenir(a.rdvs ?? [], jour).filter((r) => !estFait(r))
-  const miens = suivants.filter((r) => !r.pour?.id || r.pour.id === a.moi?.id)
-  const r = miens[0] ?? (a.role === 'admin' ? suivants[0] : null)
+  const r = suivants.find(aMoi(a)) ?? null
   const titre = `<span class="prochain-titre">${ICONS.horloge}Prochain rendez-vous</span>`
 
   if (!r) {
@@ -337,8 +335,8 @@ export function prochainHTML(view) {
 /**
  * Ce qui reclame un geste, et rien d'autre. L'administrateur y trouve en plus
  * ce que l'equipe attend de lui : les rapports d'invites a relire, et les envois
- * rates qu'il n'a pas encore vus (voir src/equipe-alertes.js). Le reste de
- * l'equipe - qui a ouvert l'app, le journal - vit dans l'onglet Administration.
+ * rates qu'il n'a pas encore vus (voir src/equipe-alertes.js). Un tap ouvre la
+ * bonne page du Bureau, ou vit tout le reste de l'equipe.
  */
 export function alertesHTML(view) {
   // Le rappel de sauvegarde n'a de sens que si l'appareil porte quelque chose a
@@ -352,12 +350,11 @@ export function alertesHTML(view) {
   const rates = admin ? echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: identite()?.id ?? 'admin' }).length : 0
   const alertes = [
     view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true, act: 'open-envois' },
-    aValider && { t: `${aValider} rapport${aValider > 1 ? 's' : ''} à valider`, act: 'open-admin' },
+    aValider && { t: `${aValider} rapport${aValider > 1 ? 's' : ''} à valider`, lien: '/bureau/#valider' },
     rates && {
       t: `${rates} envoi${rates > 1 ? 's' : ''} raté${rates > 1 ? 's' : ''} dans l’équipe`,
       alerte: true,
-      act: 'open-admin',
-      ancre: 'journal-envois',
+      lien: '/bureau/#envois',
     },
     !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente`, act: 'open-envois' },
     memoirePleine && { t: 'Mémoire presque pleine', alerte: true, act: 'open-reglages' },
@@ -367,9 +364,9 @@ export function alertesHTML(view) {
   return `<div class="poste-alertes">${alertes
     .map(
       (m) =>
-        `<button type="button" class="poste-alerte${m.alerte ? ' alerte' : ''}" data-act="${m.act}"${
-          m.ancre ? ` data-ancre="${m.ancre}"` : ''
-        }>${esc(m.t)}</button>`
+        m.lien
+          ? `<a class="poste-alerte${m.alerte ? ' alerte' : ''}" href="${m.lien}">${esc(m.t)}</a>`
+          : `<button type="button" class="poste-alerte${m.alerte ? ' alerte' : ''}" data-act="${m.act}">${esc(m.t)}</button>`
     )
     .join('')}</div>`
 }
@@ -401,7 +398,7 @@ export function homeView(view) {
             <span class="marque-metier">Détection canine professionnelle</span>
           </div>
           <span class="accueil-portes">
-            ${estAdmin() ? `<button class="porte" data-act="open-admin" title="Administration" aria-label="Administration">${ICONES_3D.admin}</button>` : ''}
+            ${estAdmin() ? `<a class="porte" href="/bureau/" title="Bureau" aria-label="Ouvrir le Bureau">${ICONES_3D.admin}</a>` : ''}
             <button class="porte" data-act="open-reglages" title="Réglages" aria-label="Réglages">${ICONES_3D.reglages}</button>
           </span>
         </header>
@@ -410,9 +407,8 @@ export function homeView(view) {
       <section class="accueil-feuille">
         <div class="reveal bloc-nouveau" style="--i:1">${nouveauHTML()}</div>
         <div class="reveal" style="--i:2">${enCoursHTML(view.reports)}</div>
-        <div class="reveal tableau-zone" style="--i:3">${tableauAdminHTML(view)}</div>
-        ${estAdmin() ? '' : `<div class="reveal rdv-accueil-zone" style="--i:4">${rdvAccueilHTML(view)}</div>`}
-        <div class="reveal" style="--i:5">${mesRapportsHTML(view)}</div>
+        <div class="reveal rdv-accueil-zone" style="--i:3">${rdvAccueilHTML(view)}</div>
+        <div class="reveal" style="--i:4">${mesRapportsHTML(view)}</div>
       </section>
     </div>`
 }

@@ -7,7 +7,7 @@ import { typeOf, accordE, rowLabelFor } from './templates.js'
 import * as S from './state.js'
 import { fileToPhoto, fileToLogo, openAnnotator } from './photo.js'
 import { openSignaturePad } from './signature.js'
-import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob, currentCode } from './mailer.js'
+import { pendingCount, failedCount, flushQueue, listQueue, retryJob, deleteJob } from './mailer.js'
 import { root, toast, pulse, showLoading, hideLoading, esc } from './ui/dom.js'
 import { startRowDrag } from './ui/dragsort.js'
 import { confirmLeave, alerteStockage } from './ui/dialogs.js'
@@ -16,23 +16,21 @@ import { homeView, listeRapportsHTML, prochainHTML, alertesHTML } from './views/
 import { contactsView, ficheContactView, listeContactsHTML } from './views/contacts.js'
 import { reglagesView } from './views/reglages.js'
 import { envoisView } from './views/envois.js'
-import { adminView, PAGE_JOURNAL } from './views/admin.js'
 import { editorView, rowCardHTML, counterPills, applySameAddress, applySameName, LIEU_ADDR_KEYS, etapesNavHTML, verdictsHTML } from './views/editor.js'
 import { openContactDialog } from './contact-dialog.js'
 import { choisirContact } from './contact-picker.js'
-import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload, ouvrirPdf } from './send.js'
+import { loadPdfEngine, previewPdf, openSendDialog, shareOrDownload } from './send.js'
 import { suivreValidations } from './validations.js'
 import { installerVerrou, seDeconnecter, estInvite, estAdmin, identite } from './lock.js'
 import { agendaView, rdvAccueilHTML } from './views/agenda.js'
-import { tableauAdminHTML } from './views/tableau.js'
-import { marquerJournalVu } from './equipe-alertes.js'
+import { adminAppel } from './admin-api.js'
 import { agendaEnCache, chargerAgenda, enregistrerRdv, supprimerRdv, marquerCommence, marquerStatut, ajouterAuCalendrier } from './agenda.js'
 import { formulaireRdv, ouvrirRdv } from './rdv-dialog.js'
 import { nomClient, decalerMois, lundiDe, decalerSemaine, conflitsDe, plusJours, libelleJour } from './agenda-outils.js'
 import { chargerVignettes, viderVignettes } from './ui/vignettes.js'
 import { synchroniserCarnet } from './carnet-sync.js'
 import { reserverNumeros } from './numeros.js'
-import { sauvegarder, listerSauvegardes, restaurer, sauvegardesEnLigne, rapportEnLigne } from './sauvegarde.js'
+import { sauvegarder, listerSauvegardes, restaurer } from './sauvegarde.js'
 import { choisirRestauration } from './restauration.js'
 import { etapesDuRapport, etapeDeReprise, ETAPES } from './etapes.js'
 import { installerDock, majDock } from './ui/dock.js'
@@ -56,6 +54,9 @@ let view = {
   queue: [],
   enAttente: 0,
   enEchec: 0,
+  // Terrain montre l'agenda de celui qui tient le telephone ; le planning de
+  // toute l'equipe vit dans le Bureau.
+  agendaPerso: true,
 }
 let saveTimer = null
 let aEnregistrer = null
@@ -253,154 +254,11 @@ async function openReglages() {
   render()
 }
 
-// --- administration -------------------------------------------------------
-
-async function adminAppel(methode, corps, query) {
-  const res = await fetch(`/api/admin${query ? `?${new URLSearchParams(query)}` : ''}`, {
-    method: methode,
-    headers: { 'x-app-code': currentCode(), ...(corps ? { 'Content-Type': 'application/json' } : {}) },
-    body: corps ? JSON.stringify(corps) : undefined,
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw Object.assign(new Error(data.error || `Erreur ${res.status}`), { base: data.base })
-  return data
-}
-
-// Le code revele a la creation d'un employe ne survit pas a une sortie de
-// l'onglet : il ne doit s'afficher qu'une fois.
-//
-// `ancre` : la rubrique ou descendre une fois l'ecran charge - le journal, quand
-// on vient de l'alerte des envois rates.
-async function openAdmin({ ancre } = {}) {
-  view = { ...view, screen: 'admin', report: null, admin: { chargement: true }, adminRapports: null, adminCodeRevele: null }
-  render()
-  await rechargerAdmin()
-  if (view.screen !== 'admin' || !view.admin?.journal) return
-  // Le journal est sous les yeux : l'alerte des envois rates, sur l'accueil,
-  // peut se taire.
-  marquerJournalVu(view.admin.journal)
-  if (ancre) document.getElementById(ancre)?.scrollIntoView({ block: 'start' })
-}
-
-async function rechargerAdmin() {
-  if (!navigator.onLine) {
-    view.admin = { erreur: "Hors ligne : l'administration a besoin du réseau." }
-  } else {
-    // L'equipe et le journal, puis les rapports de l'equipe depuis la sauvegarde
-    // en ligne : deux lectures independantes, menees ensemble.
-    const [admin, rapports] = await Promise.all([
-      adminAppel('GET').catch((err) => ({ erreur: err.message, base: err.base })),
-      sauvegardesEnLigne()
-        .then((liste) => ({ liste }))
-        .catch((err) => ({ erreur: err.message })),
-    ])
-    view.admin = admin
-    view.adminRapports = rapports
-  }
-  if (view.screen === 'admin') render()
-}
-
-// L'export de facturation d'un mois (voir api/_lib/export.js) : un fichier CSV
-// que le telephone partage ou telecharge, pour le tableur de la comptabilite.
-async function exporterEnvois() {
-  const mois = root.querySelector('[data-export-mois]')?.value
-  if (!mois) return
-  view.exportMois = mois
-  showLoading('Préparation de l’export…')
-  try {
-    const { csv, nom, nombre } = await adminAppel('GET', null, { export: mois })
-    hideLoading()
-    if (!nombre) return toast('Aucun envoi ce mois-là.')
-    await shareOrDownload(new Blob([csv], { type: 'text/csv;charset=utf-8' }), nom)
-    toast(`${nombre} envoi${nombre > 1 ? 's' : ''} exporté${nombre > 1 ? 's' : ''}.`)
-  } catch (err) {
-    hideLoading()
-    toast(err.message || 'Export impossible.')
-  }
-}
-
-// Les envois plus anciens du journal, par pages : a dix techniciens, quelques
-// semaines en remplissent deja trois cents.
-async function journalPlus() {
-  const a = view.admin
-  if (!a?.journal) return
-  try {
-    const { journal = [] } = await adminAppel('GET', null, { journal: String(a.journal.length) })
-    a.journal = [...a.journal, ...journal]
-    a.journalComplet = journal.length < PAGE_JOURNAL
-  } catch (err) {
-    toast(err.message || 'Journal illisible.')
-  }
-  if (view.screen === 'admin') render()
-}
-
-// Un rapport de l'equipe, tel qu'il est sauvegarde en ligne : son PDF, en lecture
-// seule. Rien ne se pose sur le telephone de l'administrateur.
-async function voirRapportEquipe(id) {
-  const liste = view.adminRapports?.liste ?? []
-  showLoading('Chargement du rapport…')
-  try {
-    const { rapport } = await rapportEnLigne(id)
-    // Les rapports d'appartement d'un immeuble font partie de son PDF.
-    const enfants = await Promise.all(
-      liste.filter((s) => s.parentId === id).map(async (s) => (await rapportEnLigne(s.id)).rapport)
-    )
-    hideLoading()
-    await previewPdf(rapport, enfants)
-  } catch (err) {
-    hideLoading()
-    toast(err.message || 'Rapport illisible.')
-  }
-}
-
-// --- rapports d'invites a valider ------------------------------------------------
-
-async function voirPdfValidation(id) {
-  const v = view.admin?.validations?.find((x) => x.id === id)
-  showLoading('Ouverture du PDF…')
-  try {
-    const { pdfBase64 } = await adminAppel('GET', null, { pdf: id })
-    const octets = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0))
-    ouvrirPdf(new Blob([octets], { type: 'application/pdf' }), v?.filename || 'rapport.pdf')
-  } catch (err) {
-    toast(err.message)
-  } finally {
-    hideLoading()
-  }
-}
-
-// Envoyer au client, ou refuser avec un motif que l'invite lira sur son telephone.
-async function traiterValidation(act, id) {
-  const v = view.admin?.validations?.find((x) => x.id === id)
-  if (!v) return
-  const quoi = [`le rapport${v.meta?.ref ? ` ${v.meta.ref}` : ''}`, `de ${v.par?.nom || 'l’invité'}`].join(' ')
-  let corps
-  if (act === 'valid-envoyer') {
-    if (!confirm(`Envoyer ${quoi} à ${v.to} ?`)) return
-    corps = { action: 'valider', id }
-  } else {
-    const motif = prompt(`Refuser ${quoi} ?\nMotif, que l’invité lira :`)
-    if (motif === null) return
-    corps = { action: 'refuser', id, motif }
-  }
-  showLoading(act === 'valid-envoyer' ? 'Envoi au client…' : 'Refus en cours…')
-  try {
-    await adminAppel('POST', corps)
-    toast(act === 'valid-envoyer' ? 'Rapport envoyé au client.' : 'Rapport refusé : l’invité verra le motif.')
-  } catch (err) {
-    toast(err.message)
-  } finally {
-    hideLoading()
-  }
-  await rechargerAdmin()
-}
-
 // --- une session a la fois -------------------------------------------------------
 //
 // Une session qui se ferme ne laisse rien a la suivante. Ce que l'administrateur
-// avait en memoire - l'equipe, un code tout juste revele, les rapports de
-// l'equipe, l'agenda de tout le monde - ne doit pas reapparaitre sous le code
-// d'un employe ou d'un invite qui prend le telephone.
+// avait en memoire - les alertes de l'equipe, l'agenda - ne doit pas reapparaitre
+// sous le code d'un employe ou d'un invite qui prend le telephone.
 
 const cleSession = () => {
   const i = identite()
@@ -411,15 +269,8 @@ let sessionAffichee = ''
 
 function oublierSession() {
   view.admin = null
-  view.adminRapports = null
-  view.adminCodeRevele = null
-  view.adminFiltre = undefined
-  view.adminRapportsQui = undefined
-  view.tableauQui = undefined
-  view.tableauCarte = false
   view.agenda = null
   equipeLue = 0
-  tableauRendu = ''
   validationsLues = 0
   try {
     // Le cache de l'agenda (voir src/agenda.js) : celui d'une autre session.
@@ -453,10 +304,9 @@ async function suivreMesValidations({ force = false } = {}) {
   }
 }
 
-// L'accueil de l'administrateur lit au meme endroit que l'onglet Administration,
-// et garde sa reponse dans le meme cache : deux lectures de la meme chose a une
-// seconde d'intervalle ne diraient rien de plus. Il n'en tire que ses alertes -
-// les rapports a valider, les envois rates.
+// L'accueil de l'administrateur n'a besoin que de ses alertes - les rapports a
+// valider, les envois rates : il ne demande que ce resume, relu au plus une fois
+// par minute. L'equipe entiere et le journal se lisent dans le Bureau.
 const EQUIPE_FRAIS_MS = 60_000
 let equipeLue = 0
 
@@ -467,7 +317,7 @@ async function rafraichirEquipe({ force = false } = {}) {
     // Lue d'abord, rangee ensuite : `view.admin = await ...` rangerait la reponse
     // dans la vue d'avant l'attente, que l'accueil a pu remplacer entre-temps -
     // au deverrouillage, les alertes restaient vides.
-    const equipe = await adminAppel('GET')
+    const equipe = await adminAppel('GET', null, { resume: '1' })
     view.admin = equipe
     equipeLue = Date.now()
   } catch (err) {
@@ -475,23 +325,6 @@ async function rafraichirEquipe({ force = false } = {}) {
     view.admin = { erreur: err.message, base: err.base }
   }
   majAlertes()
-}
-
-// Rendu chirurgical, comme pour les rendez-vous : un rendu complet ferait
-// perdre son curseur a une recherche en cours.
-let tableauRendu = ''
-
-function majTableau() {
-  if (view.screen !== 'home') return
-  const zone = root.querySelector('.tableau-zone')
-  if (!zone) return
-  const neuf = tableauAdminHTML(view)
-  // Rien n'a change depuis le dernier rendu : ne pas reecrire. Refaire le HTML
-  // detruit l'iframe de la carte ouverte, que Google recharge alors entierement
-  // pour redessiner exactement la meme - a chaque retour a l'accueil.
-  if (neuf === tableauRendu) return
-  zone.innerHTML = neuf
-  tableauRendu = neuf
 }
 
 // Les alertes du poste. Comparees a ce qui est affiche plutot qu'au dernier
@@ -502,49 +335,6 @@ function majAlertes() {
   if (!zone) return
   const neuf = alertesHTML(view)
   if (zone.innerHTML !== neuf) zone.innerHTML = neuf
-}
-
-const CONFIRMATIONS = {
-  revoquer: 'Révoquer cet employé ? Son code cessera de fonctionner à sa prochaine ouverture avec du réseau.',
-  supprimer: 'Supprimer cet employé ? Son code cessera de fonctionner. Ses envois restent dans le journal.',
-  'nouveau-code': "Donner un nouveau code à cet employé ? L'ancien cessera de fonctionner.",
-  'administrateur:oui':
-    "Donner l'accès administrateur ? Cette personne pourra gérer l'équipe et ses codes, valider les rapports des invités et exporter les envois.",
-  'administrateur:non': "Retirer l'accès administrateur ? Cette personne redevient employée à sa prochaine ouverture avec du réseau.",
-}
-
-async function adminAction(action, id, oui) {
-  const question = CONFIRMATIONS[action === 'administrateur' ? `administrateur:${oui ? 'oui' : 'non'}` : action]
-  if (question && !confirm(question)) return
-  try {
-    const r = await adminAppel('POST', { action, id, ...(action === 'administrateur' ? { oui } : {}) })
-    if (r.code) {
-      const e = view.admin?.employes?.find((x) => x.id === id)
-      view.adminCodeRevele = { nom: e?.nom ?? '', code: r.code }
-    }
-    await rechargerAdmin()
-  } catch (err) {
-    toast(err.message)
-  }
-}
-
-// Une date de fin choisie au calendrier vaut jusqu'au soir de ce jour-la.
-const finDeJournee = (jour) => {
-  const [a, m, j] = jour.split('-').map(Number)
-  return new Date(a, m - 1, j, 23, 59, 59, 999).getTime()
-}
-
-async function adminAjouter() {
-  const nom = root.querySelector('[data-admin-nom]')?.value.trim()
-  if (!nom) return toast("Indiquez le nom de l'employé")
-  const jour = root.querySelector('[data-admin-fin]')?.value
-  try {
-    const r = await adminAppel('POST', { action: 'creer', nom, fin: jour ? finDeJournee(jour) : undefined })
-    view.adminCodeRevele = { nom: r.nom, code: r.code, fin: r.fin }
-    await rechargerAdmin()
-  } catch (err) {
-    toast(err.message)
-  }
 }
 
 async function openReport(id) {
@@ -694,24 +484,11 @@ async function rafraichirAgenda() {
   if (view.screen === 'home') {
     const zone = root.querySelector('.rdv-accueil-zone')
     if (zone) zone.innerHTML = rdvAccueilHTML(view)
-    // Le prochain rendez-vous du poste et la tournee du tableau se lisent dans
-    // le meme agenda.
+    // Le prochain rendez-vous du poste se lit dans le meme agenda.
     const prochain = root.querySelector('.prochain-zone')
     if (prochain) prochain.innerHTML = prochainHTML(view)
-    majTableau()
   } else if (view.screen === 'agenda') {
     render()
-  }
-}
-
-// L'administrateur attribue un rendez-vous a un membre de l'equipe : il lui
-// faut la liste. Sans elle, il ne peut l'attribuer qu'a lui-meme.
-async function equipePourAgenda() {
-  try {
-    const data = await adminAppel('GET')
-    return (data.employes ?? []).filter((e) => e.actif && !e.expire)
-  } catch {
-    return []
   }
 }
 
@@ -724,15 +501,15 @@ function conflitsPour(saisi) {
 
 async function editerRdv(rdv = null, creneau = {}) {
   if (!navigator.onLine) return toast("Pas de réseau : l'agenda de l'équipe se modifie avec du réseau.")
-  const admin = estAdmin()
-  const [contacts, equipe] = await Promise.all([contactsVisibles(), admin ? equipePourAgenda() : null])
+  // Dans Terrain, chacun note les siens : attribuer un rendez-vous a un collegue
+  // se fait dans le planning du Bureau.
+  const contacts = await contactsVisibles()
   const date = creneau.date ?? (view.screen === 'agenda' ? view.agendaJour : undefined)
   const saisi = await formulaireRdv(rdv, {
     contacts,
     reports: view.reports ?? [],
-    equipe,
-    admin,
-    moi: view.agenda?.moi,
+    equipe: null,
+    admin: false,
     choisirContact,
     date,
     heure: creneau.heure,
@@ -898,9 +675,7 @@ function render() {
           ? reglagesView(view)
           : view.screen === 'envois'
             ? envoisView(view)
-            : view.screen === 'admin'
-              ? adminView(view)
-              : editorView(view)
+            : editorView(view)
   if (navigated) {
     document.scrollingElement.scrollTop = 0
     root.classList.remove('view-enter')
@@ -1011,18 +786,6 @@ root.addEventListener('input', (ev) => {
 
 root.addEventListener('change', async (ev) => {
   const el = ev.target
-
-  // Date de fin d'un invite, changee directement dans la liste de l'equipe.
-  if (el.dataset.changerFin) {
-    if (!el.value) return
-    try {
-      await adminAppel('POST', { action: 'changer-fin', id: el.dataset.changerFin, fin: finDeJournee(el.value) })
-      toast('Date de fin enregistrée.')
-    } catch (err) {
-      toast(err.message)
-    }
-    return rechargerAdmin()
-  }
 
   if (el.dataset.sameAddr !== undefined) {
     view.report.lieu.sameAsMandant = el.checked
@@ -1324,25 +1087,6 @@ root.addEventListener('click', async (ev) => {
     }
     return render()
   }
-  // Le filtre "qui" : "Tout le monde" porte une valeur vide, d'ou le test sur
-  // le bouton lui-meme plutot que sur sa valeur.
-  const btnQui = el.closest('[data-agenda-qui]')
-  if (btnQui) {
-    view.agendaQui = btnQui.dataset.agendaQui
-    return render()
-  }
-  // La tournee montree par le tableau de l'accueil, et sa carte : seul le
-  // tableau change, pour ne pas redessiner l'accueil entier a chaque bascule.
-  const btnTournee = el.closest('[data-tableau-qui]')
-  if (btnTournee) {
-    view.tableauQui = btnTournee.dataset.tableauQui
-    return majTableau()
-  }
-  if (el.closest('[data-tableau-carte]')) {
-    view.tableauCarte = !view.tableauCarte
-    return majTableau()
-  }
-
   // Le prochain rendez-vous de l'accueil : son rapport, sans passer par la fiche.
   const rdvACommencer = el.closest('[data-rdv-commencer]')?.dataset.rdvCommencer
   if (rdvACommencer) {
@@ -1667,34 +1411,11 @@ root.addEventListener('click', async (ev) => {
   if (act === 'open-agenda') return openAgenda()
   if (act === 'ajouter-rdv') return editerRdv()
   if (act === 'open-reglages') return openReglages()
-  if (act === 'open-admin') return openAdmin({ ancre: el.closest('[data-act]').dataset.ancre })
   if (act === 'deconnexion') {
     if (!confirm('Se déconnecter ? Le code sera redemandé tout de suite, et à chaque ouverture tant que « Se souvenir de moi » ne sera pas coché.')) return
     oublierSession()
     seDeconnecter()
     return goHome()
-  }
-  if (act === 'admin-ajouter') return adminAjouter()
-  if (act === 'valid-voir') return voirPdfValidation(el.closest('[data-act]').dataset.id)
-  if (act === 'equipe-rapport') return voirRapportEquipe(el.closest('[data-act]').dataset.id)
-  if (act === 'equipe-filtre') {
-    view.adminRapportsQui = el.closest('[data-act]').dataset.val
-    return render()
-  }
-  if (act === 'valid-envoyer' || act === 'valid-refuser') return traiterValidation(act, el.closest('[data-act]').dataset.id)
-  if (act === 'admin-action') {
-    const b = el.closest('[data-act]')
-    return adminAction(b.dataset.action, b.dataset.id, b.dataset.oui === '1')
-  }
-  if (act === 'admin-filtre') {
-    view.adminFiltre = el.closest('[data-act]').dataset.val
-    return render()
-  }
-  if (act === 'journal-plus') return journalPlus()
-  if (act === 'exporter-envois') return exporterEnvois()
-  if (act === 'admin-masquer-code') {
-    view.adminCodeRevele = null
-    return render()
   }
   if (act === 'open-envois') return openEnvois()
   if (act === 'add-contact') return openContactDialog(undefined, refreshContacts)
@@ -1711,7 +1432,7 @@ root.addEventListener('click', async (ev) => {
       if (view.report?.parentId) return openReport(view.report.parentId)
       // Le retour ramene la ou l'on etait : la fiche du client, l'agenda d'ou
       // l'on a commence le rendez-vous, les envois... L'accueil par defaut.
-      const RETOURS = { agenda: openAgenda, envois: openEnvois, contacts: openContacts, reglages: openReglages, admin: openAdmin }
+      const RETOURS = { agenda: openAgenda, envois: openEnvois, contacts: openContacts, reglages: openReglages }
       const vers = view.retour ? () => openFiche(view.retour) : RETOURS[view.depuis]
       if (vers) {
         await flushSave()
