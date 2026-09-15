@@ -375,12 +375,19 @@ export function alertesHTML(view) {
  * Le poste de controle : qui tient le telephone, ou il va ensuite, et ce qui
  * reclame un geste. Les alertes ont leur zone : l'equipe se relit en ligne apres
  * l'affichage, et ce qu'elle apporte s'y pose sans redessiner l'accueil.
+ *
+ * Un administrateur y trouve, face a son nom, le passage au Bureau : le planning
+ * de l'equipe et l'administration. Un bouton qui dit ou il mene - une icone
+ * seule, dans l'en-tete, ne se reconnaissait pas.
  */
 function posteHTML(view) {
   return `
     <div class="poste reveal" style="--i:0">
       ${LIGNES_FLAIR}
-      ${sessionHTML()}
+      <div class="poste-tete">
+        ${sessionHTML()}
+        ${estAdmin() ? `<a class="poste-bureau" href="/bureau/">${ICONES_3D.admin}<span>Bureau</span>${ICONS.suivant}</a>` : ''}
+      </div>
       <div class="prochain-zone">${prochainHTML(view)}</div>
       <div class="alertes-zone">${alertesHTML(view)}</div>
     </div>`
@@ -398,7 +405,6 @@ export function homeView(view) {
             <span class="marque-metier">Détection canine professionnelle</span>
           </div>
           <span class="accueil-portes">
-            ${estAdmin() ? `<a class="porte" href="/bureau/" title="Bureau" aria-label="Ouvrir le Bureau">${ICONES_3D.admin}</a>` : ''}
             <button class="porte" data-act="open-reglages" title="Réglages" aria-label="Réglages">${ICONES_3D.reglages}</button>
           </span>
         </header>

@@ -139,6 +139,32 @@ body[data-reseau='hors-ligne'] .accueil-barre { padding-top: calc(env(safe-area-
 .poste-session.admin::before { background: var(--c-fauve-bright); box-shadow: 0 0 0 3px rgba(222, 176, 107, 0.2); }
 .poste-session.invite::before { background: #f1c27d; }
 
+/* Le passage au Bureau, face au nom de l'administrateur. */
+.poste-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+.poste-bureau {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px 0 5px;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--c-on-night);
+  text-decoration: none;
+  background: rgba(241, 237, 228, 0.08);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-pill);
+  transition: transform var(--d-1) var(--ease), background-color var(--d-2) var(--ease);
+}
+.poste-bureau > svg:first-child { width: 26px; height: 26px; }
+.poste-bureau > svg:last-child { width: 14px; height: 14px; color: var(--c-fauve-bright); }
+.poste-bureau:active { transform: scale(0.96); }
+@media (hover: hover) {
+  .poste-bureau:hover { background: rgba(241, 237, 228, 0.14); }
+}
+
 /* --- Le tableau de l'administrateur ------------------------------------------
    Pose sur la feuille, sous les rapports en cours : une carte de la nuit de la
    maison, ou ses textes clairs gardent leur contraste. La tournee du jour, et
