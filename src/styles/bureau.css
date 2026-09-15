@@ -1,0 +1,174 @@
+/* ==========================================================================
+   Bureau : le cadre de l'app du bureau - la navigation a gauche sur un
+   ordinateur, en onglets en haut sur un telephone - et le planning sur deux
+   colonnes. Tout le reste (cartes, listes, calendrier) vient des feuilles
+   partagees avec Terrain.
+   ========================================================================== */
+
+/* Ni dock ni barre d'actions ici : #app n'a rien a degager en bas. */
+body.app-bureau #app { padding-bottom: 0; }
+
+.bureau {
+  display: grid;
+  grid-template-columns: 228px minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* --- La navigation ------------------------------------------------------------- */
+.bureau-nav {
+  position: sticky;
+  top: var(--bandeau, 0px);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: calc(100dvh - var(--bandeau, 0px));
+  padding: calc(env(safe-area-inset-top) + 22px) 12px 18px;
+  color: var(--c-on-night);
+  background: var(--c-night);
+}
+.bureau-marque { display: grid; gap: 3px; padding: 0 10px; }
+.bureau-marque-nom { font-family: var(--f-display); font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
+.bureau-marque-app {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+}
+.bureau-liens { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.bureau-lien {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--c-on-night-2);
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background-color var(--d-1) var(--ease), color var(--d-1) var(--ease);
+}
+.bureau-lien svg { width: 17px; height: 17px; flex-shrink: 0; }
+.bureau-lien span { flex: 1; }
+.bureau-lien.on { color: var(--c-on-night); background: rgba(241, 237, 228, 0.12); }
+.bureau-lien.on svg { color: var(--c-fauve-bright); }
+@media (hover: hover) {
+  .bureau-lien:hover { color: var(--c-on-night); background: rgba(241, 237, 228, 0.07); }
+}
+.bureau-compte {
+  min-width: 20px;
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-align: center;
+  color: #1b1206;
+  background: var(--c-fauve-bright);
+  border-radius: var(--r-pill);
+}
+.bureau-pied {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding: 14px 10px 0;
+  border-top: 1px solid var(--c-night-line);
+}
+.bureau-terrain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--c-on-night);
+  text-decoration: none;
+}
+.bureau-terrain svg { width: 16px; height: 16px; color: var(--c-fauve-bright); }
+.bureau-session { font-size: 11.5px; color: var(--c-on-night-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bureau-sortie {
+  justify-self: start;
+  padding: 0;
+  font-family: var(--f-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--c-on-night-2);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* --- La page --------------------------------------------------------------------- */
+.bureau-page { min-width: 0; padding: calc(env(safe-area-inset-top) + 26px) clamp(16px, 3vw, 40px) 48px; }
+.bureau-tete {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1240px;
+  margin-bottom: 18px;
+}
+.bureau-titre { display: grid; gap: 3px; min-width: 0; }
+.bureau-titre h1 { font-family: var(--f-display); font-size: 24px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; }
+.bureau-titre p { font-size: 12.5px; }
+.bureau-actions { display: flex; gap: 8px; flex-shrink: 0; }
+/* Les pages de liste se lisent sur une colonne. */
+.bureau-colonne { max-width: 760px; }
+
+/* --- Le planning : le calendrier a gauche, le jour et sa tournee a droite ------------ */
+.planning {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1240px;
+}
+.planning-jour { position: sticky; top: calc(var(--bandeau, 0px) + 20px); }
+.planning-jour .agenda-jour:first-child { margin-top: 2px; }
+.planning-jour .tableau { margin-top: 18px; }
+/* Un ordinateur a la place d'ecrire dans les blocs du semainier. */
+.app-bureau .semainier { --sem-h: 54px; }
+.app-bureau .sem-bloc b,
+.app-bureau .sem-bloc span { font-size: 10.5px; }
+.app-bureau .sem-jour b { font-size: 15px; }
+
+@media (max-width: 1099px) {
+  .planning { grid-template-columns: minmax(0, 1fr); }
+  .planning-jour { position: static; }
+}
+
+/* --- Telephone : la navigation passe en haut, en onglets ------------------------------ */
+@media (max-width: 859px) {
+  .bureau { grid-template-columns: minmax(0, 1fr); }
+  .bureau-nav {
+    z-index: 30;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: auto;
+    padding: calc(env(safe-area-inset-top) + 8px) 10px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .bureau-nav::-webkit-scrollbar { display: none; }
+  .bureau-marque,
+  .bureau-session,
+  .bureau-sortie { display: none; }
+  .bureau-liens { display: flex; gap: 2px; }
+  .bureau-lien { min-height: 36px; white-space: nowrap; }
+  .bureau-pied { margin: 0 0 0 auto; padding: 0 0 0 8px; border-top: 0; border-left: 1px solid var(--c-night-line); }
+  .bureau-page { padding-top: 18px; }
+  .bureau-titre h1 { font-size: 21px; }
+}
+
+/* --- Un employe au Bureau ------------------------------------------------------------ */
+.bureau-reserve { display: grid; place-items: center; min-height: 100dvh; padding: 24px; }
+.bureau-reserve .card { display: grid; gap: 12px; width: 100%; max-width: 360px; text-align: center; }
+.bureau-reserve h1 { font-family: var(--f-display); font-size: 24px; font-weight: 600; }

@@ -9,27 +9,29 @@
 //     d'elle-meme : c'est le moment ou l'on s'attend a la voir repartir ;
 //   - ailleurs, un bandeau le dit, et un tap recharge quand on veut. On ne
 //     recharge pas un rapport sous les doigts de celui qui le remplit.
+//
+// Terrain et le Bureau ont chacun leur page d'entree : chacun compare la sienne.
 
-const SCRIPT = /\/assets\/index-[\w-]+\.js/
+// Le script d'entree d'une page, tel que Vite l'inscrit dans son HTML.
+const SCRIPT_PAGE = /<script type="module"[^>]*\ssrc="(\/assets\/[^"]+\.js)"/
 const INTERVALLE = 10 * 60_000
 
 let derniere = 0
 let annoncee = false
 
-// Le script de l'app en train de tourner. En developpement (Vite), il n'y en a
+// Le script d'entree en train de tourner. En developpement (Vite), il n'y en a
 // pas : rien a comparer, rien a annoncer.
-const versionChargee = () =>
-  document.querySelector('script[type="module"][src*="/assets/index-"]')?.getAttribute('src')?.match(SCRIPT)?.[0] ?? null
+const versionChargee = () => document.querySelector('script[type="module"][src^="/assets/"]')?.getAttribute('src') ?? null
 
-async function nouvelleVersion() {
+async function nouvelleVersion(page) {
   const chargee = versionChargee()
   if (!chargee || !navigator.onLine) return false
   try {
     // Le parametre fait passer la requete a cote du cache du service worker
     // (voir public/sw.js), qui rendrait sinon la page qu'il connait deja.
-    const res = await fetch(`/index.html?verif=${Date.now()}`, { cache: 'no-store' })
+    const res = await fetch(`${page}?verif=${Date.now()}`, { cache: 'no-store' })
     if (!res.ok) return false
-    const enLigne = (await res.text()).match(SCRIPT)?.[0]
+    const enLigne = (await res.text()).match(SCRIPT_PAGE)?.[1]
     return !!enLigne && enLigne !== chargee
   } catch {
     return false
@@ -49,15 +51,16 @@ function montrerBandeau(recharger) {
 
 /**
  * @param {object} o
+ * @param {string} [o.page] la page d'entree de l'app qui demande
  * @param {boolean} [o.force] sans attendre les dix minutes
  * @param {() => boolean} [o.peutRecharger] vrai si l'app peut repartir tout de suite
  * @param {() => Promise<unknown>} [o.avantRecharge] ce qui doit etre enregistre avant
  */
-export async function verifierMiseAJour({ force = false, peutRecharger, avantRecharge } = {}) {
+export async function verifierMiseAJour({ page = '/index.html', force = false, peutRecharger, avantRecharge } = {}) {
   if (annoncee) return
   if (!force && Date.now() - derniere < INTERVALLE) return
   derniere = Date.now()
-  if (!(await nouvelleVersion())) return
+  if (!(await nouvelleVersion(page))) return
   annoncee = true
   const recharger = async () => {
     await avantRecharge?.()

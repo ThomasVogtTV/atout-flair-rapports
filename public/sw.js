@@ -1,9 +1,24 @@
 // Service worker : l'app doit demarrer sans reseau (cave, sous-sol, hotel sans wifi).
 // Strategie : network-first pour la navigation (pour recuperer les mises a jour),
 // cache-first pour les assets.
+//
+// Il sert les deux applis de la maison, a la meme adresse : Terrain (/) et le
+// Bureau (/bureau/). Chacune garde sa propre page d'entree en cache - une
+// navigation vers l'une ne doit jamais remplacer la page de l'autre.
 
-const CACHE = 'atout-flair-v16'
-const SHELL = ['/', '/index.html', '/logo.jpg', '/hero-dog.webp', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
+const CACHE = 'atout-flair-v17'
+const PAGES = ['/index.html', '/bureau/index.html']
+const SHELL = [
+  '/',
+  '/bureau/',
+  ...PAGES,
+  '/logo.jpg',
+  '/hero-dog.webp',
+  '/manifest.webmanifest',
+  '/bureau/manifest.webmanifest',
+  '/icon-192.png',
+  '/icon-512.png',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))
@@ -11,15 +26,21 @@ self.addEventListener('install', (event) => {
 
 // Les fichiers d'assets sont hashes par Vite (nouveau nom de fichier a chaque
 // build). Sans nettoyage, chaque mise a jour de l'app empile une version de
-// plus dans le cache pour toujours - on ne garde que ceux references par le
-// index.html actuel.
+// plus dans le cache pour toujours - on ne garde que ceux references par les
+// pages d'entree actuelles.
 async function pruneStaleAssets() {
   try {
-    const res = await fetch('/index.html', { cache: 'no-store' })
-    const html = await res.text()
-    const current = new Set(Array.from(html.matchAll(/\/assets\/[\w.-]+/g), (m) => m[0]))
+    const current = new Set()
+    for (const page of PAGES) {
+      const res = await fetch(page, { cache: 'no-store' })
+      // Une page illisible : on ne sait pas ce qu'elle reference, donc on ne
+      // nettoie rien du tout plutot que de casser le hors ligne.
+      if (!res.ok) return
+      const html = await res.text()
+      for (const m of html.matchAll(/\/assets\/[\w.-]+/g)) current.add(m[0])
+    }
     // Le moteur PDF est charge a la demande : son nom de fichier n'apparait pas
-    // dans index.html mais dans un import() du script principal, en chemin
+    // dans les pages mais dans un import() du script principal, en chemin
     // relatif. Sans cette passe, il serait efface du cache a chaque activation,
     // et le PDF deviendrait impossible hors ligne.
     for (const path of Array.from(current).filter((p) => p.endsWith('.js'))) {
@@ -36,7 +57,7 @@ async function pruneStaleAssets() {
       }
     }
     // Les polices de la maison sont appelees par la feuille de style, pas par
-    // index.html : sans cette passe, elles seraient effacees du cache a chaque
+    // les pages : sans cette passe, elles seraient effacees du cache a chaque
     // mise a jour, et l'app retomberait sur les polices du systeme hors ligne.
     for (const path of Array.from(current).filter((p) => p.endsWith('.css'))) {
       try {
@@ -72,6 +93,9 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+// La page d'entree de l'app vers laquelle on navigue.
+const pageDe = (url) => (url.pathname === '/bureau' || url.pathname.startsWith('/bureau/') ? '/bureau/index.html' : '/index.html')
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
@@ -82,13 +106,17 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/') || url.searchParams.has('verif')) return
 
   if (request.mode === 'navigate') {
+    const page = pageDe(url)
     event.respondWith(
       fetch(request)
         .then((res) => {
-          caches.open(CACHE).then((c) => c.put('/index.html', res.clone()))
+          if (res.ok) {
+            const copie = res.clone()
+            caches.open(CACHE).then((c) => c.put(page, copie))
+          }
           return res
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match(page))
     )
     return
   }

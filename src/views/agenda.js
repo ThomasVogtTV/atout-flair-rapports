@@ -1,12 +1,17 @@
-// Ecran "Agenda" : les rendez-vous de l'equipe, en mois ou en semaine. Et, sur
-// l'accueil, ceux du jour - on ouvre l'app le matin pour savoir ou l'on va.
+// L'agenda : les rendez-vous de l'equipe, en mois ou en semaine. Et, sur
+// l'accueil de Terrain, ceux du jour - on ouvre l'app le matin pour savoir ou
+// l'on va.
 //
 // Deux vues, parce qu'elles ne repondent pas a la meme question : le mois dit
 // "quand suis-je pris ?", la semaine dit "qui fait quoi jeudi matin ?". La
 // seconde devient la vue de travail des que l'equipe grandit.
+//
+// Le calendrier et le jour choisi se dessinent separement (agendaCalendrierHTML,
+// agendaJourHTML) : Terrain les empile, le planning du Bureau les pose cote a
+// cote.
 
 import { esc } from '../ui/dom.js'
-import { ICONS, sectionIcon } from '../ui/icons.js'
+import { ICONS } from '../ui/icons.js'
 import { todayISO } from '../state.js'
 import {
   aVenir,
@@ -286,58 +291,88 @@ const filtreQuiHTML = (gens, choisi) =>
           .join('')}
       </div>`
 
-export function agendaView(view) {
+/** Ce que l'agenda montre, selon le jour, la vue et le filtre choisis. */
+function lecture(view) {
   const a = view.agenda
   const aujourdhui = todayISO()
   const jour = view.agendaJour ?? aujourdhui
-  const mois = view.agendaMois ?? moisDe(jour)
-  const lundi = view.agendaSemaine ?? lundiDe(jour)
-  const semaine = view.agendaVue === 'semaine'
-  const invite = a?.role === 'invite'
-  const qui = a ? pasAMoi(a) : () => false
-
   const gens = personnesDe(a?.rdvs ?? [])
   const filtre = gens.some((p) => p.id === view.agendaQui) ? view.agendaQui : ''
   const rdvs = (a?.rdvs ?? []).filter((r) => !filtre || r.pour?.id === filtre)
-
   const parJour = new Map()
   for (const r of rdvs) parJour.set(r.date, [...(parJour.get(r.date) ?? []), r])
+  return {
+    a,
+    aujourdhui,
+    jour,
+    mois: view.agendaMois ?? moisDe(jour),
+    lundi: view.agendaSemaine ?? lundiDe(jour),
+    semaine: view.agendaVue === 'semaine',
+    invite: a?.role === 'invite',
+    qui: a ? pasAMoi(a) : () => false,
+    gens,
+    filtre,
+    rdvs,
+    parJour,
+  }
+}
 
-  const duJour = trierRdv(parJour.get(jour) ?? [])
-  const vide = !a
+/** Combien de rendez-vous restent a venir. */
+export const rdvsAVenir = (view) => (view.agenda ? aVenir(view.agenda.rdvs ?? [], todayISO()).length : 0)
+
+/** Mois ou semaine, le filtre par personne et la legende des couleurs. */
+export function agendaCalendrierHTML(view) {
+  const l = lecture(view)
+  const ailleurs = l.jour !== l.aujourdhui || (l.semaine ? l.lundi !== lundiDe(l.aujourdhui) : l.mois !== moisDe(l.aujourdhui))
+  return `
+    <div class="agenda-vues">
+      <button type="button" class="chip chip-sm${l.semaine ? '' : ' on'}" data-agenda-vue="mois">Mois</button>
+      <button type="button" class="chip chip-sm${l.semaine ? ' on' : ''}" data-agenda-vue="semaine">Semaine</button>
+    </div>
+    ${filtreQuiHTML(l.gens, l.filtre)}
+    ${
+      l.semaine
+        ? semaineHTML({ lundi: l.lundi, jour: l.jour, aujourdhui: l.aujourdhui, rdvs: l.rdvs, ajoutable: !l.invite })
+        : moisHTML({ mois: l.mois, jour: l.jour, aujourdhui: l.aujourdhui, parJour: l.parJour })
+    }
+    ${l.semaine ? legendeHTML(l.gens) : ''}
+    ${ailleurs ? `<button type="button" class="link cal-auj" data-agenda-jour="${l.aujourdhui}">Revenir à aujourd'hui</button>` : ''}`
+}
+
+/** Le jour choisi : ses rendez-vous, et de quoi en ajouter un. */
+export function agendaJourHTML(view) {
+  const l = lecture(view)
+  const duJour = trierRdv(l.parJour.get(l.jour) ?? [])
+  const vide = !l.a
     ? navigator.onLine
       ? "Chargement de l'agenda…"
       : "Hors ligne : l'agenda s'affichera au retour du réseau."
     : 'Aucun rendez-vous ce jour-là.'
-  const ailleurs = jour !== aujourdhui || (semaine ? lundi !== lundiDe(aujourdhui) : mois !== moisDe(aujourdhui))
-  const avenir = a ? aVenir(a.rdvs ?? [], aujourdhui).length : 0
+  return `
+    <h3 class="agenda-jour${l.jour === l.aujourdhui ? ' aujourdhui' : ''}">${esc(libelleJour(l.jour, l.aujourdhui))}</h3>
+    ${
+      duJour.length
+        ? `<ul class="report-list">${duJour.map((r) => rdvLigneHTML(r, { montrerQui: l.qui(r) })).join('')}</ul>`
+        : `<p class="empty">${esc(vide)}</p>`
+    }
+    ${l.invite ? '' : '<button type="button" class="btn ghost wide agenda-ajouter" data-act="ajouter-rdv">+ Ajouter un rendez-vous ce jour-là</button>'}`
+}
 
+/** L'ecran Agenda de Terrain. */
+export function agendaView(view) {
+  const l = lecture(view)
   return `
     <header class="top editor-top">
       <button class="icon-btn back" data-act="home" aria-label="Retour">${ICONS.retour}</button>
       <div class="top-title">
         <h1>Agenda</h1>
-        <p class="muted">${avenir} rendez-vous à venir</p>
+        <p class="muted">${rdvsAVenir(view)} rendez-vous à venir</p>
       </div>
-      ${invite ? '' : `<span class="top-actions"><button class="btn ghost btn-mini" data-act="ajouter-rdv">+ Ajouter</button></span>`}
+      ${l.invite ? '' : `<span class="top-actions"><button class="btn ghost btn-mini" data-act="ajouter-rdv">+ Ajouter</button></span>`}
     </header>
     <section class="pad">
-      ${a && !navigator.onLine ? '<p class="muted small agenda-horsligne">Hors ligne : dernière version enregistrée sur ce téléphone.</p>' : ''}
-      <div class="agenda-vues">
-        <button type="button" class="chip chip-sm${semaine ? '' : ' on'}" data-agenda-vue="mois">Mois</button>
-        <button type="button" class="chip chip-sm${semaine ? ' on' : ''}" data-agenda-vue="semaine">Semaine</button>
-      </div>
-      ${filtreQuiHTML(gens, filtre)}
-      ${semaine ? semaineHTML({ lundi, jour, aujourdhui, rdvs, ajoutable: !invite }) : moisHTML({ mois, jour, aujourdhui, parJour })}
-      ${semaine ? legendeHTML(gens) : ''}
-      ${ailleurs ? `<button type="button" class="link cal-auj" data-agenda-jour="${aujourdhui}">Revenir à aujourd'hui</button>` : ''}
-
-      <h3 class="agenda-jour${jour === aujourdhui ? ' aujourdhui' : ''}">${esc(libelleJour(jour, aujourdhui))}</h3>
-      ${
-        duJour.length
-          ? `<ul class="report-list">${duJour.map((r) => rdvLigneHTML(r, { montrerQui: qui(r) })).join('')}</ul>`
-          : `<p class="empty">${esc(vide)}</p>`
-      }
-      ${invite ? '' : '<button type="button" class="btn ghost wide agenda-ajouter" data-act="ajouter-rdv">+ Ajouter un rendez-vous ce jour-là</button>'}
+      ${l.a && !navigator.onLine ? '<p class="muted small agenda-horsligne">Hors ligne : dernière version enregistrée sur ce téléphone.</p>' : ''}
+      ${agendaCalendrierHTML(view)}
+      ${agendaJourHTML(view)}
     </section>`
 }

@@ -1,0 +1,16 @@
+{
+  "name": "Atout Flair — Bureau",
+  "short_name": "AF Bureau",
+  "description": "Planning de l'équipe, administration, validations et export des envois.",
+  "start_url": "/bureau/",
+  "scope": "/bureau/",
+  "display": "standalone",
+  "background_color": "#0d1b1e",
+  "theme_color": "#0d1b1e",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

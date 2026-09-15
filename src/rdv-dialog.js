@@ -35,10 +35,11 @@ const DUREES = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480]
 const clientVide = () => ({ type: '', nom: '', prenom: '', adresse: '', npaLieu: '', email: '', tel: '' })
 
 /**
- * La fiche d'un rendez-vous.
+ * La fiche d'un rendez-vous. `commencer` : le bouton du rapport - il n'a de sens
+ * que dans Terrain, ou les rapports se font.
  * @returns {Promise<'commencer'|'agenda'|'modifier'|'supprimer'|`statut:${string}`|null>}
  */
-export function ouvrirRdv(rdv, { modifiable }) {
+export function ouvrirRdv(rdv, { modifiable, commencer = true }) {
   const t = typeRdv(rdv.type)
   const adresse = adresseRdv(rdv)
   const tel = (rdv.client?.tel || '').replace(/[^\d+]/g, '')
@@ -75,7 +76,7 @@ export function ouvrirRdv(rdv, { modifiable }) {
       ${tel ? `<a class="fiche-btn" href="tel:${esc(tel)}">${ICONS.phone}Appeler</a>` : ''}
     </div>
     ${
-      estAnnule(rdv)
+      estAnnule(rdv) || !commencer
         ? ''
         : `<button type="button" class="btn primary wide rdv-commencer" data-choix="commencer">
              ${rdv.rapportId ? 'Ouvrir le rapport' : 'Commencer le rapport'}

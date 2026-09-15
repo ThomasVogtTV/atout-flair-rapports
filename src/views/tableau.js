@@ -1,21 +1,19 @@
-// Le tableau de l'administrateur, sur l'accueil, sous les rapports en cours :
-// la tournee du jour. Reserve a l'admin : un technicien a son agenda, il n'a pas
-// a savoir depuis son accueil ce que fait le voisin.
+// La tournee d'un jour, pour l'administrateur : sur l'accueil de Terrain celle
+// d'aujourd'hui, dans le planning du Bureau celle du jour choisi. Un technicien
+// a son agenda, il n'a pas a savoir depuis son accueil ce que fait le voisin.
 //
-// Il ne repond qu'a la question qu'on se pose le matin quand on tient la boite :
-// "qui est ou aujourd'hui ?" - la tournee de chacun, et l'itineraire complet en
-// un tap vers les cartes du telephone. Qui a ouvert l'app et ce qui a casse
-// vivent dans l'onglet Administration : l'accueil n'en garde qu'une alerte dans
-// le poste, quand il y a quelque chose a regarder (voir src/equipe-alertes.js).
+// Elle ne repond qu'a la question qu'on se pose quand on tient la boite : "qui
+// est ou ce jour-la ?" - la tournee de chacun, et l'itineraire complet en un
+// tap vers les cartes du telephone. Qui a ouvert l'app et ce qui a casse vivent
+// dans l'administration.
 //
-// Un jour sans rendez-vous, le tableau disparait : le prochain se lit deja dans
-// le poste, juste au-dessus.
+// Un jour sans rendez-vous, la tournee disparait.
 
 import { esc } from '../ui/dom.js'
 import { ICONS } from '../ui/icons.js'
 import { estAdmin } from '../lock.js'
 import { todayISO } from '../state.js'
-import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne } from '../agenda-outils.js'
+import { adresseRdv, nomClient, trierRdv, estAnnule, estFait, tonPersonne, libelleJour } from '../agenda-outils.js'
 
 // La carte integree parle adresses, pas coordonnees : c'est pour cela qu'elle
 // peut se passer d'un geocodage, l'app n'ayant jamais que du texte. La cle est
@@ -55,7 +53,7 @@ function carteHTML(arrets) {
       : `https://www.google.com/maps/embed/v1/place?key=${CLE_CARTE}&q=${url(ou[0])}&zoom=14`
   return `
     <div class="carte">
-      <iframe src="${esc(src)}" title="Carte de la tournée du jour" loading="lazy"
+      <iframe src="${esc(src)}" title="Carte de la tournée" loading="lazy"
               referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
     </div>`
 }
@@ -133,14 +131,17 @@ function tourneeHTML(view, duJour) {
     <ol class="arrets">${choisi.arrets.map(arretHTML).join('')}</ol>`
 }
 
-export function tableauAdminHTML(view) {
+/** `jour` : AAAA-MM-JJ, aujourd'hui par defaut. */
+export function tableauAdminHTML(view, { jour } = {}) {
   if (!estAdmin()) return ''
-  const jour = todayISO()
-  const duJour = trierRdv((view.agenda?.rdvs ?? []).filter((r) => r.date === jour && !estAnnule(r)))
+  const aujourdhui = todayISO()
+  const cible = jour ?? aujourdhui
+  const duJour = trierRdv((view.agenda?.rdvs ?? []).filter((r) => r.date === cible && !estAnnule(r)))
   if (!duJour.length) return ''
+  const titre = cible === aujourdhui ? 'Tournée du jour' : `Tournée · ${libelleJour(cible, aujourdhui)}`
   return `
-    <section class="tableau" aria-label="Tournée du jour">
-      <h3 class="tableau-titre">${ICONS.pin}Tournée du jour</h3>
+    <section class="tableau" aria-label="${esc(titre)}">
+      <h3 class="tableau-titre">${ICONS.pin}${esc(titre)}</h3>
       ${tourneeHTML(view, duJour)}
     </section>`
 }

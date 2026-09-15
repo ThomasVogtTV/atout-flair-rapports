@@ -1,12 +1,16 @@
-// Onglet Administration : qui fait partie de l'equipe, et ce qui est parti.
+// L'administration : qui fait partie de l'equipe, et ce qui est parti.
 //
-// Il ne montre que ce que le serveur sait - les envois, et les ouvertures de
+// Elle ne montre que ce que le serveur sait - les envois, et les ouvertures de
 // l'app avec du reseau. Les brouillons restent sur le telephone de chacun :
-// l'onglet dit ce qui a ete remis aux clients, pas ce qui est en cours de saisie.
+// elle dit ce qui a ete remis aux clients, pas ce qui est en cours de saisie.
 //
 // Plusieurs administrateurs : le titulaire du code principal donne l'acces a qui
 // il veut. Les autres gerent l'equipe comme lui, mais les comptes des
 // administrateurs restent a lui seul (voir api/admin.js).
+//
+// Chaque rubrique se dessine seule (equipeHTML, validationsHTML,
+// rapportsEquipeHTML, journalHTML) : le Bureau en fait chacune une page, avec
+// son propre titre.
 
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
@@ -22,7 +26,7 @@ const isoJour = (ts) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const AIDE_BASE = `
+export const AIDE_BASE = `
   <p class="muted small">Le journal a besoin d'une petite base de données, gratuite à cette échelle.
   Dans Vercel : <b>Storage</b> → <b>Create Database</b> → <b>Upstash for Redis</b> → région
   <b>Europe (Frankfurt)</b> → la relier au projet <b>atout-flair-rapports</b>, puis redéployer.</p>`
@@ -40,7 +44,7 @@ function entete(copie) {
 
 // Le code n'est montre qu'une fois, a la creation : le serveur n'en garde que
 // l'empreinte et ne pourrait plus le redonner.
-function codeRevele(c) {
+export function codeRevele(c) {
   if (!c) return ''
   return `
     <div class="card admin-code">
@@ -160,7 +164,7 @@ function ligneValidation(v) {
 // --- les rapports de l'equipe ------------------------------------------------------
 // Chaque rapport vit sur le telephone de celui qui l'a fait ; sa copie en ligne
 // (la sauvegarde automatique) permet a l'administrateur de le relire. En
-// lecture seule : il s'ouvre en PDF, et rien ne se pose sur ce telephone.
+// lecture seule : il s'ouvre en PDF, et rien ne se pose sur l'appareil.
 
 const ETATS_RAPPORT = {
   sent: ['sent', 'Envoyé'],
@@ -189,16 +193,18 @@ function ligneRapportEquipe(s) {
 // Les plus recents d'abord ; au-dela, le filtre par personne suffit a retrouver.
 const RAPPORTS_MONTRES = 40
 
-function rapportsEquipeHTML(view) {
+export function rapportsEquipeHTML(view, { titre = true } = {}) {
   const e = view.adminRapports
   if (!e) return ''
   const tous = (e.liste ?? []).filter((s) => !s.parentId).sort((a, b) => (b.maj ?? 0) - (a.maj ?? 0))
-  const titre = `
+  const tete = titre
+    ? `
     <h2 class="section-title">
       <span class="section-title-main">${sectionIcon('folder', 'accent')}Rapports de l’équipe</span>
       ${tous.length ? `<span class="section-title-trailer"><span class="count-pill"><b>${tous.length}</b></span></span>` : ''}
     </h2>`
-  if (e.erreur) return `${titre}<p class="muted small">${esc(e.erreur)}</p>`
+    : ''
+  if (e.erreur) return `${tete}<p class="muted small">${esc(e.erreur)}</p>`
 
   const noms = [...new Set(tous.map((s) => s.par?.nom).filter(Boolean))]
   const actif = noms.includes(view.adminRapportsQui) ? view.adminRapportsQui : 'Tous'
@@ -212,21 +218,27 @@ function rapportsEquipeHTML(view) {
           )
           .join('')}</div>`
       : ''
-  return `${titre}${chips}
+  return `${tete}${chips}
     <ul class="report-list">${
       montres.map(ligneRapportEquipe).join('') || `<li class="empty">Aucun rapport sauvegardé en ligne pour l’instant.</li>`
     }</ul>`
 }
 
-function aValiderHTML(validations) {
+export function validationsHTML(validations, { titre = true } = {}) {
   if (!validations.length) return ''
   return `
-    <h2 class="section-title">
+    ${
+      titre
+        ? `<h2 class="section-title">
       <span class="section-title-main">${sectionIcon('note', 'amber')}À valider</span>
       <span class="section-title-trailer"><span class="count-pill"><b>${validations.length}</b></span></span>
-    </h2>
+    </h2>`
+        : ''
+    }
     <ul class="report-list">${validations.map(ligneValidation).join('')}</ul>`
 }
+
+// --- le journal des envois ------------------------------------------------------------
 
 // Le journal arrive par pages de trois cents : une page pleine en annonce
 // peut-etre une autre.
@@ -265,6 +277,44 @@ function filtres(journal, actif) {
     .join('')}</div>`
 }
 
+export function journalHTML(view, { titre = true } = {}) {
+  const a = view.admin
+  const filtre = view.adminFiltre ?? 'Tous'
+  const journal = filtre === 'Tous' ? a.journal : a.journal.filter((j) => j.qui === filtre)
+  return `
+    ${
+      titre
+        ? `<h2 class="section-title" id="journal-envois"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>`
+        : ''
+    }
+    ${exportHTML(view)}
+    ${filtres(a.journal, filtre)}
+    <ul class="report-list">
+      ${journal.map(ligneJournal).join('') || `<li class="empty">Aucun envoi enregistré pour l'instant.</li>`}
+    </ul>
+    ${plusDEnvois(a) ? `<button class="btn ghost wide" data-act="journal-plus">Voir les envois plus anciens</button>` : ''}`
+}
+
+// --- l'equipe ------------------------------------------------------------------------
+
+export function equipeHTML(view, { titre = true } = {}) {
+  const a = view.admin
+  return `
+    ${titre ? `<h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'accent')}Équipe</span></h2>` : ''}
+    <div class="card admin-ajout">
+      <input data-admin-nom type="text" placeholder="Nom de l'employé" autocomplete="off" />
+      <button class="btn primary" data-act="admin-ajouter">Ajouter</button>
+      <label class="admin-fin">Invité jusqu'au <input data-admin-fin type="date" /></label>
+      <p class="muted small admin-aide">Date vide : employé permanent. Avec une date : invité (sous-traitant, intérimaire), dont l'accès s'arrête tout seul le soir de ce jour.</p>
+    </div>
+    <ul class="report-list">
+      ${ligneAdmin(a.admin)}
+      ${a.employes.map((e) => ligneEmploye(e, a.titulaire)).join('')}
+    </ul>
+    ${a.employes.length ? '' : `<p class="muted small">Aucun employé pour l'instant. Ajoutez-en un : un code personnel lui sera attribué.</p>`}`
+}
+
+/** L'onglet Administration de Terrain : toutes les rubriques, l'une sous l'autre. */
 export function adminView(view) {
   const a = view.admin ?? { chargement: true }
   if (a.chargement) return `${entete()}<section class="pad"><p class="muted">Chargement…</p></section>`
@@ -274,36 +324,12 @@ export function adminView(view) {
         <div class="card"><p>${esc(a.erreur)}</p>${a.base === false ? AIDE_BASE : ''}</div>
       </section>`
   }
-
-  const filtre = view.adminFiltre ?? 'Tous'
-  const journal = filtre === 'Tous' ? a.journal : a.journal.filter((j) => j.qui === filtre)
-
   return `${entete(a.copie)}
     <section class="pad">
       ${codeRevele(view.adminCodeRevele)}
-      ${aValiderHTML(a.validations ?? [])}
-
-      <h2 class="section-title"><span class="section-title-main">${sectionIcon('collab', 'accent')}Équipe</span></h2>
-      <div class="card admin-ajout">
-        <input data-admin-nom type="text" placeholder="Nom de l'employé" autocomplete="off" />
-        <button class="btn primary" data-act="admin-ajouter">Ajouter</button>
-        <label class="admin-fin">Invité jusqu'au <input data-admin-fin type="date" /></label>
-        <p class="muted small admin-aide">Date vide : employé permanent. Avec une date : invité (sous-traitant, intérimaire), dont l'accès s'arrête tout seul le soir de ce jour.</p>
-      </div>
-      <ul class="report-list">
-        ${ligneAdmin(a.admin)}
-        ${a.employes.map((e) => ligneEmploye(e, a.titulaire)).join('')}
-      </ul>
-      ${a.employes.length ? '' : `<p class="muted small">Aucun employé pour l'instant. Ajoutez-en un : un code personnel lui sera attribué.</p>`}
-
+      ${validationsHTML(a.validations ?? [])}
+      ${equipeHTML(view)}
       ${rapportsEquipeHTML(view)}
-
-      <h2 class="section-title" id="journal-envois"><span class="section-title-main">${sectionIcon('mail', 'neutral')}Journal des envois</span></h2>
-      ${exportHTML(view)}
-      ${filtres(a.journal, filtre)}
-      <ul class="report-list">
-        ${journal.map(ligneJournal).join('') || `<li class="empty">Aucun envoi enregistré pour l'instant.</li>`}
-      </ul>
-      ${plusDEnvois(a) ? `<button class="btn ghost wide" data-act="journal-plus">Voir les envois plus anciens</button>` : ''}
+      ${journalHTML(view)}
     </section>`
 }

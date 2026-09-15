@@ -15,7 +15,12 @@
     {
       "source": "/manifest.webmanifest",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "source": "/bureau/manifest.webmanifest",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     }
   ],
+  "redirects": [{ "source": "/bureau", "destination": "/bureau/", "permanent": false }],
   "crons": [{ "path": "/api/sauvegarde-base", "schedule": "30 1 * * *" }]
 }
