@@ -158,6 +158,28 @@ body:not([data-screen='editor']) .section-title .section-icon { display: none; }
 .admin-emp { flex-direction: column; align-items: stretch; gap: 10px; }
 .admin-emp .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-emp .row-actions .btn { flex: 1; }
+/* Une personne de l'equipe : son initiale, dans la couleur qu'elle porte dans
+   l'agenda. Assombrie juste assez pour que le blanc s'y lise, meme en theme
+   sombre ou les teintes s'eclaircissent. */
+.membre-tete { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.membre-tete > .envoi-main { flex: 1; }
+.membre-avatar {
+  --ton: var(--c-brand-fill);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font-family: var(--f-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--ton) 85%, #fff) 0%, color-mix(in srgb, var(--ton) 72%, #061013) 72%);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 14px -8px color-mix(in srgb, var(--ton) 90%, transparent);
+}
+.membre.echec .membre-avatar { filter: grayscale(1); opacity: 0.5; }
 .admin-filtres { margin: 0 0 10px; }
 /* L'export du mois : le choix du mois, le bouton a sa droite. */
 .admin-export { display: flex; gap: 8px; margin: 0 0 12px; }

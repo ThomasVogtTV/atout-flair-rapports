@@ -226,6 +226,88 @@ const AGENDA = `
   <rect x="25.6" y="30.3" width="4.8" height="1.2" rx="0.6" fill="#fff" opacity="0.5"/>
 </svg>`
 
+// L'equipe, pour le Bureau : deux badges d'acces en eventail, prune derriere,
+// petrole devant - les memes badges que celui de l'administration.
+const EQUIPE = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-eq-arriere" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b886b3"/>
+      <stop offset="1" stop-color="#5a3657"/>
+    </linearGradient>
+    <linearGradient id="ic-eq-avant" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d93a2"/>
+      <stop offset="1" stop-color="#0e4c57"/>
+    </linearGradient>
+    <linearGradient id="ic-eq-photo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#e6dcc9"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="24" cy="43.6" rx="16" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- le badge de derriere, penche -->
+  <g transform="rotate(-12 15 24)">
+    <rect x="5.8" y="10.4" width="21" height="27" rx="4.5" fill="#3b2139"/>
+    <rect x="4.5" y="9" width="21" height="27" rx="4.5" fill="url(#ic-eq-arriere)"/>
+    <circle cx="15" cy="18.6" r="5.6" fill="url(#ic-eq-photo)"/>
+    <circle cx="15" cy="17" r="2.2" fill="#aa9c86"/>
+    <path d="M10.6 22.8 C11 19.6 12.7 18.3 15 18.3 C17.3 18.3 19 19.6 19.4 22.8 Z" fill="#aa9c86"/>
+    <rect x="8" y="27.6" width="11" height="1.5" rx="0.75" fill="#fff" opacity="0.3"/>
+  </g>
+  <!-- le badge de devant -->
+  <g transform="rotate(7 31 25)">
+    <rect x="21.4" y="12.4" width="22" height="28" rx="4.8" fill="#0a3b44"/>
+    <rect x="20" y="11" width="22" height="28" rx="4.8" fill="url(#ic-eq-avant)"/>
+    <rect x="23.5" y="13.8" width="15" height="1.5" rx="0.75" fill="#fff" opacity="0.25"/>
+    <circle cx="31" cy="21.4" r="6" fill="url(#ic-eq-photo)"/>
+    <circle cx="31" cy="19.6" r="2.4" fill="#aa9c86"/>
+    <path d="M26.3 26.2 C26.7 22.7 28.5 21.3 31 21.3 C33.5 21.3 35.3 22.7 35.7 26.2 Z" fill="#aa9c86"/>
+    <rect x="24" y="30.6" width="13" height="1.6" rx="0.8" fill="#fff" opacity="0.32"/>
+    <rect x="24" y="34" width="8.5" height="1.6" rx="0.8" fill="#fff" opacity="0.22"/>
+  </g>
+</svg>`
+
+// Les rapports d'invites a relire : la page au bandeau ardoise, et la loupe
+// doree de la relecture posee dessus.
+const VALIDER = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-va-page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#e6dcc9"/>
+    </linearGradient>
+    <linearGradient id="ic-va-bande" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7887bd"/>
+      <stop offset="1" stop-color="#2a3354"/>
+    </linearGradient>
+    <linearGradient id="ic-va-or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffdb8f"/>
+      <stop offset="1" stop-color="#c9811f"/>
+    </linearGradient>
+    <radialGradient id="ic-va-verre" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#eef8f9"/>
+      <stop offset="1" stop-color="#8fc3ca"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="24" cy="43.8" rx="15.5" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- epaisseur, puis la page -->
+  <rect x="9.7" y="6.9" width="25" height="33" rx="3.5" fill="#bfb199"/>
+  <rect x="8" y="5" width="25" height="33" rx="3.5" fill="url(#ic-va-page)"/>
+  <path d="M11.5 5 H29.5 A3.5 3.5 0 0 1 33 8.5 V12.6 H8 V8.5 A3.5 3.5 0 0 1 11.5 5 Z" fill="url(#ic-va-bande)"/>
+  <rect x="11.5" y="7.7" width="10" height="1.8" rx="0.9" fill="#fff" opacity="0.45"/>
+  <!-- les lignes du texte -->
+  <rect x="11.5" y="17" width="16" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <rect x="11.5" y="21.4" width="12" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <rect x="11.5" y="25.8" width="14" height="1.9" rx="0.95" fill="#cdbfa8"/>
+  <!-- la loupe : le manche, la monture doree, le verre et son reflet -->
+  <path d="M37 37 L41.6 41.6" stroke="#6b4417" stroke-width="5.2" stroke-linecap="round"/>
+  <path d="M37 37 L41.2 41.2" stroke="#e3a445" stroke-width="3.4" stroke-linecap="round"/>
+  <circle cx="32" cy="32.4" r="9.2" fill="#6b4417" opacity="0.4"/>
+  <circle cx="31" cy="31" r="9" fill="url(#ic-va-or)"/>
+  <circle cx="31" cy="31" r="6.5" fill="url(#ic-va-verre)"/>
+  <path d="M27.3 29.3 A4.4 4.4 0 0 1 30.4 26.6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9"/>
+</svg>`
+
 /** Les icones dessinees de l'app, par nom de porte. */
 export const ICONES_3D = {
   carnet: CARNET,
@@ -234,4 +316,6 @@ export const ICONES_3D = {
   reglages: REGLAGES,
   rapports: RAPPORTS,
   agenda: AGENDA,
+  equipe: EQUIPE,
+  valider: VALIDER,
 }

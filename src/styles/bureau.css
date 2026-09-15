@@ -1,144 +1,555 @@
 /* ==========================================================================
-   Bureau : le cadre de l'app du bureau - la navigation a gauche sur un
-   ordinateur, en onglets en haut sur un telephone - et le planning sur deux
-   colonnes. Tout le reste (cartes, listes, calendrier) vient des feuilles
-   partagees avec Terrain.
+   Bureau : la meme maison que Terrain, a la taille d'un ordinateur
+   --------------------------------------------------------------------------
+   La navigation est la nuit de la maison : les chiens en tete, les lignes de
+   niveau en filigrane, les icones dessinees de l'app. Chaque page s'ouvre sur
+   son panneau de nuit - la date, le titre, les chiffres qu'on vient y lire -
+   puis le travail se pose sur le papier. Sur un telephone, la navigation passe
+   en onglets en haut.
+
+   Les morceaux eux-memes (cartes, listes, calendrier) viennent des feuilles
+   partagees avec Terrain ; ils ne prennent ici que l'aisance d'un grand ecran.
    ========================================================================== */
 
 /* Ni dock ni barre d'actions ici : #app n'a rien a degager en bas. */
 body.app-bureau #app { padding-bottom: 0; }
+body.app-bureau .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
 
 .bureau {
   display: grid;
-  grid-template-columns: 228px minmax(0, 1fr);
+  grid-template-columns: 256px minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
 }
+.bureau-attente { min-height: 100dvh; background: var(--c-night); }
 
-/* --- La navigation ------------------------------------------------------------- */
+/* --- La navigation : la nuit de la maison ----------------------------------------- */
 .bureau-nav {
   position: sticky;
   top: var(--bandeau, 0px);
+  z-index: 30;
   align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   height: calc(100dvh - var(--bandeau, 0px));
-  padding: calc(env(safe-area-inset-top) + 22px) 12px 18px;
+  padding: 0 12px 14px;
+  overflow: hidden auto;
+  scrollbar-width: none;
   color: var(--c-on-night);
   background: var(--c-night);
+  box-shadow: inset -1px 0 0 var(--c-night-line);
 }
-.bureau-marque { display: grid; gap: 3px; padding: 0 10px; }
-.bureau-marque-nom { font-family: var(--f-display); font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
+.bureau-nav::-webkit-scrollbar { display: none; }
+.bureau-nav > .lignes-flair {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--c-on-night);
+  opacity: 0.07;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 170px, #000 340px);
+  mask-image: linear-gradient(180deg, transparent 170px, #000 340px);
+}
+.bureau-nav > :not(.lignes-flair) { position: relative; }
+
+/* Les chiens, en tete : la photo se fond dans la nuit, le nom de la maison
+   se pose sur le bas. */
+.bureau-scene {
+  flex-shrink: 0;
+  height: 196px;
+  margin: 0 -12px;
+  overflow: hidden;
+  background: var(--c-night);
+}
+.bureau-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+.bureau-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 12, 14, 0.4) 0%,
+    rgba(6, 12, 14, 0) 28%,
+    color-mix(in srgb, var(--c-night) 50%, transparent) 64%,
+    var(--c-night) 100%
+  );
+}
+.bureau-marque {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 10px;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
+.bureau-marque-nom {
+  font-family: var(--f-display);
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.022em;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+}
 .bureau-marque-app {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--c-fauve-bright);
-}
-.bureau-liens { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.bureau-lien {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+}
+.bureau-marque-app::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c-fauve-bright) 55%, transparent), transparent);
+}
+
+.bureau-liens { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.bureau-lien {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
+  min-height: 50px;
+  padding: 4px 12px 4px 5px;
   font-family: var(--f-ui);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
+  letter-spacing: -0.004em;
   text-align: left;
   color: var(--c-on-night-2);
   background: none;
   border: 0;
-  border-radius: var(--r-sm);
+  border-radius: 14px;
   cursor: pointer;
-  transition: background-color var(--d-1) var(--ease), color var(--d-1) var(--ease);
+  transition: background-color var(--d-2) var(--ease), color var(--d-2) var(--ease);
 }
-.bureau-lien svg { width: 17px; height: 17px; flex-shrink: 0; }
-.bureau-lien span { flex: 1; }
-.bureau-lien.on { color: var(--c-on-night); background: rgba(241, 237, 228, 0.12); }
-.bureau-lien.on svg { color: var(--c-fauve-bright); }
+.bureau-lien-ico {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  transition: background-color var(--d-2) var(--ease), transform var(--d-2) var(--ease-spring);
+}
+.bureau-lien-ico svg {
+  width: 31px;
+  height: 31px;
+  filter: saturate(0.8) drop-shadow(0 0 6px rgba(241, 237, 228, 0.12));
+  opacity: 0.8;
+  transition: filter var(--d-2) var(--ease), opacity var(--d-2) var(--ease), transform var(--d-2) var(--ease-spring);
+}
+.bureau-lien-nom { flex: 1; min-width: 0; }
+/* La page ouverte : le fil d'or sur la tranche, et son icone allumee. */
+.bureau-lien.on {
+  color: var(--c-on-night);
+  background-image: linear-gradient(90deg, rgba(241, 237, 228, 0.11), rgba(241, 237, 228, 0.025));
+  box-shadow: inset 0 0 0 1px rgba(241, 237, 228, 0.07);
+}
+.bureau-lien.on::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 13px;
+  bottom: 13px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--c-fauve-bright);
+  box-shadow: 0 0 12px rgba(222, 176, 107, 0.6);
+}
+.bureau-lien.on .bureau-lien-ico {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 18px rgba(241, 237, 228, 0.1);
+}
+.bureau-lien.on .bureau-lien-ico svg { filter: drop-shadow(0 0 8px rgba(241, 237, 228, 0.3)); opacity: 1; }
+.bureau-lien:active .bureau-lien-ico { transform: scale(0.92); }
 @media (hover: hover) {
-  .bureau-lien:hover { color: var(--c-on-night); background: rgba(241, 237, 228, 0.07); }
+  .bureau-lien:hover { color: var(--c-on-night); background-color: rgba(241, 237, 228, 0.06); }
+  .bureau-lien:hover .bureau-lien-ico svg { opacity: 1; transform: translateY(-1px); }
 }
+/* Ce qui attend, sur l'icone : la pastille doree du dock de Terrain. */
 .bureau-compte {
-  min-width: 20px;
-  padding: 1px 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-align: center;
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: #1b1206;
   background: var(--c-fauve-bright);
+  border: 2px solid var(--c-night);
   border-radius: var(--r-pill);
 }
+
 .bureau-pied {
   display: grid;
-  gap: 6px;
+  gap: 12px;
   margin-top: auto;
-  padding: 14px 10px 0;
+  padding-top: 14px;
   border-top: 1px solid var(--c-night-line);
 }
 .bureau-terrain {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px 0 12px;
   font-size: 12.5px;
   font-weight: 650;
   color: var(--c-on-night);
   text-decoration: none;
+  background: rgba(241, 237, 228, 0.06);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-md);
+  transition: background-color var(--d-2) var(--ease), transform var(--d-1) var(--ease);
 }
-.bureau-terrain svg { width: 16px; height: 16px; color: var(--c-fauve-bright); }
-.bureau-session { font-size: 11.5px; color: var(--c-on-night-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bureau-sortie {
-  justify-self: start;
-  padding: 0;
-  font-family: var(--f-ui);
-  font-size: 11.5px;
-  font-weight: 600;
+.bureau-terrain span { flex: 1; }
+.bureau-terrain svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--c-fauve-bright); }
+.bureau-terrain svg:last-child {
+  width: 14px;
+  height: 14px;
   color: var(--c-on-night-2);
-  text-decoration: underline;
+  transition: transform var(--d-2) var(--ease-spring), color var(--d-2) var(--ease);
+}
+.bureau-terrain:active { transform: scale(0.98); }
+@media (hover: hover) {
+  .bureau-terrain:hover { background: rgba(241, 237, 228, 0.11); }
+  .bureau-terrain:hover svg:last-child { color: var(--c-fauve-bright); transform: translateX(3px); }
+}
+
+.bureau-moi { display: flex; align-items: center; gap: 10px; min-width: 0; padding-left: 2px; }
+.bureau-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: #1b1206;
+  background: linear-gradient(150deg, #f3d6a0 0%, var(--c-fauve-bright) 45%, #b98038 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 3px rgba(222, 176, 107, 0.16);
+}
+.bureau-moi-nom { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.bureau-moi-nom b {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--c-on-night);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bureau-moi-nom i { font-style: normal; font-size: 10.5px; font-weight: 550; color: var(--c-on-night-2); }
+.bureau-sortie {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--c-on-night-2);
   background: none;
-  border: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
+  transition: color var(--d-2) var(--ease), background-color var(--d-2) var(--ease), border-color var(--d-2) var(--ease);
+}
+.bureau-sortie svg { width: 17px; height: 17px; }
+@media (hover: hover) {
+  .bureau-sortie:hover { color: #ffdcd5; background: rgba(170, 60, 48, 0.25); border-color: rgba(242, 164, 151, 0.3); }
 }
 
-/* --- La page --------------------------------------------------------------------- */
-.bureau-page { min-width: 0; padding: calc(env(safe-area-inset-top) + 26px) clamp(16px, 3vw, 40px) 48px; }
+/* --- La page ------------------------------------------------------------------------ */
+.bureau-page { min-width: 0; padding: calc(env(safe-area-inset-top) + 24px) clamp(16px, 3vw, 44px) 56px; }
+
+/* Le panneau de nuit : la date en or, le titre en grand, les chiffres de la
+   page, et son action. */
 .bureau-tete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 20px 32px;
   max-width: 1240px;
-  margin-bottom: 18px;
+  margin-bottom: 26px;
+  padding: 28px 30px;
+  color: var(--c-on-night);
+  background:
+    radial-gradient(80% 170% at 100% 0%, color-mix(in srgb, var(--c-brand-fill) 36%, transparent) 0%, transparent 62%),
+    radial-gradient(55% 130% at 0% 100%, rgba(197, 139, 63, 0.13) 0%, transparent 62%),
+    var(--c-night);
+  border: 1px solid var(--c-night-line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-3);
 }
-.bureau-titre { display: grid; gap: 3px; min-width: 0; }
-.bureau-titre h1 { font-family: var(--f-display); font-size: 24px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; }
-.bureau-titre p { font-size: 12.5px; }
-.bureau-actions { display: flex; gap: 8px; flex-shrink: 0; }
-/* Les pages de liste se lisent sur une colonne. */
-.bureau-colonne { max-width: 760px; }
+.bureau-tete > .lignes-flair {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  color: var(--c-on-night);
+  opacity: 0.09;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(100deg, transparent 22%, #000 78%);
+  mask-image: linear-gradient(100deg, transparent 22%, #000 78%);
+}
+.bureau-titre { display: grid; gap: 7px; min-width: 0; }
+.bureau-sur {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+}
+.bureau-titre h1 {
+  font-family: var(--f-display);
+  font-size: clamp(28px, 2.5vw, 38px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.026em;
+  color: var(--c-on-night);
+}
+.bureau-titre p { font-size: 12.5px; color: var(--c-on-night-2); }
 
-/* --- Le planning : le calendrier a gauche, le jour et sa tournee a droite ------------ */
+.bureau-chiffres { display: flex; margin: 0; }
+.chiffre {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 7px;
+  min-width: 92px;
+  padding: 2px 22px;
+  border-left: 1px solid var(--c-night-line);
+}
+.chiffre dd {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--c-on-night);
+}
+.chiffre dt {
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--c-on-night-2);
+}
+.chiffre.or dd { color: var(--c-fauve-bright); }
+.chiffre.alerte dd { color: #f2a497; }
+
+.bureau-actions { display: flex; gap: 8px; align-self: center; }
+.bureau-actions .btn { min-height: 46px; padding: 0 20px; font-size: 13.5px; border-radius: var(--r-md); }
+.bureau-actions .btn svg { width: 17px; height: 17px; }
+
+/* Les pages de liste se lisent sur une colonne. */
+.bureau-colonne { max-width: 920px; }
+
+/* --- Ce que le Bureau pose sur le papier -------------------------------------------- */
+.bureau-page .card { border-radius: var(--r-xl); box-shadow: var(--sh-2); }
+.bureau-page .report-list { gap: 10px; }
+.bureau-page .rapport-ligne,
+.bureau-page .envoi-row { border-radius: 14px; }
+.bureau-page .envoi-row { gap: 12px; padding: 13px 14px 13px 16px; }
+.bureau-page .envoi-main strong {
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+.bureau-page .envoi-main strong .pill { margin-left: 4px; font-family: var(--f-ui); vertical-align: 2px; }
+.bureau-page .rapport-equipe { cursor: pointer; }
+.bureau-page .rapport-equipe .envoi-side svg { width: 15px; height: 15px; color: var(--c-faint); }
+.bureau-page .rapport-ligne,
+.bureau-page .rapport-equipe { transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease), border-color var(--d-2) var(--ease); }
+@media (hover: hover) {
+  .bureau-page .rapport-ligne:hover,
+  .bureau-page .rapport-equipe:hover { transform: translateY(-1px); border-color: var(--c-line-2); box-shadow: var(--sh-2); }
+}
+.bureau-page .quick-rooms,
+.bureau-page .report-filters { margin-right: 0; }
+.bureau-page .admin-export {
+  max-width: 480px;
+  padding: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+}
+.bureau-page .admin-export select { min-height: 40px; border-color: transparent; background-color: var(--c-surface-2); }
+.bureau-page .admin-code { border-radius: var(--r-xl); }
+
+/* Une personne, un rapport a relire : son identite a gauche, ses gestes a
+   droite, sur une seule ligne quand la liste est assez large pour ne pas
+   couper le nom. C'est la liste qui se mesure : a cote du formulaire d'ajout,
+   elle est plus etroite que la page. */
+.bureau-page .report-list { container-type: inline-size; }
+.bureau-page .admin-emp .admin-fin { max-width: 360px; }
+.bureau-page .admin-emp .row-actions .btn { flex: 0 0 auto; }
+@container (min-width: 700px) {
+  .bureau-page .admin-emp {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 18px;
+  }
+  .bureau-page .admin-emp .admin-fin { grid-column: 1 / -1; }
+  .bureau-page .admin-emp .row-actions { justify-content: flex-end; }
+}
+.bureau-page .membre-avatar { width: 42px; height: 42px; font-size: 18px; }
+
+/* L'equipe : ajouter quelqu'un a gauche, qui en fait partie a droite. */
+.bureau-equipe { max-width: 1240px; }
+@media (min-width: 1180px) {
+  .bureau-equipe {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0 24px;
+  }
+  .bureau-equipe > .card { grid-column: 1; }
+  .bureau-equipe > .admin-ajout { position: sticky; top: calc(var(--bandeau, 0px) + 24px); }
+  .bureau-equipe > .report-list { grid-column: 2; grid-row: 1 / 4; }
+  .bureau-equipe > p { grid-column: 2; }
+  .bureau-equipe .admin-ajout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Des lignes qui respirent le temps que la liste arrive. */
+.squelette {
+  height: 66px;
+  list-style: none;
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+  background: linear-gradient(100deg, var(--c-surface) 30%, var(--c-bg-2) 50%, var(--c-surface) 70%) 0 0 / 300% 100%;
+  animation: squelette 1.5s var(--ease-in-out) infinite;
+}
+.squelette:nth-child(2) { animation-delay: 0.12s; }
+.squelette:nth-child(3) { animation-delay: 0.24s; }
+.squelette:nth-child(4) { animation-delay: 0.36s; }
+@keyframes squelette {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+/* Une page sans rien a faire : l'icone de la page, en grand. */
+.bureau-vide {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 48px 24px 44px;
+  text-align: center;
+  background: var(--c-surface);
+  border: 1px dashed var(--c-line-2);
+  border-radius: var(--r-xl);
+}
+.bureau-vide-ico svg { display: block; width: 76px; height: 76px; filter: drop-shadow(0 14px 14px rgba(21, 25, 26, 0.14)); }
+.bureau-vide p { font-family: var(--f-display); font-size: 16.5px; font-weight: 600; letter-spacing: -0.012em; color: var(--c-ink-2); }
+
+/* --- Le planning : le calendrier a gauche, le jour et sa tournee a droite ------------- */
 .planning {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+  gap: 26px;
   align-items: start;
   max-width: 1240px;
 }
 .planning-jour { position: sticky; top: calc(var(--bandeau, 0px) + 20px); }
-.planning-jour .agenda-jour:first-child { margin-top: 2px; }
-.planning-jour .tableau { margin-top: 18px; }
-/* Un ordinateur a la place d'ecrire dans les blocs du semainier. */
-.app-bureau .semainier { --sem-h: 54px; }
-.app-bureau .sem-bloc b,
-.app-bureau .sem-bloc span { font-size: 10.5px; }
-.app-bureau .sem-jour b { font-size: 15px; }
+.bureau-page .agenda-jour {
+  margin: 4px 2px 12px;
+  font-size: 21px;
+  letter-spacing: -0.018em;
+}
+.planning-jour .tableau { margin-top: 18px; border-radius: var(--r-xl); }
 
+.bureau-page .calendrier,
+.bureau-page .semainier { padding: 16px 14px 14px; }
+.bureau-page .cal-tete { margin: 0 2px 12px; }
+.bureau-page .cal-titre { font-size: 18px; letter-spacing: -0.016em; }
+.bureau-page .cal-nav {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--c-ink);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-line);
+}
+.bureau-page .cal-case { border-radius: 14px; }
+.bureau-page .cal-num { font-size: 15px; }
+@media (hover: hover) {
+  .bureau-page .cal-case:not(.choisi):hover { background: color-mix(in srgb, var(--c-brand) 12%, transparent); }
+}
+
+/* Un ordinateur a la place d'ecrire dans les blocs du semainier. */
+.app-bureau .semainier { --sem-h: 56px; }
+.app-bureau .sem-grille { grid-template-columns: 44px repeat(7, minmax(58px, 1fr)); }
+.app-bureau .sem-heure { font-size: 10px; }
+.app-bureau .sem-jour { gap: 4px; padding: 4px 0 10px; }
+.app-bureau .sem-jour i { font-size: 10px; letter-spacing: 0.08em; }
+.app-bureau .sem-jour b { font-size: 16px; }
+.app-bureau .sem-jour.aujourdhui b { width: 30px; height: 30px; }
+.app-bureau .sem-bloc {
+  padding: 4px 6px;
+  border-radius: 7px;
+  box-shadow: 0 1px 2px rgba(21, 25, 26, 0.08), 0 8px 16px -12px color-mix(in srgb, var(--ton) 80%, transparent);
+  transition: transform var(--d-2) var(--ease), box-shadow var(--d-2) var(--ease);
+}
+.app-bureau .sem-bloc b,
+.app-bureau .sem-bloc span { font-size: 11px; }
+.app-bureau .sem-bloc.serre { padding: 3px 3px; }
+@media (hover: hover) {
+  .app-bureau .sem-bloc:hover { z-index: 2; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(21, 25, 26, 0.1), 0 12px 22px -12px color-mix(in srgb, var(--ton) 90%, transparent); }
+  /* Un creneau libre se propose sous le pointeur. */
+  .app-bureau .sem-creneau:hover { background: color-mix(in srgb, var(--c-brand) 7%, transparent); }
+  .app-bureau .sem-creneau:hover::after {
+    content: '+';
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--c-brand-ink);
+  }
+}
+
+/* --- Ecrans moyens : le titre et l'action en haut, les chiffres dessous ---------------- */
+@media (max-width: 1179px) {
+  .bureau-tete { grid-template-columns: minmax(0, 1fr) auto; }
+  .bureau-chiffres { grid-column: 1 / -1; grid-row: 2; }
+  .chiffre:first-child { padding-left: 0; border-left: 0; }
+}
 @media (max-width: 1099px) {
   .planning { grid-template-columns: minmax(0, 1fr); }
   .planning-jour { position: static; }
@@ -148,27 +559,84 @@ body.app-bureau #app { padding-bottom: 0; }
 @media (max-width: 859px) {
   .bureau { grid-template-columns: minmax(0, 1fr); }
   .bureau-nav {
-    z-index: 30;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     height: auto;
     padding: calc(env(safe-area-inset-top) + 8px) 10px 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    overflow: auto hidden;
+    box-shadow: 0 12px 24px -20px rgba(6, 12, 14, 0.9);
   }
-  .bureau-nav::-webkit-scrollbar { display: none; }
-  .bureau-marque,
-  .bureau-session,
-  .bureau-sortie { display: none; }
+  .bureau-nav > .lignes-flair,
+  .bureau-scene,
+  .bureau-moi { display: none; }
   .bureau-liens { display: flex; gap: 2px; }
-  .bureau-lien { min-height: 36px; white-space: nowrap; }
+  .bureau-lien {
+    gap: 6px;
+    min-height: 44px;
+    padding: 3px 12px 3px 3px;
+    font-size: 12.5px;
+    white-space: nowrap;
+    border-radius: 12px;
+  }
+  .bureau-lien-ico { width: 34px; height: 34px; border-radius: 10px; }
+  .bureau-lien-ico svg { width: 26px; height: 26px; }
+  .bureau-lien.on::before { top: auto; right: 12px; bottom: -8px; left: 12px; width: auto; height: 3px; border-radius: 3px 3px 0 0; }
   .bureau-pied { margin: 0 0 0 auto; padding: 0 0 0 8px; border-top: 0; border-left: 1px solid var(--c-night-line); }
-  .bureau-page { padding-top: 18px; }
-  .bureau-titre h1 { font-size: 21px; }
+  .bureau-terrain { min-height: 38px; padding: 0 12px 0 10px; white-space: nowrap; }
+  .bureau-terrain svg:last-child { display: none; }
+
+  .bureau-page { padding: 16px var(--gutter) 40px; }
+  .bureau-tete { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-bottom: 18px; padding: 20px 18px; border-radius: var(--r-lg); }
+  .bureau-titre h1 { font-size: 27px; }
+  .bureau-chiffres { grid-row: auto; }
+  .chiffre { flex: 1 1 0; min-width: 0; padding: 0 12px; }
+  .chiffre dd { font-size: 28px; }
+  .chiffre dt { font-size: 9px; letter-spacing: 0.06em; white-space: normal; }
+  .bureau-actions .btn { flex: 1; }
+  .bureau-page .admin-emp { display: flex; }
+  .bureau-page .admin-emp .row-actions .btn { flex: 1 1 auto; }
 }
 
-/* --- Un employe au Bureau ------------------------------------------------------------ */
-.bureau-reserve { display: grid; place-items: center; min-height: 100dvh; padding: 24px; }
-.bureau-reserve .card { display: grid; gap: 12px; width: 100%; max-width: 360px; text-align: center; }
-.bureau-reserve h1 { font-family: var(--f-display); font-size: 24px; font-weight: 600; }
+/* --- Un employe au Bureau : l'ecran du code, les chiens et la nuit qui monte ------------ */
+.bureau-reserve {
+  position: relative;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--c-night) url('/hero-dog.webp') 50% 30% / cover no-repeat;
+}
+.bureau-reserve::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 12, 14, 0.25) 0%, rgba(6, 12, 14, 0) 30%, rgba(6, 12, 14, 0.25) 46%, rgba(6, 12, 14, 0.9) 70%, #060c0e 88%);
+}
+.bureau-reserve-carte {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 420px);
+  padding: 0 2px calc(16px + env(safe-area-inset-bottom));
+  color: var(--c-on-night);
+}
+.bureau-reserve-carte h1 {
+  font-family: var(--f-display);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.022em;
+}
+.bureau-reserve-carte p { font-size: 13.5px; color: var(--c-on-night-2); }
+.bureau-reserve-carte .btn.wide { min-height: 48px; margin-top: 2px; }
+.bureau-reserve-carte .btn.quiet { --btn-fg: var(--c-on-night-2); }
+@media (prefers-reduced-motion: no-preference) {
+  .bureau-reserve-carte > * { animation: bloc-entre var(--d-4) var(--ease) backwards; }
+  .bureau-reserve-carte > :nth-child(2) { animation-delay: 60ms; }
+  .bureau-reserve-carte > :nth-child(3) { animation-delay: 120ms; }
+  .bureau-reserve-carte > :nth-child(n + 4) { animation-delay: 180ms; }
+}

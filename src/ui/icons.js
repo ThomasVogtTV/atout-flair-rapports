@@ -41,6 +41,8 @@ export const ICONS = {
   alerte: `<svg viewBox="0 0 24 24" ${ICON_STROKE} stroke-width="1.9"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.1"/></svg>`,
   horloge: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
   cadenas: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`,
+  // La porte, et la fleche qui en sort : se deconnecter.
+  sortie: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><path d="M13.5 4.5H7A1.5 1.5 0 0 0 5.5 6v12A1.5 1.5 0 0 0 7 19.5h6.5"/><path d="M10.5 12H20M16.5 8.5 20 12l-3.5 3.5"/></svg>`,
   contacts: `<svg viewBox="0 0 24 24" ${ICON_STROKE}><rect ${ICON_FILL} x="4" y="3.5" width="16" height="17" rx="2.2"/><rect x="4" y="3.5" width="16" height="17" rx="2.2"/><circle cx="12" cy="10" r="2.4"/><path d="M7.7 16.3a4.3 4.3 0 0 1 8.6 0"/></svg>`,
 }
 

@@ -31,10 +31,23 @@ const FRAIS_MS = 60_000
 let view = { ecran: 'planning', admin: null, agenda: null, adminRapports: null }
 let luA = 0
 
+// La page affichee, pour ne rejouer l'entree des blocs qu'en arrivant sur une
+// page - pas a chaque re-rendu (un jour choisi, un filtre).
+let pageAffichee = null
+let entreeTimer = null
+
 function render() {
   document.body.dataset.screen = view.ecran
   document.body.dataset.role = identite()?.role ?? ''
   root.innerHTML = bureauView(view)
+  const page = `${identite()?.role ?? ''}:${view.ecran}`
+  if (page === pageAffichee) return
+  pageAffichee = page
+  root.classList.remove('entree')
+  void root.offsetWidth // relance l'animation
+  root.classList.add('entree')
+  clearTimeout(entreeTimer)
+  entreeTimer = setTimeout(() => root.classList.remove('entree'), 1200)
 }
 
 // --- les pages ----------------------------------------------------------------

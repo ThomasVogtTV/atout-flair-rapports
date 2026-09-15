@@ -15,7 +15,7 @@
 import { esc } from '../ui/dom.js'
 import { ICONS, sectionIcon } from '../ui/icons.js'
 import { ilYA } from './envois.js'
-import { decalerMois, libelleMois } from '../agenda-outils.js'
+import { decalerMois, libelleMois, tonPersonne } from '../agenda-outils.js'
 
 const TYPES = { detection: 'Détection', immeuble: 'Immeuble', hotel: 'Hôtel' }
 
@@ -25,6 +25,14 @@ const isoJour = (ts) => {
   const d = new Date(ts)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+// L'initiale d'une personne, dans la couleur qu'elle porte dans l'agenda : on la
+// reconnait d'un ecran a l'autre avant d'avoir lu son nom.
+const avatar = (id, nom) =>
+  `<span class="membre-avatar ton-${tonPersonne(id)}" aria-hidden="true">${esc((nom || '?').trim().charAt(0).toUpperCase())}</span>`
+
+// Le type du rapport en tete de ligne : maison, immeuble ou hotel, sans lire.
+const iconeType = (type) => (ICONS[type] ? `<span class="rapport-type icon-${type}" aria-hidden="true">${ICONS[type]}</span>` : '')
 
 export const AIDE_BASE = `
   <p class="muted small">Le journal a besoin d'une petite base de données, gratuite à cette échelle.
@@ -60,7 +68,8 @@ function ligneAdmin(a) {
   const vu = a?.vu ? `vu ${ilYA(a.vu)}` : 'pas encore vu'
   const n = a?.envois ?? 0
   return `
-    <li class="envoi-row">
+    <li class="envoi-row membre">
+      ${avatar('admin', 'Administrateur')}
       <div class="envoi-main">
         <strong>Administrateur</strong>
         <span class="muted">${esc(vu)} · ${n} envoi${n > 1 ? 's' : ''}</span>
@@ -102,10 +111,13 @@ function ligneEmploye(e, titulaire) {
         }
       </div>`
   return `
-    <li class="envoi-row admin-emp${bloque ? ' echec' : ''}">
-      <div class="envoi-main">
-        <strong>${esc(e.nom)}${pastille}</strong>
-        <span class="muted">${esc(detail)}</span>
+    <li class="envoi-row admin-emp membre${bloque ? ' echec' : ''}">
+      <div class="membre-tete">
+        ${avatar(e.id, e.nom)}
+        <div class="envoi-main">
+          <strong>${esc(e.nom)}${pastille}</strong>
+          <span class="muted">${esc(detail)}</span>
+        </div>
       </div>
       ${
         e.invite
@@ -132,6 +144,7 @@ function ligneJournal(j) {
   const motif = j.statut === 'echec' ? j.erreur || 'Échec sans explication.' : j.statut === 'refuse' ? j.erreur : ''
   return `
     <li class="envoi-row${rouge ? ' echec' : ''}">
+      ${iconeType(j.type)}
       <div class="envoi-main">
         <strong>${esc(j.qui || '?')}</strong>
         <span class="muted">${esc(quoi || j.fichier || 'Rapport')}</span>
@@ -148,10 +161,13 @@ function ligneValidation(v) {
   const quoi = [v.meta?.ref, TYPES[v.meta?.type] ?? v.meta?.type, v.meta?.adresse].filter(Boolean).join(' · ')
   return `
     <li class="envoi-row admin-emp a-valider">
-      <div class="envoi-main">
-        <strong>${esc(v.par?.nom || 'Invité')} <span class="pill invite">Invité</span></strong>
-        <span class="muted">${esc(quoi || v.filename || 'Rapport')}</span>
-        <span class="muted">→ ${esc(v.to || '?')} · ${esc(ilYA(v.date))}</span>
+      <div class="membre-tete">
+        ${iconeType(v.meta?.type)}
+        <div class="envoi-main">
+          <strong>${esc(v.par?.nom || 'Invité')} <span class="pill invite">Invité</span></strong>
+          <span class="muted">${esc(quoi || v.filename || 'Rapport')}</span>
+          <span class="muted">→ ${esc(v.to || '?')} · ${esc(ilYA(v.date))}</span>
+        </div>
       </div>
       <div class="row-actions">
         <button class="btn ghost btn-mini" data-act="valid-voir" data-id="${esc(v.id)}">Voir le PDF</button>
@@ -181,6 +197,7 @@ function ligneRapportEquipe(s) {
     .join(' · ')
   return `
     <li class="envoi-row rapport-equipe" data-act="equipe-rapport" data-id="${esc(s.id)}">
+      ${iconeType(s.type)}
       <div class="envoi-main">
         <strong>${esc(s.titre || s.ref || 'Rapport')}</strong>
         <span class="muted">${esc(quoi)}</span>
