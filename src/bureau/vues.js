@@ -18,8 +18,9 @@ import { agendaCalendrierHTML, agendaJourHTML } from '../views/agenda.js'
 import { tableauAdminHTML } from '../views/tableau.js'
 import { AIDE_BASE, PAGE_JOURNAL, codeRevele, equipeHTML, validationsHTML, rapportsEquipeHTML, journalHTML } from '../views/admin.js'
 import { estAnnule, lundiDe, plusJours, personnesDe } from '../agenda-outils.js'
+import { incidentsNouveaux, incidentsVus } from '../equipe-alertes.js'
 
-export const ECRANS = ['planning', 'equipe', 'valider', 'rapports', 'envois']
+export const ECRANS = ['planning', 'equipe', 'valider', 'rapports', 'envois', 'incidents']
 
 const PAGES = {
   planning: { titre: 'Planning', icone: 'agenda' },
@@ -27,6 +28,7 @@ const PAGES = {
   valider: { titre: 'À valider', icone: 'valider' },
   rapports: { titre: 'Rapports', icone: 'rapports' },
   envois: { titre: 'Envois', icone: 'envois' },
+  incidents: { titre: 'Incidents', icone: 'incidents' },
 }
 
 const JOUR_MS = 86_400_000
@@ -36,6 +38,7 @@ const s = (n) => (n > 1 ? 's' : '')
 
 function navHTML(view, ident) {
   const aValider = view.admin?.validations?.length ?? 0
+  const nouveaux = incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length
   const nom = ident.id ? ident.nom : 'Administrateur'
   return `
     <nav class="bureau-nav" aria-label="Bureau">
@@ -50,7 +53,12 @@ function navHTML(view, ident) {
       <ul class="bureau-liens">
         ${ECRANS.map((e) => {
           const on = view.ecran === e
-          const compte = e === 'valider' && aValider ? `<b class="bureau-compte">${aValider}</b>` : ''
+          const compte =
+            e === 'valider' && aValider
+              ? `<b class="bureau-compte">${aValider}</b>`
+              : e === 'incidents' && nouveaux
+                ? `<b class="bureau-compte alerte">${nouveaux}</b>`
+                : ''
           return `
           <li>
             <button type="button" class="bureau-lien${on ? ' on' : ''}" data-bureau-ecran="${e}"${on ? ' aria-current="page"' : ''}>
@@ -235,12 +243,71 @@ function envoisPageHTML(view) {
     <div class="bureau-colonne reveal" style="--i:1">${etatEquipe(view) || journalHTML(view, { titre: false })}</div>`
 }
 
+// --- les incidents techniques -------------------------------------------------------
+// Ce qui a casse chez quelqu'un, sans qu'il ait eu a le dire (voir
+// api/_lib/incidents.js). Une ligne par erreur, son compte, et le detail
+// technique replie. "Regle" l'efface ; si elle revient, elle repart de un.
+
+const APPS = { terrain: 'Terrain', bureau: 'Bureau', serveur: 'Serveur' }
+
+function incidentHTML(i, vu) {
+  const nouveau = i.derniere > vu
+  const ou = [APPS[i.app] ?? i.app, i.ecran, (i.qui ?? []).join(', ')].filter(Boolean).join(' · ')
+  const quand = `${i.nombre > 1 ? `${i.nombre} fois · première ${ilYA(i.premiere)} · ` : ''}dernière ${ilYA(i.derniere)}`
+  const detail = [[i.source, i.version, i.appareil].filter(Boolean).join('\n'), i.pile].filter(Boolean).join('\n\n')
+  return `
+    <li class="envoi-row incident${nouveau ? ' echec' : ''}">
+      <span class="rapport-type incident-ico" aria-hidden="true">${ICONS.alerte}</span>
+      <div class="envoi-main">
+        <strong>${esc(i.message)}</strong>
+        <span class="muted">${esc(ou)}</span>
+        <span class="muted">${esc(quand)}</span>
+        ${detail ? `<details class="incident-detail"><summary>Détails</summary><pre>${esc(detail)}</pre></details>` : ''}
+      </div>
+      <div class="envoi-side">
+        ${nouveau ? '<span class="pill off">Nouveau</span>' : ''}
+        <button type="button" class="btn ghost btn-mini" data-act="incident-regler" data-sig="${esc(i.sig)}">Réglé</button>
+      </div>
+    </li>`
+}
+
+function incidentsPageHTML(view) {
+  const inc = view.incidents
+  const lu = Boolean(inc?.liste)
+  const liste = inc?.liste ?? []
+  const vu = view.incidentsVuAvant ?? 0
+  const nouveaux = liste.filter((i) => i.derniere > vu).length
+  const semaine = liste.filter((i) => i.derniere > Date.now() - 7 * JOUR_MS).length
+  return `
+    ${teteHTML({
+      titre: 'Incidents',
+      chiffres: [
+        { mot: nouveaux > 1 ? 'nouveaux' : 'nouveau', n: lu ? nouveaux : null, alerte: true },
+        { mot: 'cette semaine', n: lu ? semaine : null },
+        { mot: 'à régler', n: lu ? liste.length : null },
+      ],
+      actions: liste.length ? '<button type="button" class="btn ghost" data-act="incidents-tout-regler">Tout régler</button>' : '',
+    })}
+    <div class="bureau-colonne reveal" style="--i:1">
+      ${
+        !inc || inc.chargement
+          ? attenteHTML()
+          : inc.erreur
+            ? `<div class="card bureau-erreur"><p>${esc(inc.erreur)}</p></div>`
+            : liste.length
+              ? `<ul class="report-list">${liste.map((i) => incidentHTML(i, vu)).join('')}</ul>`
+              : videHTML('incidents', 'Aucun incident. Tout tourne.')
+      }
+    </div>`
+}
+
 const RENDUS = {
   planning: planningHTML,
   equipe: equipePageHTML,
   valider: validerPageHTML,
   rapports: rapportsPageHTML,
   envois: envoisPageHTML,
+  incidents: incidentsPageHTML,
 }
 
 // Un employe ou un invite qui ouvre le Bureau : pas de porte fermee sans issue.

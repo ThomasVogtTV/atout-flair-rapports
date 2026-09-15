@@ -5,6 +5,7 @@
 // Le dossier commence par "_" : Vercel n'en fait pas une adresse publique.
 
 import { journaliser, noterActivite } from './equipe.js'
+import { signalerServeur } from './incidents.js'
 
 export const MAILBOX = 'info@atout-flair.ch'
 // APP_CODE est obligatoire : sans lui, l'URL du site suffirait a n'importe qui
@@ -104,5 +105,6 @@ export async function consigner(ident, demande, statut, { erreur, validePar } = 
     }
   } catch (e) {
     console.error('Journal non ecrit', e)
+    await signalerServeur('journal', e)
   }
 }

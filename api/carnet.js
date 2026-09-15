@@ -13,6 +13,7 @@
 
 import { identifierRequete, TropDEssais, baseConfiguree, lireCarnet, ecrireCarnet, versionCarnet } from './_lib/equipe.js'
 import { fusionnerCarnet, contactsVivants } from './_lib/carnet.js'
+import { signalerServeur } from './_lib/incidents.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -56,6 +57,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ contacts: contactsVivants(carnet), version })
   } catch (err) {
     console.error('Carnet', err)
+    await signalerServeur('carnet', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })
   }
 }

@@ -8,8 +8,11 @@ import '@fontsource/ibm-plex-mono/500.css'
 import '@fontsource/ibm-plex-mono/600.css'
 import '../styles/index.css'
 import '../styles/bureau.css'
+import { installerIncidents } from '../incidents.js'
+import { currentCode } from '../mailer.js'
 import { demarrer } from './app.js'
 
+installerIncidents('bureau', { code: currentCode })
 demarrer()
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

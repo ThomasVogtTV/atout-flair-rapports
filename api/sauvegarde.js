@@ -29,6 +29,7 @@ import {
   retirerSauvegarde,
 } from './_lib/equipe.js'
 import { stockageConfigure, ecrireFichier, lireFichier, supprimerFichiers, listerFichiers } from './_lib/stockage.js'
+import { signalerServeur } from './_lib/incidents.js'
 
 const ID_OK = /^[\w-]{1,64}$/
 const CLE_OK = /^[a-f0-9]{16,64}$/
@@ -167,6 +168,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Action inconnue' })
   } catch (err) {
     console.error('Sauvegarde', err)
+    await signalerServeur('sauvegarde', err)
     return res.status(500).json({ error: 'Erreur du stockage en ligne' })
   }
 }

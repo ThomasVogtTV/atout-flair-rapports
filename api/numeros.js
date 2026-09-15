@@ -3,6 +3,7 @@
 // des rapports, et ses numeros doivent aussi etre uniques.
 
 import { identifierRequete, TropDEssais, baseConfiguree, reserverNumeros } from './_lib/equipe.js'
+import { signalerServeur } from './_lib/incidents.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -28,6 +29,7 @@ export default async function handler(req, res) {
     return res.status(200).json(await reserverNumeros(req.body?.plusHaut))
   } catch (err) {
     console.error('Numeros', err)
+    await signalerServeur('numeros', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })
   }
 }

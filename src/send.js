@@ -7,6 +7,7 @@ import { sendReport } from './mailer.js'
 import { esc, toast, showLoading, hideLoading } from './ui/dom.js'
 import { openOverlay, confirmRemise } from './ui/dialogs.js'
 import { estInvite } from './lock.js'
+import { signaler } from './incidents.js'
 
 // Boite mail de l'entreprise : copie par defaut proposee dans le dialogue.
 const COPY_DEFAULT = 'info@atout-flair.ch'
@@ -78,6 +79,7 @@ export async function previewPdf(report, children) {
     ouvrirPdf(blob, S.reportFilename(report))
   } catch (err) {
     console.error('Génération du PDF impossible', err)
+    signaler(err, 'Génération du PDF')
     toast('Impossible de générer le PDF. Réessayez.')
   } finally {
     hideLoading()
@@ -234,6 +236,7 @@ Atout Flair</textarea></label>
       onSent()
     } catch (err) {
       console.error('Génération/envoi du rapport impossible', err)
+      signaler(err, 'Envoi du rapport')
       toast('Une erreur est survenue. Réessayez.')
     } finally {
       hideLoading()

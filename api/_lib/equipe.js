@@ -36,6 +36,8 @@ export const _brancherBase = (fn) => {
   executer = fn
 }
 const r = (...commande) => executer(commande.map(String))
+/** Une commande de la base, pour les modules voisins (voir incidents.js). */
+export const commandeBase = r
 
 export class Erreur400 extends Error {}
 
@@ -127,7 +129,8 @@ export class TropDEssais extends Error {
 const adresseDe = (req) =>
   String(req.headers?.['x-real-ip'] || req.headers?.['x-forwarded-for'] || 'inconnue').split(',')[0].trim()
 // L'adresse ne s'ecrit pas en clair dans la base.
-const cleEssais = (req) => `af:essais:${createHash('sha256').update(adresseDe(req)).digest('hex').slice(0, 24)}`
+export const empreinteAdresse = (req) => createHash('sha256').update(adresseDe(req)).digest('hex').slice(0, 24)
+const cleEssais = (req) => `af:essais:${empreinteAdresse(req)}`
 
 /**
  * Qui se cache derriere le code de cette requete, avec le frein aux essais en

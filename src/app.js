@@ -38,6 +38,7 @@ import { ouvrirNouveauRapport } from './nouveau-dialog.js'
 import { ouvrirMenuRapport } from './rapport-menu.js'
 import { montrerSceau } from './ui/sceau.js'
 import { verifierMiseAJour } from './mise-a-jour.js'
+import { signaler } from './incidents.js'
 
 // reportsOpen / filter : etat de la liste de l'accueil (repliee sur les trois
 // derniers rapports, ou deroulee et filtrable). Il survit aux allers-retours
@@ -1536,6 +1537,7 @@ root.addEventListener('click', async (ev) => {
     } catch (err) {
       hideLoading()
       console.error('Sauvegarde impossible', err)
+      signaler(err, 'Fichier de sauvegarde')
       toast('Sauvegarde impossible.')
     }
     return

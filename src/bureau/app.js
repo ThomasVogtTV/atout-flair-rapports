@@ -17,8 +17,9 @@ import { choisirContact } from '../contact-picker.js'
 import { synchroniserCarnet } from '../carnet-sync.js'
 import { sauvegardesEnLigne, rapportEnLigne } from '../sauvegarde.js'
 import { previewPdf, ouvrirPdf, shareOrDownload } from '../send.js'
-import { marquerJournalVu } from '../equipe-alertes.js'
+import { marquerJournalVu, incidentsVus, marquerIncidentsVus } from '../equipe-alertes.js'
 import { verifierMiseAJour } from '../mise-a-jour.js'
+import { appelIncidents } from '../incidents.js'
 import { PAGE_JOURNAL } from '../views/admin.js'
 import { ECRANS, bureauView } from './vues.js'
 
@@ -55,12 +56,16 @@ function render() {
 function aller(ecran) {
   if (!ECRANS.includes(ecran)) return
   view.ecran = ecran
+  // Ce qui etait deja vu en arrivant : les nouveaux incidents restent marques
+  // tant qu'on est sur la page, meme une fois comptes comme vus.
+  if (ecran === 'incidents') view.incidentsVuAvant = incidentsVus()
   // L'adresse garde la page : un rechargement ou un favori y ramene.
   history.replaceState(null, '', `#${ecran}`)
   render()
   document.scrollingElement.scrollTop = 0
   if (ecran === 'rapports' && !view.adminRapports) chargerRapports()
   if (ecran === 'envois' && view.admin?.journal) marquerJournalVu(view.admin.journal)
+  if (ecran === 'incidents') chargerIncidents()
 }
 
 // --- les donnees ----------------------------------------------------------------
@@ -83,6 +88,9 @@ async function recharger({ force = false } = {}) {
   if (agenda) view.agenda = agenda
   // Le journal est sous les yeux : l'alerte des envois rates, dans Terrain, se tait.
   if (view.ecran === 'envois' && admin.journal) marquerJournalVu(admin.journal)
+  // Arrive directement sur une page qui a ses propres donnees (favori, rechargement).
+  if (view.ecran === 'rapports' && !view.adminRapports?.liste) chargerRapports()
+  if (view.ecran === 'incidents') chargerIncidents()
   render()
 }
 
@@ -100,6 +108,32 @@ async function chargerRapports() {
     .catch((err) => ({ erreur: err.message }))
   view.adminRapports = rapports
   if (view.ecran === 'rapports') render()
+}
+
+// --- les incidents techniques ----------------------------------------------------
+
+async function chargerIncidents() {
+  if (!view.incidents?.liste) {
+    view.incidents = { chargement: true }
+    render()
+  }
+  const incidents = await appelIncidents('GET')
+    .then((d) => ({ liste: d.incidents ?? [] }))
+    .catch((err) => ({ erreur: err.message }))
+  view.incidents = incidents
+  // Sous les yeux : l'alerte de Terrain et la pastille de la navigation se taisent.
+  if (incidents.liste) marquerIncidentsVus(incidents.liste)
+  if (view.ecran === 'incidents') render()
+}
+
+async function reglerIncidents(corps) {
+  try {
+    await appelIncidents('POST', corps)
+  } catch (err) {
+    return toast(err.message)
+  }
+  if (view.admin?.incidents) view.admin.incidents = corps.sig ? view.admin.incidents.filter((i) => i.sig !== corps.sig) : []
+  await chargerIncidents()
 }
 
 // --- le planning ------------------------------------------------------------------
@@ -397,6 +431,11 @@ root.addEventListener('click', async (ev) => {
     return render()
   }
   if (act === 'journal-plus') return journalPlus()
+  if (act === 'incident-regler') return reglerIncidents({ action: 'regler', sig: cible.dataset.sig })
+  if (act === 'incidents-tout-regler') {
+    if (!confirm('Marquer tous les incidents comme réglés ? Ceux qui reviennent réapparaîtront.')) return
+    return reglerIncidents({ action: 'tout-regler' })
+  }
   if (act === 'exporter-envois') return exporterEnvois()
   if (act === 'deconnexion') {
     if (!confirm('Se déconnecter ? Le code sera redemandé, ici comme dans Terrain.')) return
@@ -465,6 +504,7 @@ export function demarrer() {
   sessionAffichee = cleSession()
   const demande = location.hash.slice(1)
   if (ECRANS.includes(demande)) view.ecran = demande
+  view.incidentsVuAvant = incidentsVus()
   const aujourdhui = S.todayISO()
   view.agendaJour = aujourdhui
   view.agendaMois = aujourdhui.slice(0, 7)

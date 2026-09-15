@@ -476,6 +476,48 @@ body.app-bureau .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
 .bureau-vide-ico svg { display: block; width: 76px; height: 76px; filter: drop-shadow(0 14px 14px rgba(21, 25, 26, 0.14)); }
 .bureau-vide p { font-family: var(--f-display); font-size: 16.5px; font-weight: 600; letter-spacing: -0.012em; color: var(--c-ink-2); }
 
+/* --- Les incidents ------------------------------------------------------------------ */
+.bureau-compte.alerte { color: #fff; background: #c9483a; }
+.bureau-tete .btn.ghost { --btn-bg: rgba(241, 237, 228, 0.08); --btn-fg: var(--c-on-night); --btn-bd: var(--c-night-line); }
+@media (hover: hover) {
+  .bureau-tete .btn.ghost:hover { --btn-bg: rgba(241, 237, 228, 0.14); border-color: rgba(241, 237, 228, 0.3); }
+}
+.incident { align-items: flex-start; }
+.incident-ico { --ton: var(--c-muted); }
+.incident.echec .incident-ico { --ton: var(--c-danger); }
+.bureau-page .incident .envoi-main strong {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.incident .envoi-side { align-self: center; }
+.incident-detail { margin-top: 6px; }
+.incident-detail summary { width: max-content; font-size: 11.5px; font-weight: 600; color: var(--c-brand-ink); cursor: pointer; }
+.incident-detail pre {
+  max-height: 260px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  overflow: auto;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--c-ink-2);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-sm);
+}
+@media (max-width: 599px) {
+  .incident { flex-wrap: wrap; }
+  .incident .envoi-main { flex-basis: calc(100% - 50px); }
+  .incident .envoi-side { justify-content: flex-end; width: 100%; }
+}
+
 /* --- Le planning : le calendrier a gauche, le jour et sa tournee a droite ------------- */
 .planning {
   display: grid;

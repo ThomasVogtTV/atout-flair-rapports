@@ -32,6 +32,7 @@ import {
 import { envoisDuMois, enCsv } from './_lib/export.js'
 import { boiteIndisponible, envoyerMail, consigner, cheminPdfValidation } from './_lib/mail.js'
 import { stockageConfigure, lireFichier, supprimerFichiers } from './_lib/stockage.js'
+import { lireIncidents, incidentsLegers, signalerServeur } from './_lib/incidents.js'
 
 const ID_OK = /^[\w-]{1,64}$/
 const MOIS_OK = /^\d{4}-(0[1-9]|1[0-2])$/
@@ -62,13 +63,14 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
       // Le resume de l'accueil de Terrain : ce qui fait ses alertes, rien de plus -
-      // les demandes a valider, et les envois partis ou rates de la semaine.
+      // les demandes a valider, les envois partis ou rates et les incidents de la semaine.
       if (req.query?.resume !== undefined) {
         const semaine = Date.now() - 7 * 86_400_000
-        const [journal, validations] = await Promise.all([lireJournal(300), aValider()])
+        const [journal, validations, incidents] = await Promise.all([lireJournal(300), aValider(), lireIncidents()])
         return res.status(200).json({
           validations,
           journal: journal.filter((j) => j.date > semaine && (j.statut === 'echec' || j.statut === 'envoye')),
+          incidents: incidentsLegers(incidents.filter((i) => i.derniere > semaine)),
         })
       }
       // L'export de facturation d'un mois : les envois partis, en CSV. Ceux
@@ -85,8 +87,22 @@ export default async function handler(req, res) {
         const depuis = Math.max(0, Math.floor(Number(req.query.journal)) || 0)
         return res.status(200).json({ journal: await lireJournal(300, depuis) })
       }
-      const [equipe, journal, validations, copie] = await Promise.all([listerEmployes(), lireJournal(300), aValider(), derniereCopie()])
-      return res.status(200).json({ base: true, ...equipe, journal, validations, copie, titulaire: estTitulaire(ident) })
+      const [equipe, journal, validations, copie, incidents] = await Promise.all([
+        listerEmployes(),
+        lireJournal(300),
+        aValider(),
+        derniereCopie(),
+        lireIncidents(),
+      ])
+      return res.status(200).json({
+        base: true,
+        ...equipe,
+        journal,
+        validations,
+        copie,
+        titulaire: estTitulaire(ident),
+        incidents: incidentsLegers(incidents),
+      })
     }
     if (req.method === 'POST') {
       const { action, id, nom, fin, motif, oui } = req.body ?? {}
@@ -120,6 +136,7 @@ export default async function handler(req, res) {
   } catch (err) {
     if (err instanceof Erreur400) return res.status(400).json({ error: err.message })
     console.error('Administration', err)
+    await signalerServeur('admin', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })
   }
 }

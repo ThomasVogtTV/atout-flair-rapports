@@ -21,6 +21,7 @@ import {
   tonsDe,
 } from './_lib/equipe.js'
 import { nettoyerRdv, visiblesPour, peutModifier, personne, jourSuisse, trierParDate, idValable, statutValable } from './_lib/agenda.js'
+import { signalerServeur } from './_lib/incidents.js'
 
 // Au-dela, un rendez-vous passe n'a plus rien a dire sur un telephone : il part
 // aux archives.
@@ -116,6 +117,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ moi: personne(ident), role: ident.role, rdvs, version, tons })
   } catch (err) {
     console.error('Agenda', err)
+    await signalerServeur('agenda', err)
     return res.status(500).json({ error: 'Erreur de la base de données' })
   }
 }

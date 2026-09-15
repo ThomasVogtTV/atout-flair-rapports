@@ -66,7 +66,8 @@ describe('Terrain', () => {
 
     const r = await appel(admin, ADMIN, { query: { resume: '1' } })
     assert.equal(r.statut, 200)
-    assert.deepEqual(Object.keys(r.corps).sort(), ['journal', 'validations'])
+    assert.deepEqual(Object.keys(r.corps).sort(), ['incidents', 'journal', 'validations'])
+    assert.deepEqual(r.corps.incidents, [])
     assert.deepEqual(r.corps.journal.map((j) => j.ref).sort(), ['AF-2', 'AF-3'])
     assert.deepEqual(r.corps.validations, [])
   })

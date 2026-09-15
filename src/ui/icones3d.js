@@ -308,6 +308,30 @@ const VALIDER = `
   <path d="M27.3 29.3 A4.4 4.4 0 0 1 30.4 26.6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9"/>
 </svg>`
 
+// Les incidents techniques : le panneau de danger en terre cuite, et son point
+// d'exclamation creme.
+const INCIDENTS = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-in-panneau" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eea27a"/>
+      <stop offset="1" stop-color="#a8472a"/>
+    </linearGradient>
+    <linearGradient id="ic-in-signe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#e6dcc9"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="24" cy="43.6" rx="16" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- epaisseur, puis le panneau -->
+  <path d="M26.9 8.4 L42.6 36.4 A3.6 3.6 0 0 1 39.5 41.8 H8.1 A3.6 3.6 0 0 1 5 36.4 L20.7 8.4 A3.6 3.6 0 0 1 26.9 8.4 Z" transform="translate(1.2 1.6)" fill="#6e2a17"/>
+  <path d="M26.9 8.4 L42.6 36.4 A3.6 3.6 0 0 1 39.5 41.8 H8.1 A3.6 3.6 0 0 1 5 36.4 L20.7 8.4 A3.6 3.6 0 0 1 26.9 8.4 Z" fill="url(#ic-in-panneau)"/>
+  <path d="M19.6 13.4 L22.2 8.9" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- le point d'exclamation -->
+  <rect x="21.6" y="17" width="4.4" height="13.4" rx="2.2" fill="url(#ic-in-signe)"/>
+  <circle cx="23.8" cy="35.3" r="2.5" fill="url(#ic-in-signe)"/>
+</svg>`
+
 /** Les icones dessinees de l'app, par nom de porte. */
 export const ICONES_3D = {
   carnet: CARNET,
@@ -318,4 +342,5 @@ export const ICONES_3D = {
   agenda: AGENDA,
   equipe: EQUIPE,
   valider: VALIDER,
+  incidents: INCIDENTS,
 }

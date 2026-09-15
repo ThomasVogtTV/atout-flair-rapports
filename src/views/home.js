@@ -23,7 +23,7 @@ import { ICONES_3D } from '../ui/icones3d.js'
 import { LIGNES_FLAIR } from '../ui/motifs.js'
 import { rdvAccueilHTML } from './agenda.js'
 import { aVenir, estFait, libelleJour, nomClient, adresseRdv, aMoi } from '../agenda-outils.js'
-import { echecsARegarder, journalVu } from '../equipe-alertes.js'
+import { echecsARegarder, journalVu, incidentsNouveaux, incidentsVus } from '../equipe-alertes.js'
 
 // Nombre de rapports montres tant qu'on n'a pas demande a tout voir : de quoi
 // retrouver ce qu'on vient de faire sans derouler des mois d'archives.
@@ -334,8 +334,9 @@ export function prochainHTML(view) {
 
 /**
  * Ce qui reclame un geste, et rien d'autre. L'administrateur y trouve en plus
- * ce que l'equipe attend de lui : les rapports d'invites a relire, et les envois
- * rates qu'il n'a pas encore vus (voir src/equipe-alertes.js). Un tap ouvre la
+ * ce que l'equipe attend de lui : les rapports d'invites a relire, les envois
+ * rates et les incidents techniques qu'il n'a pas encore vus (voir
+ * src/equipe-alertes.js). Un tap ouvre la
  * bonne page du Bureau, ou vit tout le reste de l'equipe.
  */
 export function alertesHTML(view) {
@@ -348,6 +349,7 @@ export function alertesHTML(view) {
   const admin = estAdmin()
   const aValider = admin ? (view.admin?.validations?.length ?? 0) : 0
   const rates = admin ? echecsARegarder(view.admin?.journal, { vu: journalVu(), moi: identite()?.id ?? 'admin' }).length : 0
+  const incidents = admin ? incidentsNouveaux(view.admin?.incidents, { vu: incidentsVus() }).length : 0
   const alertes = [
     view.enEchec && { t: `${view.enEchec} envoi${view.enEchec > 1 ? 's' : ''} à corriger`, alerte: true, act: 'open-envois' },
     aValider && { t: `${aValider} rapport${aValider > 1 ? 's' : ''} à valider`, lien: '/bureau/#valider' },
@@ -355,6 +357,11 @@ export function alertesHTML(view) {
       t: `${rates} envoi${rates > 1 ? 's' : ''} raté${rates > 1 ? 's' : ''} dans l’équipe`,
       alerte: true,
       lien: '/bureau/#envois',
+    },
+    incidents && {
+      t: `${incidents} incident${incidents > 1 ? 's' : ''} technique${incidents > 1 ? 's' : ''}`,
+      alerte: true,
+      lien: '/bureau/#incidents',
     },
     !view.enEchec && view.enAttente && { t: `${view.enAttente} envoi${view.enAttente > 1 ? 's' : ''} en attente`, act: 'open-envois' },
     memoirePleine && { t: 'Mémoire presque pleine', alerte: true, act: 'open-reglages' },

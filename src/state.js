@@ -1,5 +1,6 @@
 import * as db from './db.js'
 import { TYPES } from './templates.js'
+import { signaler } from './incidents.js'
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 
@@ -309,6 +310,8 @@ export const saveReport = async (report) => {
     return true
   } catch (err) {
     console.error('Enregistrement du rapport impossible', err)
+    // Une memoire pleine s'explique a l'ecran ; le reste est un vrai incident.
+    if (!memoirePleine(err)) signaler(err, 'Enregistrement du rapport')
     signalEcriture?.(memoirePleine(err))
     return false
   }

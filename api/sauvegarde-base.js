@@ -12,6 +12,7 @@
 import { baseConfiguree, exporterBase, reserverCopie, libererCopie, noterCopie } from './_lib/equipe.js'
 import { stockageConfigure, ecrireFichier, supprimerFichiers } from './_lib/stockage.js'
 import { jourSuisse } from './_lib/agenda.js'
+import { signalerServeur } from './_lib/incidents.js'
 
 const GARDE_JOURS = 30
 export const cheminCopie = (jour) => `base/${jour}.json`
@@ -32,6 +33,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, jour })
   } catch (err) {
     console.error('Copie de la base', err)
+    // Une nuit sans copie ne doit pas passer inapercue.
+    await signalerServeur('copie de la base', err)
     // Ratee : la nuit suivante ne doit pas attendre vingt heures pour reessayer.
     if (reserve) await libererCopie().catch(() => {})
     return res.status(500).json({ error: 'Copie de la base impossible' })

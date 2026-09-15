@@ -55,3 +55,33 @@ export function echecsARegarder(journal, { vu = 0, maintenant = Date.now(), moi 
     return !(j.ref && lignes.slice(0, i).some((k) => k.statut === 'envoye' && k.qui === j.qui && k.ref === j.ref))
   })
 }
+
+// --- les incidents techniques -------------------------------------------------
+// Meme regle que les envois rates : ce qui est arrive depuis la derniere visite
+// de la page Incidents du Bureau, et dans la semaine.
+
+const CLE_INCIDENTS_VU = 'af-incidents-vu'
+
+export function incidentsVus() {
+  try {
+    return Number(localStorage.getItem(CLE_INCIDENTS_VU)) || 0
+  } catch {
+    return 0
+  }
+}
+
+/** La page Incidents vient de les montrer : on retient le plus recent, date par le serveur. */
+export function marquerIncidentsVus(incidents) {
+  const plusRecent = Math.max(0, ...(incidents ?? []).map((i) => Number(i.derniere) || 0))
+  if (plusRecent <= incidentsVus()) return
+  try {
+    localStorage.setItem(CLE_INCIDENTS_VU, String(plusRecent))
+  } catch {
+    // Stockage indisponible : l'alerte reviendra a la prochaine ouverture.
+  }
+}
+
+export function incidentsNouveaux(incidents, { vu = 0, maintenant = Date.now() } = {}) {
+  const depuis = Math.max(vu, maintenant - SEMAINE)
+  return (incidents ?? []).filter((i) => Number(i.derniere) > depuis)
+}

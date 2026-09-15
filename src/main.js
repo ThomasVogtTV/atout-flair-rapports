@@ -5,8 +5,12 @@ import '@fontsource-variable/onest/wght.css'
 import '@fontsource/ibm-plex-mono/500.css'
 import '@fontsource/ibm-plex-mono/600.css'
 import './styles/index.css'
+import { installerIncidents } from './incidents.js'
+import { currentCode } from './mailer.js'
 import { boot } from './app.js'
 
+// Avant le demarrage : une erreur de l'ouverture doit, elle aussi, remonter.
+installerIncidents('terrain', { code: currentCode })
 boot()
 
 // La base locale est la seule copie des rapports en cours, du carnet de mandants
