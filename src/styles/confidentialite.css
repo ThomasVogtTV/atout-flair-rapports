@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Declaration de confidentialite : la nuit de la maison en tete, puis le texte
+   sur le papier, en une colonne de lecture.
+   ========================================================================== */
+
+.conf-tete {
+  padding: calc(env(safe-area-inset-top) + 34px) var(--gutter) 44px;
+  color: var(--c-on-night);
+  background:
+    radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--c-brand-fill) 36%, transparent) 0%, transparent 62%),
+    radial-gradient(60% 120% at 0% 100%, rgba(197, 139, 63, 0.12) 0%, transparent 62%),
+    var(--c-night);
+}
+.conf-tete > * { max-width: 760px; margin-right: auto; margin-left: auto; }
+.conf-marque {
+  display: block;
+  width: max-content;
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-decoration: none;
+}
+.conf-sur {
+  margin-top: 30px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-fauve-bright);
+}
+.conf-tete h1 {
+  margin-top: 10px;
+  font-family: var(--f-display);
+  font-size: clamp(32px, 6vw, 46px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.026em;
+}
+.conf-intro { margin-top: 16px; font-size: 15px; line-height: 1.6; color: var(--c-on-night-2); }
+.conf-date { margin-top: 18px; font-size: 11.5px; font-weight: 600; color: var(--c-on-night-2); }
+
+.conf { max-width: 760px; margin: 0 auto; padding: 4px var(--gutter) 56px; }
+.conf section { margin-top: 38px; }
+.conf h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.016em;
+}
+.conf h2 span { font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: var(--c-fauve-ink); }
+.conf p,
+.conf li { font-size: 14.5px; line-height: 1.62; color: var(--c-ink-2); }
+.conf p { margin-top: 10px; }
+.conf ul { margin: 10px 0 0; padding-left: 20px; }
+.conf li + li { margin-top: 7px; }
+.conf li::marker { color: var(--c-fauve); }
+.conf strong { font-weight: 650; color: var(--c-ink); }
+.conf a { color: var(--c-brand-ink); text-underline-offset: 3px; }
+
+.conf-carte {
+  margin-top: 14px;
+  padding: 16px 18px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+}
+.conf-carte p:first-child { margin-top: 0; }
+
+.conf-tableau {
+  overflow-x: auto;
+  margin-top: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+}
+.conf table { width: 100%; border-collapse: collapse; }
+.conf table.large { min-width: 560px; }
+.conf th,
+.conf td {
+  padding: 11px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: left;
+  vertical-align: top;
+  color: var(--c-ink-2);
+  border-bottom: 1px solid var(--c-line);
+}
+.conf th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  background: var(--c-surface-2);
+}
+.conf td:first-child { font-weight: 600; color: var(--c-ink); }
+.conf tbody tr:last-child td { border-bottom: 0; }
+
+.conf-pied {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px var(--gutter) calc(36px + env(safe-area-inset-bottom));
+  font-size: 12px;
+  color: var(--c-muted);
+  border-top: 1px solid var(--c-line);
+}

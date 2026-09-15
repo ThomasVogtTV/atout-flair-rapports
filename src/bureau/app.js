@@ -66,6 +66,7 @@ function aller(ecran) {
   if (ecran === 'rapports' && !view.adminRapports) chargerRapports()
   if (ecran === 'envois' && view.admin?.journal) marquerJournalVu(view.admin.journal)
   if (ecran === 'incidents') chargerIncidents()
+  if (ecran === 'donnees') chargerConservation()
 }
 
 // --- les donnees ----------------------------------------------------------------
@@ -91,6 +92,7 @@ async function recharger({ force = false } = {}) {
   // Arrive directement sur une page qui a ses propres donnees (favori, rechargement).
   if (view.ecran === 'rapports' && !view.adminRapports?.liste) chargerRapports()
   if (view.ecran === 'incidents') chargerIncidents()
+  if (view.ecran === 'donnees') chargerConservation()
   render()
 }
 
@@ -124,6 +126,18 @@ async function chargerIncidents() {
   // Sous les yeux : l'alerte de Terrain et la pastille de la navigation se taisent.
   if (incidents.liste) marquerIncidentsVus(incidents.liste)
   if (view.ecran === 'incidents') render()
+}
+
+// --- les donnees personnelles ------------------------------------------------------
+
+async function chargerConservation() {
+  if (!view.conservation?.categories) {
+    view.conservation = { chargement: true }
+    render()
+  }
+  const conservation = await adminAppel('GET', null, { conservation: '1' }).catch((err) => ({ erreur: err.message }))
+  view.conservation = conservation
+  if (view.ecran === 'donnees') render()
 }
 
 async function reglerIncidents(corps) {

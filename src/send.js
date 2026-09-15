@@ -148,7 +148,9 @@ export function openSendDialog(report, children, onSent) {
 Veuillez trouver ci-joint le rapport de détection canine.
 
 Meilleures salutations,
-Atout Flair</textarea></label>
+Atout Flair
+
+Protection des données : ${location.origin}/confidentialite/</textarea></label>
     <p class="muted small">Pièce jointe : ${esc(filename)}</p>
     <div class="dialog-actions">
       <button class="btn ghost" data-close>Annuler</button>

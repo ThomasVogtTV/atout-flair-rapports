@@ -205,6 +205,9 @@ export async function lireEnvoisDuMois(mois) {
   return ((await r('LRANGE', ENVOIS(mois), 0, -1)) ?? []).map(lireJson).filter(Boolean)
 }
 
+/** Les mois (AAAA-MM) qui ont des envois ranges. */
+export const moisEnvois = async () => (await r('SMEMBERS', MOIS_ENVOIS)) ?? []
+
 /** `n` lignes du journal, de la plus recente a la plus ancienne, a partir de la `depuis`-ieme. */
 export async function lireJournal(n = 300, depuis = 0) {
   const lignes = (await r('LRANGE', JOURNAL, depuis, depuis + n - 1)) ?? []

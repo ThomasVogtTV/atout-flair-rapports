@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <script>
+      // Le theme choisi dans l'app vaut aussi ici (meme adresse, meme reglage).
+      (function () {
+        var t = localStorage.getItem('af-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      })()
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d1b1e" />
+    <link rel="icon" href="/icon-192.png" />
+    <title>Protection des données — Atout Flair</title>
+    <!--
+      Declaration de confidentialite de l'application de rapports. Publique :
+      un client la lit en suivant le lien de son e-mail, sans code d'acces.
+      Les durees de conservation sont celles de api/_lib/conservation.js : les
+      changer ici, c'est les changer la-bas aussi.
+    -->
+    <script type="module" src="/src/confidentialite.js"></script>
+  </head>
+  <body>
+    <header class="conf-tete">
+      <a class="conf-marque" href="https://www.atout-flair.ch">Atout Flair</a>
+      <p class="conf-sur">Déclaration de confidentialité</p>
+      <h1>Protection des données</h1>
+      <p class="conf-intro">
+        Ce que nous faisons des données de nos clients et de notre équipe dans notre application de rapports
+        d’intervention, à qui nous les confions, combien de temps nous les gardons, et vos droits.
+      </p>
+      <p class="conf-date">Mise à jour : 15 septembre 2026</p>
+    </header>
+
+    <main class="conf">
+      <section>
+        <h2><span>01</span>Qui est responsable</h2>
+        <div class="conf-carte">
+          <p><strong>Atout-Flair Sàrl</strong><br />Oberli Stessy<br />Rue des Fontaines 6, 1423 Vaugondry, Suisse</p>
+          <p><a href="mailto:info@atout-flair.ch">info@atout-flair.ch</a> · 079 269 94 96</p>
+        </div>
+        <p>Pour toute question sur vos données, écrivez-nous à cette adresse.</p>
+      </section>
+
+      <section>
+        <h2><span>02</span>Quelles données</h2>
+        <ul>
+          <li>
+            <strong>Clients et lieux d’intervention :</strong> nom, prénom, adresse, e-mail et téléphone ; adresse et
+            étage du lieu, nom et présence du locataire ; constats de l’intervention, photos, remarques et signatures ;
+            rendez-vous (date, heure, adresse, note).
+          </li>
+          <li>
+            <strong>Collaborateurs :</strong> nom, rôle, date de fin d’accès d’un collaborateur temporaire, dernière
+            ouverture de l’application, rapports envoyés. Le code d’accès personnel n’est jamais enregistré en clair,
+            seulement son empreinte.
+          </li>
+          <li>
+            <strong>Données techniques :</strong> en cas d’erreur de l’application, le message d’erreur, l’écran
+            concerné, la version de l’application et le type d’appareil ; l’adresse réseau, uniquement sous forme
+            d’empreinte, pour bloquer les tentatives de codes en série.
+          </li>
+        </ul>
+        <p>L’application n’utilise ni cookies publicitaires ni mesure d’audience.</p>
+      </section>
+
+      <section>
+        <h2><span>03</span>Pourquoi</h2>
+        <ul>
+          <li>réaliser l’intervention demandée et vous en remettre le rapport ;</li>
+          <li>organiser les rendez-vous de l’équipe ;</li>
+          <li>facturer, et conserver les pièces qui justifient la facturation ;</li>
+          <li>protéger l’application : accès par code personnel, détection des pannes.</li>
+        </ul>
+        <p>Vos données ne sont ni vendues ni utilisées à des fins publicitaires.</p>
+      </section>
+
+      <section>
+        <h2><span>04</span>Qui y a accès</h2>
+        <p>
+          Dans l’entreprise, chaque technicien voit ses propres rapports et rendez-vous ; les administrateurs voient
+          ceux de toute l’équipe. Le rapport d’un collaborateur temporaire est relu par un administrateur avant de
+          vous être envoyé.
+        </p>
+        <p>Nous confions certaines tâches à des prestataires :</p>
+        <div class="conf-tableau">
+          <table class="large">
+            <thead>
+              <tr><th>Prestataire</th><th>Ce qu’il fait</th><th>Pays</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Vercel Inc.</td>
+                <td>Hébergement de l’application, traitements sur le serveur, stockage privé des rapports et photos sauvegardés</td>
+                <td>États-Unis</td>
+              </tr>
+              <tr>
+                <td>Upstash Inc.</td>
+                <td>Base de données de l’équipe : agenda, carnet de clients, journal des envois</td>
+                <td>Union européenne (Allemagne)</td>
+              </tr>
+              <tr>
+                <td>Infomaniak Network SA</td>
+                <td>Envoi des rapports par e-mail, boîte info@atout-flair.ch</td>
+                <td>Suisse</td>
+              </tr>
+              <tr>
+                <td>Google</td>
+                <td>Cartes et itinéraires : l’adresse d’intervention lui est transmise quand un technicien ouvre la carte ou l’itinéraire, ou ajoute un rendez-vous à son agenda Google</td>
+                <td>États-Unis</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Les États-Unis n’offrent pas d’office une protection des données équivalente à celle de la Suisse. Les
+          transferts vers ces prestataires reposent sur leur adhésion au Swiss-U.S. Data Privacy Framework ou, à
+          défaut, sur les clauses contractuelles types reconnues par le Préposé fédéral à la protection des données.
+        </p>
+      </section>
+
+      <section>
+        <h2><span>05</span>Combien de temps</h2>
+        <div class="conf-tableau">
+          <table>
+            <thead>
+              <tr><th>Données</th><th>Durée de conservation</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Rapports, photos et signatures sauvegardés en ligne</td><td>10 ans après leur dernière modification</td></tr>
+              <tr><td>Journal des envois et export de facturation</td><td>10 ans</td></tr>
+              <tr><td>Rendez-vous passés</td><td>2 ans</td></tr>
+              <tr><td>Clients du carnet sans rendez-vous ni modification</td><td>5 ans</td></tr>
+              <tr><td>PDF d’un rapport en attente de relecture</td><td>Effacé dès qu’il est envoyé ou refusé ; la demande, 60 jours après</td></tr>
+              <tr><td>Copies de sauvegarde de la base</td><td>30 jours</td></tr>
+              <tr><td>Incidents techniques</td><td>90 jours</td></tr>
+              <tr><td>Comptes des collaborateurs</td><td>Jusqu’à leur suppression, à la fin de la collaboration</td></tr>
+              <tr><td>Rapports enregistrés sur les téléphones de l’équipe</td><td>Jusqu’à leur suppression par le technicien</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Les 10 ans correspondent à la durée de conservation des pièces comptables fixée par le Code des obligations
+          (art. 958f).
+        </p>
+      </section>
+
+      <section>
+        <h2><span>06</span>Sécurité</h2>
+        <ul>
+          <li>tous les échanges sont chiffrés (HTTPS) ;</li>
+          <li>chaque collaborateur accède avec un code personnel, révocable à tout moment ;</li>
+          <li>les rapports et les photos sont stockés en accès privé, sans aucun lien public ;</li>
+          <li>la base de l’équipe est copiée chaque nuit ;</li>
+          <li>
+            en cas de violation de la sécurité présentant un risque élevé, nous l’annonçons au Préposé fédéral et en
+            informons les personnes concernées.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2><span>07</span>Vos droits</h2>
+        <p>Vous pouvez à tout moment nous demander :</p>
+        <ul>
+          <li>quelles données nous avons sur vous ;</li>
+          <li>de les corriger ;</li>
+          <li>de les effacer, sauf celles que la loi nous oblige à conserver ;</li>
+          <li>de vous les remettre dans un format courant.</li>
+        </ul>
+        <div class="conf-carte">
+          <p>
+            Écrivez à <a href="mailto:info@atout-flair.ch">info@atout-flair.ch</a> : nous répondons dans les 30 jours.
+          </p>
+          <p>
+            Vous pouvez aussi vous adresser au Préposé fédéral à la protection des données et à la transparence
+            (PFPDT), Feldeggweg 1, 3003 Berne,
+            <a href="https://www.edoeb.admin.ch" rel="noopener">www.edoeb.admin.ch</a>.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="conf-pied">Atout-Flair Sàrl · Détection canine professionnelle</footer>
+  </body>
+</html>

@@ -6,7 +6,7 @@
 // Bureau (/bureau/). Chacune garde sa propre page d'entree en cache - une
 // navigation vers l'une ne doit jamais remplacer la page de l'autre.
 
-const CACHE = 'atout-flair-v17'
+const CACHE = 'atout-flair-v18'
 const PAGES = ['/index.html', '/bureau/index.html']
 const SHELL = [
   '/',
@@ -93,8 +93,15 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// La page d'entree de l'app vers laquelle on navigue.
-const pageDe = (url) => (url.pathname === '/bureau' || url.pathname.startsWith('/bureau/') ? '/bureau/index.html' : '/index.html')
+// La page d'entree de l'app vers laquelle on navigue. La declaration de
+// confidentialite n'est pas une appli : elle passe par le reseau, sans jamais
+// prendre en cache la place de la page de Terrain.
+const pageDe = (url) =>
+  url.pathname === '/bureau' || url.pathname.startsWith('/bureau/')
+    ? '/bureau/index.html'
+    : url.pathname === '/confidentialite' || url.pathname.startsWith('/confidentialite/')
+      ? null
+      : '/index.html'
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
@@ -107,6 +114,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     const page = pageDe(url)
+    if (!page) return
     event.respondWith(
       fetch(request)
         .then((res) => {

@@ -4,6 +4,7 @@
 //
 // GET                                   equipe, journal, demandes a valider
 // GET  ?pdf=<id>                        le PDF d'une demande, pour le relire
+// GET  ?conservation=1                  ce que les durees de conservation effaceraient
 // POST {action: 'valider', id}          le rapport part chez le client
 // POST {action: 'refuser', id, motif}   il ne part pas ; l'invite lit le motif
 
@@ -33,6 +34,7 @@ import { envoisDuMois, enCsv } from './_lib/export.js'
 import { boiteIndisponible, envoyerMail, consigner, cheminPdfValidation } from './_lib/mail.js'
 import { stockageConfigure, lireFichier, supprimerFichiers } from './_lib/stockage.js'
 import { lireIncidents, incidentsLegers, signalerServeur } from './_lib/incidents.js'
+import { bilanConservation } from './_lib/conservation.js'
 
 const ID_OK = /^[\w-]{1,64}$/
 const MOIS_OK = /^\d{4}-(0[1-9]|1[0-2])$/
@@ -62,6 +64,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       if (req.query?.pdf) return lirePdf(req.query.pdf, res)
+      if (req.query?.conservation !== undefined) return res.status(200).json(await bilanConservation())
       // Le resume de l'accueil de Terrain : ce qui fait ses alertes, rien de plus -
       // les demandes a valider, les envois partis ou rates et les incidents de la semaine.
       if (req.query?.resume !== undefined) {

@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         index: ici('./index.html'),
         bureau: ici('./bureau/index.html'),
+        confidentialite: ici('./confidentialite/index.html'),
       },
     },
   },

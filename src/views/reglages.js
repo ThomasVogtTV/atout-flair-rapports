@@ -131,5 +131,10 @@ export function reglagesView(view) {
           <button class="btn ghost" data-act="import-backup">Restaurer</button>
         </div>
       </div>
+
+      <h2 class="section-title"><span class="section-title-main">${sectionIcon('cadenas', 'neutral')}Confidentialité</span></h2>
+      <div class="card">
+        <a class="btn ghost wide reglage-lien" href="/confidentialite/" target="_blank" rel="noopener">Protection des données</a>
+      </div>
     </section>`
 }

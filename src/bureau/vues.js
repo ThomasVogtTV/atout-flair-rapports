@@ -20,7 +20,7 @@ import { AIDE_BASE, PAGE_JOURNAL, codeRevele, equipeHTML, validationsHTML, rappo
 import { estAnnule, lundiDe, plusJours, personnesDe } from '../agenda-outils.js'
 import { incidentsNouveaux, incidentsVus } from '../equipe-alertes.js'
 
-export const ECRANS = ['planning', 'equipe', 'valider', 'rapports', 'envois', 'incidents']
+export const ECRANS = ['planning', 'equipe', 'valider', 'rapports', 'envois', 'incidents', 'donnees']
 
 const PAGES = {
   planning: { titre: 'Planning', icone: 'agenda' },
@@ -29,6 +29,7 @@ const PAGES = {
   rapports: { titre: 'Rapports', icone: 'rapports' },
   envois: { titre: 'Envois', icone: 'envois' },
   incidents: { titre: 'Incidents', icone: 'incidents' },
+  donnees: { titre: 'Données', icone: 'donnees' },
 }
 
 const JOUR_MS = 86_400_000
@@ -301,6 +302,49 @@ function incidentsPageHTML(view) {
     </div>`
 }
 
+// --- les donnees personnelles ---------------------------------------------------------
+// Combien de temps l'entreprise garde chaque donnee, et ce qui depasse deja ces
+// durees (voir api/_lib/conservation.js). Rien ne s'efface tant que
+// l'administrateur ne l'a pas demande.
+
+const moisAnnee = (t) => new Date(t).toLocaleDateString('fr-CH', { month: 'long', year: 'numeric' })
+
+function donneeHTML(c) {
+  const detail = [`Durée : ${c.duree}`, `${c.total} en tout`, c.plusAncien ? `le plus ancien : ${moisAnnee(c.plusAncien)}` : '']
+    .filter(Boolean)
+    .join(' · ')
+  return `
+    <li class="envoi-row donnee${c.aEffacer ? ' au-dela' : ''}">
+      <div class="envoi-main">
+        <strong>${esc(c.libelle)}</strong>
+        <span class="muted">${esc(detail)}</span>
+      </div>
+      <div class="envoi-side"><span class="pill ${c.aEffacer ? 'queued' : 'sent'}">${c.aEffacer ? `${c.aEffacer} au-delà` : 'Dans les délais'}</span></div>
+    </li>`
+}
+
+function donneesPageHTML(view) {
+  const c = view.conservation
+  const lu = Boolean(c?.categories)
+  const auDela = lu ? c.categories.reduce((n, x) => n + x.aEffacer, 0) : null
+  return `
+    ${teteHTML({
+      titre: 'Données',
+      sous: lu ? (c.effacementActif ? 'Effacement automatique activé' : 'Effacement automatique désactivé : rien n’est effacé') : '',
+      chiffres: [{ mot: 'au-delà des durées', n: auDela, or: true }],
+      actions: '<a class="btn ghost" href="/confidentialite/" target="_blank" rel="noopener">Déclaration</a>',
+    })}
+    <div class="bureau-colonne reveal" style="--i:1">
+      ${
+        !c || c.chargement
+          ? attenteHTML(6)
+          : c.erreur
+            ? `<div class="card bureau-erreur"><p>${esc(c.erreur)}</p></div>`
+            : `<ul class="report-list">${c.categories.map(donneeHTML).join('')}</ul>`
+      }
+    </div>`
+}
+
 const RENDUS = {
   planning: planningHTML,
   equipe: equipePageHTML,
@@ -308,6 +352,7 @@ const RENDUS = {
   rapports: rapportsPageHTML,
   envois: envoisPageHTML,
   incidents: incidentsPageHTML,
+  donnees: donneesPageHTML,
 }
 
 // Un employe ou un invite qui ouvre le Bureau : pas de porte fermee sans issue.

@@ -518,6 +518,9 @@ body.app-bureau .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
   .incident .envoi-side { justify-content: flex-end; width: 100%; }
 }
 
+/* --- Les donnees personnelles : la tranche ocre de ce qui depasse sa duree ---------------- */
+.donnee.au-dela::before { background: var(--c-warning); }
+
 /* --- Le planning : le calendrier a gauche, le jour et sa tournee a droite ------------- */
 .planning {
   display: grid;

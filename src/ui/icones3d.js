@@ -332,6 +332,33 @@ const INCIDENTS = `
   <circle cx="23.8" cy="35.3" r="2.5" fill="url(#ic-in-signe)"/>
 </svg>`
 
+// Les donnees personnelles : le cadenas ardoise, son anse doree et son trou de
+// serrure creme.
+const DONNEES = `
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="ic-do-corps" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7887bd"/>
+      <stop offset="1" stop-color="#2a3354"/>
+    </linearGradient>
+    <linearGradient id="ic-do-anse" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffdb8f"/>
+      <stop offset="1" stop-color="#c9811f"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="24" cy="43.6" rx="15.5" ry="2.1" fill="#000" opacity="0.22"/>
+  <!-- l'anse, et son ombre -->
+  <path d="M15.5 21 V15.5 A8 8 0 0 1 31.5 15.5 V21" fill="none" stroke="#6b4417" stroke-width="5.4" stroke-linecap="round" transform="translate(0.8 1)"/>
+  <path d="M15.5 21 V15.5 A8 8 0 0 1 31.5 15.5 V21" fill="none" stroke="url(#ic-do-anse)" stroke-width="4" stroke-linecap="round"/>
+  <!-- epaisseur, puis le corps -->
+  <rect x="10.4" y="21.4" width="29" height="21" rx="5" fill="#1c2440"/>
+  <rect x="9" y="20" width="29" height="21" rx="5" fill="url(#ic-do-corps)"/>
+  <rect x="12.5" y="22.6" width="18" height="1.6" rx="0.8" fill="#fff" opacity="0.25"/>
+  <!-- le trou de serrure -->
+  <circle cx="23.5" cy="29" r="3.2" fill="#fffaf2"/>
+  <path d="M22.1 30.4 L21.5 36 H25.5 L24.9 30.4 Z" fill="#fffaf2"/>
+</svg>`
+
 /** Les icones dessinees de l'app, par nom de porte. */
 export const ICONES_3D = {
   carnet: CARNET,
@@ -343,4 +370,5 @@ export const ICONES_3D = {
   equipe: EQUIPE,
   valider: VALIDER,
   incidents: INCIDENTS,
+  donnees: DONNEES,
 }

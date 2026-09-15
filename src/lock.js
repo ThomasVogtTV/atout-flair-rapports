@@ -153,6 +153,7 @@ export function verrouiller(message = '') {
       <p class="lock-error" aria-live="polite"></p>
       <label class="lock-souvenir"><input type="checkbox" name="souvenir" checked /> Se souvenir de moi sur cet appareil</label>
       <button type="submit" class="btn primary wide">Déverrouiller</button>
+      <a class="lock-lien" href="/confidentialite/" target="_blank" rel="noopener">Protection des données</a>
     </form>`
   document.body.appendChild(el)
   document.body.classList.add('verrouille')
